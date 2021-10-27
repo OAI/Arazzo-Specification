@@ -25,10 +25,15 @@ Optimally, it should be possible to articulate these workflows in a human and ma
 
 The current SIG is made up of the following individuals, and feel free to submit an issue requesting to be added.
 
+### Champions
+
 - David O'Neill ([CEO, APImetrics](https://www.linkedin.com/in/davidon/))
+- Kin Lane ([Chief Evangelist, Postman](https://www.linkedin.com/in/kinlane/))
+
+### Contributors
+
 - Nick Denny ([VP Engineering, APImetrics](https://www.linkedin.com/in/nickdenny/))
 - Frank Kilcommins ([API Evangelist, SmartBear](https://www.linkedin.com/in/frank-kilcommins))
-- Kin Lane ([Chief Evangelist, Postman](https://www.linkedin.com/in/kinlane/))
 - Mike Ralphson ([OpenAPI Specification Lead, Postman](https://www.linkedin.com/in/mikeralphson/))
 - Alessandro Duminuco ([Senior Technical Leader, Cisco](https://www.linkedin.com/in/alessandroduminuco/))
 - Mark Haine ([Founder, Considrd Consulting](https://www.linkedin.com/in/mark-haine/))
