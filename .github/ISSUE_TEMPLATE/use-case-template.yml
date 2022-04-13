@@ -1,0 +1,53 @@
+name: "Workflow-SIG Usecase Create Form"
+description: "Request form to describe a Workflow-SIG use case. Inorder to create a comprehensive solution Please provide a brief title, description, and fill out the details below and we'll get back to you ASAP."
+title: "[Workflow-SIG Usecases, draft version]: "
+labels: use-case
+assignees: @OAI/sig-workflows-admins
+  - 
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for contributing to the OAI work-flow SIG, please use this issue form to describe use cases in your industry.
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: Please share the name(s) / handle(s) so we can followup with any additional questions comments.
+    validations:
+      required: true
+  - type: textarea
+    id: Title
+    attributes:
+      label: Give your usecase a unique name so we may refer to it in discussions
+      description: Each usecase needs a unique name starting with "USECASE-"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Give an overview of your use case.
+      description: A brief description that outlines your usecase.
+    validations:
+      required: true
+  - type: textarea
+    id: Industry
+    attributes:
+      label: Industry
+      description: Let us know if this is an industry specific usecase and any specific circumstances such as regulations that restrict the use case.
+    validations:
+      required: true
+  - type: textarea
+    id: Documentation
+    attributes:
+      label: Documentation
+      description: Share any existing documention, examples, or any other materials that will help the SIG understand the requirements.
+    validations:
+      required: false
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/OAI/OpenAPI-Specification/blob/main/CODE_OF_CONDUCT.md)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
