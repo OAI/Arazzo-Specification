@@ -1,1 +1,0 @@
-The Workflows Special Interest Group follows the Conduct of Conduct guidelines outlined by the OpenAPI Initiatives' Technical Steering Committee. Please review [here](https://github.com/OAI/OpenAPI-Specification/blob/main/CODE_OF_CONDUCT.md) 
