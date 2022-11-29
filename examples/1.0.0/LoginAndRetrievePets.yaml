@@ -1,0 +1,51 @@
+workflows: 1.0.0
+info:
+    title: A pet purchasing workflow
+    summary: This worfklow showcases how to purchase a pet through a sequence of API calls
+    description: |
+        This worfklow walks you through the steps of `searching` for, `selecting`, and `purchasing` an available pet.
+    version: 1.0.1
+sources:
+    petStore: https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml
+
+procedures:
+    summary: Login User and then retrieve pets
+    description: This procedure lays out the steps to login a user and then retrieve pets
+    procedureId: loginUser
+    inputs: 
+        type: object
+        properties:
+            username:
+                type: string
+            password:
+                type: string
+    steps:
+    - stepId: loginStep
+      description: This step demonstrates the user login step
+      operationId: loginUser
+      parameters:
+        # parameters to inject into the loginUser operation (parameter name must be resolvable at the referenced operation and the value is determined using {expression} syntax)
+        username: $inputs.username
+        password: $inputs.password
+      successCriteria:
+        # assertions to determine step was successful
+        - $statusCode == 200
+      outputs:
+        # outputs from this step
+        tokenExpires: $response.header.X-Expires-After
+        rateLimit: $response.header.X-Rate-Limit
+        sessionToken: $response.body
+    - stepId: getPetStep
+      description: retrieve a pet by status from the GET pets endpoint
+      operationRef: https://petstore3.swagger.io/api/v3/openapi.json#/paths/users/~findbystatus~1{status}/get
+      dependsOn: loginStep
+      parameters:
+        status: 'available'
+        '{$request.header.Authorization}': $steps.loginUser.outputs.sessionToken
+      successCriteria:
+       - $statusCode == 200
+      outputs:
+        # outputs from this step
+        availablePets: $response.body
+    outputs:
+        available: $steps.getPetStep.availablePets
