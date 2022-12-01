@@ -1,9 +1,9 @@
 workflows: 1.0.0
 info:
     title: A pet purchasing workflow
-    summary: This worfklow showcases how to purchase a pet through a sequence of API calls
+    summary: This workflow showcases how to purchase a pet through a sequence of API calls
     description: |
-        This worfklow walks you through the steps of `searching` for, `selecting`, and `purchasing` an available pet.
+        This workflow walks you through the steps of `searching` for, `selecting`, and `purchasing` an available pet.
     version: 1.0.1
 sources:
     petStore: https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml
