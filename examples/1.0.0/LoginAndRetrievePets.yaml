@@ -1,4 +1,4 @@
-workflows: 1.0.0
+workflowsSpec: 1.0.0
 info:
     title: A pet purchasing workflow
     summary: This workflow showcases how to purchase a pet through a sequence of API calls
@@ -8,11 +8,11 @@ info:
 sources:
     petStore: https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml
 
-procedures:
+workflows:
   petRetrieval:
     summary: Login User and then retrieve pets
     description: This procedure lays out the steps to login a user and then retrieve pets
-    procedureId: loginUser
+    workflowId: loginUserRetrievePet
     inputs: 
         type: object
         properties:
