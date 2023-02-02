@@ -1,0 +1,94 @@
+openapi: 3.1.0
+info:
+  title: APImetrics OAuth service
+  version: 1.0.0
+  contact: 
+    email: info@apimetrics.com
+  description: >-
+    APImetrics OAuth service
+x-optic-path-ignore:
+  - "**/*.+(ico|png|jpeg|jpg|gif)"
+servers:
+  - url: https://auth.apimetrics.io
+    description: APImetrics OAuth Production
+paths:
+  /authorize:
+    get:
+      operationId: authorize
+      description: >-
+        This endpoint is used to authorize a user to access the APImetrics API.
+        The user will be redirected to the login page if they are not already
+        logged in. If they are logged in, they will be asked to authorize the
+        application to access their account. If they accept, they will be
+        redirected back to the application with an authorization code.
+      parameters:
+        - name: client_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: redirect_uri
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: response_type
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: scope
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 200 response
+  /oauth/token:
+    post:
+      operationId: get-token
+      description: >-
+        This endpoint is used to get an access token from an authorization code.
+        The authorization code is obtained from the authorize endpoint.
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                grant_type:
+                  type: string
+                code:
+                  type: string
+                redirect_uri:
+                  type: string
+                client_id:
+                  type: string
+                client_secret:
+                  type: string
+              requiredProperties:
+                - grant_type
+                - client_id
+      responses:
+        "200":
+          description: 200 response
+
+# callback:
+#     myCallback:
+#       '{$request.query.queryUrl}':
+#         post:
+#           requestBody:
+#             description: Callback payload
+#             content:
+#               'application/json':
+#                 schema:
+#                   $ref: '#/components/schemas/SomePayload'
+#           responses:
+#             '200':
+#               description: callback successfully processed

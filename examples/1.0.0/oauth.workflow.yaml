@@ -1,0 +1,161 @@
+workflowsSpec: 1.0.0
+info:
+  title: APImetrics OAuth service
+  version: 1.0.0
+  description: >-
+    APImetrics OAuth service
+sources:
+  - sourceId: apim-auth
+    $ref: ./oauth.openapi.yaml
+    type: openapi
+  # This is how you can reference another workflow file
+  # - sourceId: sample
+  #   $ref: ./sample.workflows.yml
+  #   type: workflow
+
+workflows:
+
+  - workflowId: refresh-token-flow
+    summary: Refresh an access token
+    description: >-
+      This is how you can refresh an access token.
+    inputs:
+      type: object
+      properties:
+        my_client_id:
+          type: string
+          description: The client id
+        my_client_secret:
+          type: string
+          description: The client secret
+        my_redirect_uri:
+          type: string
+          description: The redirect uri
+        # refresh_token:
+        #   type: string
+        #   description: The refresh token
+        #   # From authorization-code-flow.outputs.refresh_token
+        #   # Or a previous refresh-token-flow.outputs.refresh_token
+    steps:
+      - stepId: do-the-auth-flow
+        # Open question: how do we reference a workflow from another file?
+        # e.g.: 
+        # workflowId: $sources.sample.workflows.authorization-code-flow
+        workflowId: authorization-code-flow
+        parameters:
+          client_id: $inputs.my_client_id
+          client_secret: $inputs.my_client_secret
+          redirect_uri: $inputs.my_redirect_uri
+        outputs:
+          my_refresh_token: $outputs.refresh_token
+
+      - stepId: do-the-refresh
+        description: >-
+          This is where you do the refresh
+        operationId: get-token
+        parameters:
+          grant_type: refresh_token
+          refresh_token: $steps.do-the-auth-flow.outputs.my_refresh_token
+        successCriteria:
+          - $statusCode == 200
+          - $response.body.access_token != null
+        outputs:
+          access_token: $response.body.access_token
+          refresh_token: $response.body.refresh_token
+          expires_in: $response.body.expires_in
+
+    outputs:
+      access_token: $steps.do-the-refresh.outputs.access_token
+      refresh_token: $steps.do-the-refresh.outputs.refresh_token
+      expires_in: $steps.do-the-refresh.outputs.expires_in
+
+
+  - workflowId: client-credentials-flow
+    summary: Get an access token using client credentials
+    description: >-
+      This is how you can get an access token using client credentials.
+    inputs:
+      type: object
+      properties:
+        client_id:
+          type: string
+          description: The client id
+        client_secret:
+          type: string
+          description: The client secret
+    steps:
+      - stepId: get-client-creds-token
+        description: >-
+          This is where you get the token
+        operationId: get-token
+        parameters:
+          grant_type: client_credentials
+          client_id: $inputs.client_id
+          client_secret: $inputs.client_secret
+        successCriteria:
+          - $statusCode == 200
+          - $response.body.access_token != null
+        outputs:  
+          access_token: $response.body.access_token
+
+    outputs:
+      access_token: $steps.get-client-creds-token.outputs.access_token
+
+
+  - workflowId: authorization-code-flow
+    summary: Get an access token using an authorization code
+    description: >-
+      This is how you can get an access token using an authorization code.
+    inputs:
+      type: object
+      properties:
+        client_id:
+          type: string
+          description: The client id
+        client_secret:
+          type: string
+          description: The client secret
+        redirect_uri:
+          type: string
+          description: The redirect uri
+      steps:
+        - stepId: browser-authorize
+          description: >-
+            This URL is opened in the browser and redirects you back to
+            the registered redirect URI with an authorization code.
+          operationId: authorize
+          parameters:
+            client_id: $inputs.client_id
+            redirect_uri: $inputs.redirect_uri
+            response_type: code
+            scope: read
+            state: $random.uuid
+          successCriteria:
+            - $statusCode == 200
+            - $response.body.access_token != null
+          outputs:  
+            code: $response.body.code  # Not really, this is a query parameter
+        
+        - stepId: get-access-token
+          description: >-
+            This is where you get the token
+          operationId: get-token
+          parameters:
+            grant_type: authorization_code
+            client_id: $inputs.client_id
+            client_secret: $inputs.client_secret
+            code: $steps.browser-authorize.code
+            redirect_uri: $inputs.redirect_uri
+          successCriteria:
+            - $statusCode == 200
+            - $response.body.access_token != null
+          outputs:  
+            access_token: $response.body.access_token
+            refresh_token: $response.body.refresh_token
+            expires_in: $response.body.expires_in
+
+      outputs:
+        access_token: $steps.get-access-token.outputs.access_token
+        refresh_token: $steps.get-access-token.outputs.refresh_token
+        expires_in: $steps.get-access-token.outputs.expires_in
+
