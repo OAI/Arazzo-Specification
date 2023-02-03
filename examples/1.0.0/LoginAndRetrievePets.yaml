@@ -11,44 +11,51 @@ sources:
   type: openapi
 
 workflows:
-  petRetrieval:
-    summary: Login User and then retrieve pets
-    description: This procedure lays out the steps to login a user and then retrieve pets
-    workflowId: loginUserRetrievePet
-    inputs: 
-        type: object
-        properties:
-            username:
-                type: string
-            password:
-                type: string
-    steps:
-    - stepId: loginStep
-      description: This step demonstrates the user login step
-      operationId: loginUser
-      parameters:
-        # parameters to inject into the loginUser operation (parameter name must be resolvable at the referenced operation and the value is determined using {expression} syntax)
-        username: $inputs.username
-        password: $inputs.password
-      successCriteria:
-        # assertions to determine step was successful
-        - $statusCode == 200
-      outputs:
-        # outputs from this step
-        tokenExpires: $response.header.X-Expires-After
-        rateLimit: $response.header.X-Rate-Limit
-        sessionToken: $response.body
-    - stepId: getPetStep
-      description: retrieve a pet by status from the GET pets endpoint
-      operationRef: https://petstore3.swagger.io/api/v3/openapi.json#/paths/users/~findbystatus~1{status}/get
-      dependsOn: loginStep
-      parameters:
-        status: 'available'
-        '{$request.header.Authorization}': $steps.loginUser.outputs.sessionToken
-      successCriteria:
-       - $statusCode == 200
-      outputs:
-        # outputs from this step
-        availablePets: $response.body
+- workflowId: loginUserRetrievePet  
+  summary: Login User and then retrieve pets
+  description: This procedure lays out the steps to login a user and then retrieve pets
+  inputs: 
+      type: object
+      properties:
+          username:
+              type: string
+          password:
+              type: string
+  steps:
+  - stepId: loginStep
+    description: This step demonstrates the user login step
+    operationId: petStoreDefinition.loginUser
+    parameters:
+      # parameters to inject into the loginUser operation (parameter name must be resolvable at the referenced operation and the value is determined using {expression} syntax)
+      - name: username
+        in: query
+        value: $inputs.username
+      - name: password
+        in: query
+        value: $inputs.password
+    successCriteria:
+      # assertions to determine step was successful
+      - $statusCode == 200
     outputs:
-        available: $steps.getPetStep.availablePets
+      # outputs from this step
+      tokenExpires: $response.header.X-Expires-After
+      rateLimit: $response.header.X-Rate-Limit
+      sessionToken: $response.body
+  - stepId: getPetStep
+    description: retrieve a pet by status from the GET pets endpoint
+    operationRef: https://petstore3.swagger.io/api/v3/openapi.json#/paths/users/~findbystatus~1{status}/get
+    dependsOn: loginStep
+    parameters:
+      - name: status
+        in: query
+        value: 'available'
+      - name: Authorization
+        in: header
+        value: $steps.loginUser.outputs.sessionToken    
+    successCriteria:
+      - $statusCode == 200
+    outputs:
+      # outputs from this step
+      availablePets: $response.body
+  outputs:
+      available: $steps.getPetStep.availablePets

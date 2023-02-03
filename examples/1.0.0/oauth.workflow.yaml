@@ -5,16 +5,15 @@ info:
   description: >-
     APImetrics OAuth service
 sources:
-  - sourceId: apim-auth
-    $ref: ./oauth.openapi.yaml
+  - name: apim-auth
+    url: ./oauth.openapi.yaml
     type: openapi
   # This is how you can reference another workflow file
-  # - sourceId: sample
-  #   $ref: ./sample.workflows.yml
-  #   type: workflow
+  # - name: sample
+  #   url: ./sample.workflows.yml
+  #   type: workflowSpec
 
 workflows:
-
   - workflowId: refresh-token-flow
     summary: Refresh an access token
     description: >-
@@ -43,9 +42,15 @@ workflows:
         # workflowId: $sources.sample.workflows.authorization-code-flow
         workflowId: authorization-code-flow
         parameters:
-          client_id: $inputs.my_client_id
-          client_secret: $inputs.my_client_secret
-          redirect_uri: $inputs.my_redirect_uri
+        - name: client_id
+          in: workflow
+          value: $inputs.my_client_id
+        - name: redirect_uri
+          in: workflow
+          value: $inputs.my_redirect_uri
+        - name: client_secret
+          in: workflow
+          value: $inputs.my_client_secret
         outputs:
           my_refresh_token: $outputs.refresh_token
 
@@ -89,9 +94,19 @@ workflows:
           This is where you get the token
         operationId: get-token
         parameters:
-          grant_type: client_credentials
-          client_id: $inputs.client_id
-          client_secret: $inputs.client_secret
+        - name: client_id
+          in: body
+          style: form
+          value: $inputs.client_id
+        - name: client_secret
+          in: body
+          style: form
+          value: $inputs.client_secret
+        - name: grant_type
+          in: body
+          style: form
+          value: 'client_credentials'         
+
         successCriteria:
           - $statusCode == 200
           - $response.body.access_token != null
@@ -125,11 +140,21 @@ workflows:
             the registered redirect URI with an authorization code.
           operationId: authorize
           parameters:
-            client_id: $inputs.client_id
-            redirect_uri: $inputs.redirect_uri
-            response_type: code
-            scope: read
-            state: $random.uuid
+          - name: client_id
+            in: query
+            value: $inputs.client_id
+          - name: redirect_uri
+            in: query
+            value: $inputs.redirect_uri
+          - name: response_type
+            in: query
+            value: 'code' 
+          - name: scope
+            in: query
+            value: 'read' 
+          - name: state
+            in: query
+            value: '12345'
           successCriteria:
             - $statusCode == 200
             - $response.body.access_token != null
@@ -141,11 +166,27 @@ workflows:
             This is where you get the token
           operationId: get-token
           parameters:
-            grant_type: authorization_code
-            client_id: $inputs.client_id
-            client_secret: $inputs.client_secret
-            code: $steps.browser-authorize.code
-            redirect_uri: $inputs.redirect_uri
+          - name: client_id
+            in: body
+            style: form
+            value: $inputs.client_id
+          - name: client_secret
+            in: body
+            style: form
+            value: $inputs.client_secret
+          - name: grant_type
+            in: body
+            style: form
+            value: 'authorization_code' 
+          - name: redirect_uri
+            in: body
+            style: form
+            value: $inputs.redirect_uri      
+          - name: code
+            in: body
+            style: form
+            value: $steps.browser-authorize.outputs.code                     
+
           successCriteria:
             - $statusCode == 200
             - $response.body.access_token != null
