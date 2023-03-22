@@ -1,0 +1,639 @@
+openapi: '3.0.0'
+info:
+  version: '1.0.0'
+  title: 'Authentication API'
+  description: |
+    ##  OAuth2 and OpenID Connect are used to handle the security flows relating to API access.
+
+    These interfaces are used as part of the PSD2 API journeys there is a 
+    [Getting Started Guide](https://developer.example.com) 
+    and use case focussed developer documentation is available for the following cases:
+    1. [Delegated SCA](https://developer.example.com)
+    2. [Redirect based Account Access](https://developer.example.com)
+    3. [Redirect based Payments](https://developer.example.com)
+
+    The OAuth2 and OpenID interfaces are used in three sequences depending on the particular 
+    requirements of the use cases.
+    
+    When the third party app needs to get access without end-user involvement the Token 
+    endpoint is used to get an access token.  This is called the "Client Credentials Grant" of 
+    OAuth2.  The result of this is an access token than can be used to call some functional APIs.
+    
+    When user interaction is required the "Authorization Code" grant is used.  In this 
+    implementation it consists of a sequence of calls.
+
+    *how far do we take this? include Create Consent and Init Payment at the start? include account and payment APIs at the end?*
+
+    1. PAR - Pushed Authorization Request - API Call
+    2. Authorize - A web interaction that needs to be passed to a user agent (such as a browser)  
+    3. Token - An API call requesting the tokens
+
+    ![sequence](https://lh3.googleusercontent.com/fBWv0qA9a-HFCXSpEQrUDyFj-xSSFDw4UmG2ACqnvaC8aClExjE9gmDsdgonSHZBGQ_CZ9T-mYB31w=w3000-h886)
+    
+    This sequence of calls returns an Access token, ID_Token and potentially a refresh token.  
+    The access token provided as a result of the authorization code grant can access other APIs.
+
+    The refresh token can be used to request replacement access tokens with the same level of access.
+    This request is 
+
+    ### References
+    * [RFC6749 OAuth 2.0 Authorization Framework](https://tools.ietf.org/html/rfc6749)
+    * [RFC6750 The OAuth 2.0 Authorization Framework: Bearer Token Usage](https://tools.ietf.org/html/rfc6750)
+    * [OpenID Connect Core 1.0 incorporating errata set 1](https://openid.net/specs/openid-connect-core-1_0.html)
+    * [Financial-grade API Security Profile 1.0 - Part 1: Baseline](https://openid.net/specs/openid-financial-api-part-1-1_0.html)
+    * [Financial-grade API Security Profile 1.0 - Part 2: Advanced](https://openid.net/specs/openid-financial-api-part-2-1_0.html)
+    * [OAuth 2.0 Pushed Authorization Requests draft-ietf-oauth-par-07](https://tools.ietf.org/html/draft-ietf-oauth-par-07)
+    * [JOSE Related specs (including JWT, JWT, JWE)](https://datatracker.ietf.org/wg/jose/documents/)
+
+   
+servers:
+  - url: https://api.uat.example.com/
+    description: Sandbox -  Test Server for registered external parties to use for testing and development
+  - url: https://api.example.com
+    description: Production - Live Server providing APIs to registered third parties
+
+paths:
+  /.well-known/openid-configuration:
+    get:
+      summary: RFC 8414 Well known OAuth 2.0 configuration endpoint
+      description: |
+        The standard "OAuth 2.0 Authorization Server Metadata" describing
+        the configuration including endpoint addresses.  The content of this 
+        file is used by clients to confirm details of the configuration of 
+        the OpenID Provider.
+        Generally speaking the OpenID configuration is not directly required for delivery of use cases.
+      externalDocs: 
+        url: https://tools.ietf.org/html/rfc8414
+      security: []
+      operationId: WellKnown
+      tags:
+        - OAuth2
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WellKnown"
+
+  /public/jwks:
+    get:
+      summary: JSON Web Key set
+      description: |
+        Retrieve the public server JSON Web Key (JWK) to verify the signature of an issued 
+        token or to encrypt request objects to it. 
+      externalDocs: 
+        url: https://datatracker.ietf.org/doc/rfc7517/
+      operationId: JWKS
+      tags:
+        - OAuth2
+      responses:
+        200:
+          description: OK
+          content:
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/JWKResponse'
+        404:
+          description: Not Found
+        500:
+          description: Internal Server Error
+
+  /as/par.oauth2:
+    post:
+      summary: Submits the OAuth 2.0 authorisation request parameters to obtain a request_uri handle for use at the authorisation endpoint.
+      description: |
+        A Pushed Authorization request is used to set the parameters for the subsequent Authorization call
+        
+        The OAuth2 client sends the signed request object in the POST to the PAR interface to avoid leakage of request parmeters. 
+
+        ![PAR](https://lh3.googleusercontent.com/bxiF_yvjeIIDFHxWR8Avae0efhqigSAOPM0t1XzuBihfFWv_yEyZwz1uMCejR7RCl1ytUcvxmFWhVw=w3000-h886)
+
+        This implementation requires PAR to be used.
+
+        **Mutual TLS client authentication is required to access this endpoint**
+
+        As stated in the draft spec : "The pushed authorization request can be composed of any of the parameters
+        applicable for use at authorization endpoint including those defined
+        in [RFC6749] as well as all applicable extensions."
+
+        For the purposes of the implementation there are a set of 
+        parameters that will be required for a successful authorization request and
+        these are listed below in the request object parameter.
+
+        The `consent_id` key in the request body is found in response to the "Init Payment" 
+        or "Create Consent" APIs
+      externalDocs: 
+        url: https://tools.ietf.org/html/draft-ietf-oauth-par-07
+      operationId: Par
+      tags:
+        - OAuth2
+      parameters:
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+            default: application/x-www-form-urlencoded
+            enum:
+              - application/x-www-form-urlencoded
+          required: true
+        - name: client_id
+          in: query
+          required: true
+          description: The identifier of the third party provider OAuth client. ClientId is returned during the TPP registration.
+          schema:
+            type: string
+
+        - name: client_assertion_type
+          in: query
+          required: true
+          description: Type of assertion be used. In this case it must be "urn:ietf:params:oauth:grant-type:jwt-bearer"
+          schema:
+            type: string
+            default: urn:ietf:params:oauth:grant-type:jwt-bearer
+            enum:
+              - urn:ietf:params:oauth:grant-type:jwt-bearer
+          allowEmptyValue: false
+        - name: client_assertion
+          in: query
+          description: |
+            Used for PAR client authentication.  The assertion contains a JWS, in this an object (base64(JWS)) 
+            signed with JWT signing private key related to the TPP OAuth client. See the Model and the Assertion 
+            object for a detailed description of the content.
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  iss:
+                    type: string
+                  sub:
+                    type: string
+                  aud:
+                    type: string
+                  exp:
+                    type: string
+                  iat:
+                    type: string
+                  jti:
+                    type: string
+      requestBody:
+        description: |
+          parameters that comprise an authorization request are sent directly to the 
+          pushed authorization request endpoint in the request body
+
+          [PAR Request](https://tools.ietf.org/html/draft-ietf-oauth-par-07#section-2.1)    
+        required: true
+        content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response_type:
+                    type: string
+                  client_id: 
+                    type: string
+                  sub:
+                    type: string
+                  scope:
+                    type: string
+                  prompt:
+                    type: string
+                  code_challenge_method:
+                    type: string
+                  code_challenge:
+                    type: string
+                  state:
+                    type: string
+                  nonce:
+                    type: string
+                  redirect_uri:
+                    type: string
+                  consent_id:
+                    type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/ParResponse'
+
+          links:
+            PAR_returned_request_uri:
+              operationId: Authorization
+              parameters:
+                request_uri: '$response.body#/request_uri'
+              description: >
+                The `request_uri` value returned in the response MUST be used as
+                the `request_uri` input parameter in `GET /as/authorize.oauth2` when 
+                using the authorization code flow, before it expires.
+        400:
+          description: Bad Request
+        401:
+          description: Unauthorized
+        500:
+          description: Internal Server Error
+
+  /as/authorize.oauth2:
+    get:
+      summary: OAuth 2.0 Authorization endpoint
+      description: |
+        The OAuth 2.0 authorisation endpoint is where the end-user is redirected to Perform SCA using their browser.
+
+        **This is a Web interface not a REST API**
+
+        This is the standard RFC 6749 authorization endpoint. In this case the request parameters 
+        are pushed in via the PAR endpoint prior to the authorize call and only the request_uri 
+        returned from the PAR request and the client_id is given as input parameters to this call. 
+        The call is normally triggered from the backend via browser based redirect to the 
+        authorization server authorize endpoint. 
+
+        ![Authorize](https://lh5.googleusercontent.com/G7vvCF3kSwI5IFleYNjBPBVUB-4tYkfnhHr7FUfsGTL9ffxMr8EzH6CQ_V76YYb1qdfTuZ3-emqnMw=w3000-h886)
+
+        ### External Documentation:
+        [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html)
+        
+        [OAuth2](https://tools.ietf.org/html/rfc6749) 
+      security: []
+      operationId: Authorization
+      tags:
+        - OAuth2
+      parameters:
+        - name: request_uri
+          in: query
+          required: true
+          description: This parameter is returned by the preceeding /as/par.oauth2 call
+          schema:
+            type: string
+        - name: client_id
+          in: query
+          required: true
+          description: The Client ID issued when the app was registered in the developer portal
+          schema:
+            type: string            
+      responses:
+        302:
+          description: |
+            Redirect to defined redirect uri with the authorization code as a standard OIDC response. 
+
+            >**https://**_{your app redirect_uri}_
+            
+            >**?code=**_{Arbirary String}_
+
+            >**&state=**_{state value from authorization request}_
+
+            >**&iss=**_https://api.example.com_
+          links:
+            Authorization_Response:
+              description: >
+                The `code` value returned in the response MUST be used as
+                the `request_uri` input parameter in `GET /as/authorize.oauth2` when 
+                using the authorization code flow, before it expires.
+              operationId: Token
+              parameters:
+                code: '$response.path#/code'
+        500:
+          description: Internal Server Error          
+
+  /as/token.oauth2:
+    post:
+      summary: Token endpoint with client authentication 
+      description: |
+        There are three different cases where the token endpoint is used
+          1. Client Credentials Grant
+          2. Authorisation Code Grant
+          3. Refresh Grant
+        
+        As a result there are different types of token endpoint request and response
+        There are three request types and two response types.  All of these types use the same 
+        interaction but with different request and responses
+
+        ![token](https://lh3.googleusercontent.com/3W6rTo7zGvIj2O0Dm0sTnItr9EDKC6WEn_fN9b8E0hv1vPSNfdyewPzUJBJLuoGMaVNyLnW1PNVA0w=w3000-h886)
+
+        **Mutual TLS client authentication is required to access this endpoint**
+
+        When the **client credentials grant** is being used the Token request has no other calls as pre-requisities.
+
+        When the authorization code grant or refresh grant are being exercised there are dependancies on previous calls.
+
+        In the implementation the **Authorization code flow** depends upon previous calls to:
+        - /as/par.oauth2
+        - /as/authorize.oauth2
+
+        **The Refresh grant** depends on there being a previous authorization code flow that returned a refresh token.
+          
+      operationId: Token
+      tags:
+        - OAuth2
+      parameters:
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+            default: application/x-www-form-urlencoded
+            enum:
+              - application/x-www-form-urlencoded
+          required: true
+        - name: client_id
+          in: query
+          required: true
+          description: The identifier of the third party provider OAuth client. ClientId is returned during the TPP registration.
+          schema:
+            type: string
+        - name: client_assertion_type
+          in: query
+          required: true
+          description: Type of assertion be used. In this case it must be "urn:ietf:params:oauth:grant-type:jwt-bearer"
+          schema:
+            type: string
+            default: urn:ietf:params:oauth:grant-type:jwt-bearer
+            enum:
+              - urn:ietf:params:oauth:grant-type:jwt-bearer
+          allowEmptyValue: false
+        - name: client_assertion
+          in: query
+          description: |
+            Used for PAR client authentication.  The assertion contains a JWS, in this an object (base64(JWS)) 
+            signed with JWT signing private key related to the TPP OAuth client. See the Model and the Assertion 
+            object for a detailed description of the content.
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  iss:
+                    type: string
+                  sub:
+                    type: string
+                  aud:
+                    type: string
+                  exp:
+                    type: string
+                  iat:
+                    type: string
+                  jti:
+                    type: string
+      requestBody:
+        description: |
+          Body of the request made to the Token endpoint - 3 schemas available for different flows
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/TokenClientCredsRequest'
+                - $ref: '#/components/schemas/TokenAuthzCodeRequest'
+                - $ref: '#/components/schemas/TokenRefreshRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json: 
+              schema: 
+                oneOf:
+                  - $ref: '#/components/schemas/TokenClientCredsResponse'
+                  - $ref: '#/components/schemas/TokenAuthzResponse' 
+        400:
+          description: Bad Request with a token error code
+        401:
+          description: Unauthorized with a token error code
+        500:
+          description: Internal Server Error
+
+components:
+  schemas:
+    WellKnown:
+      required:
+        - issuer
+        - authorization_endpoint
+        - token_endpoint
+        - response_types_supported
+      properties:
+        issuer:
+          type: string
+        authorization_endpoint:
+          type: string
+        token_endpoint:
+          type: string
+        revocation_endpoint:
+          type: string
+        userinfo_endpoint:
+          type: string
+        introspection_endpoint:
+          type: string
+        jwks_uri:
+          type: string
+        registration_endpoint:
+          type: string
+        ping_revoked_sris_endpoint:
+          type: string
+        ping_end_session_endpoint:
+          type: string
+        device_authorization_endpoint:
+          type: string
+        scopes_supported:
+          type: string
+        claims_supported:
+          type: string
+        response_types_supported:
+          type: string
+        response_modes_supported:
+          type: string
+        grant_types_supported:
+          type: string
+        subject_types_supported:
+          type: string
+        id_token_signing_alg_values_supported:
+          type: string
+        token_endpoint_auth_methods_supported:
+          type: string
+        token_endpoint_auth_signing_alg_values_supported:
+          type: string
+        claim_types_supported:
+          type: string
+        claims_parameter_supported:
+          type: string
+        request_parameter_supported:
+          type: string
+        request_uri_parameter_supported:
+          type: string
+        request_object_signing_alg_values_supported:
+          type: string
+        id_token_encryption_alg_values_supported:
+          type: string
+        id_token_encryption_enc_values_supported:
+          type: string
+        backchannel_authentication_endpoint:
+          type: string
+        backchannel_token_delivery_modes_supported:
+          type: string
+        backchannel_authentication_request_signing_alg_values_supported:
+          type: string
+        backchannel_user_code_parameter_supported:
+          type: string
+        tls_client_certificate_bound_access_tokens:
+          type: string
+        mtls_endpoint_aliases:
+          type: string
+
+    JWKResponse:
+      description: |
+        A JSON object containing the server public JWK set in the form of an array of  
+      properties:
+        keys: 
+          type: array
+          items:
+            type: object
+            properties:
+              kty:
+                type: string
+              use:
+                type: string
+              key_ops:
+                type: string
+              alg:
+                type: string
+              kid:
+                type: string
+              x5c:
+                type: string
+              x5u:
+                type: string
+              x5t:
+                type: string
+              x5t#s256:
+                type: string
+
+    ParResponse:
+      properties:
+        expires_in:
+          type: string
+          description: The expires in parameter defines the number of seconds when the reference uri expires.
+        request_uri:
+          type: string
+          description: The request uri to the request object in the request to the par endpoint.
+
+    AuthCodeRequest:
+      required:
+        - test
+      properties:
+        expires_in:
+          type: string
+          description: The expires in paremeter defines the number of seconds when the reference uri expires.
+        request_uri:
+          type: string
+          description: The request uri to the request object in the request to the par endpoint.
+
+    AuthCodeResponse1:
+      properties:
+        code:
+          type: string
+          description: The authorization code that will be used when making the subsequent request to the /as/token.oauth endpoint
+        state:
+          type: string
+          description: The request uri to the request object in the request to the par endpoint.
+        iss:
+          type: string
+          description: The request uri to the request object in the request to the par endpoint.
+
+    TokenClientCredsRequest:
+      description: Request Schema for the token endpoint in the context of a Client Credentials OAuth2 flow
+      required:
+        - grant_type
+        - scope
+      properties:
+        grant_type:
+          type: string
+          description: String that defines which OAuth2 grant this request is part of
+          enum:
+            - client_credentials
+          default: client_credentials
+        scope:
+          type: string
+          description: Space delimited list of OAuth2 scopes 
+
+    TokenAuthzCodeRequest:
+       description: Request Schema for the token endpoint in the context of an OAuth2 Authorization code  flow
+       required:
+         - grant_type
+         - code
+         - redirect_uri
+         - code_verifier
+       properties:
+        grant_type:
+          description: String that defines which OAuth2 grant this request is part of
+          type: string
+          default: authorization_code
+        code:
+          type: string
+          description: The authorization code provided as a parameter in the redirect back from the preceeding /as/authorize.oauth2 call
+        redirect_uri:
+          type: string
+          description: The value of the redirect URI that was used in the preceeding /as/authorize.oauth2 call
+        code_verifier:
+          type: string
+          description: The code verifier Proof Key of Code Exchange (PKCE).
+
+    TokenRefreshRequest:
+      description: Request Schema for the token endpoint in the context of an OAuth2 Refresh flow
+      required:
+        - grant_type
+        - refresh_token
+      properties:
+        grant_type:
+          description: String that defines which OAuth2 grant this request is part of
+          type: string
+          enum:
+            - refresh_token
+          default: refresh_token
+        refresh_token:
+          type: string
+          description: The refresh_token provided as a parameter in the response from a preceeding /as/token.oauth2 call
+        scope:
+          type: string
+          description: OPTIONAL - space delimited list of scopes that is equal to or a subset of the scopes requested by the preceeding authorization code flow
+
+    TokenClientCredsResponse:
+      required:
+        - access_token
+        - token_type
+      properties:
+        access_token:
+          type: string
+          description: The access token issued by the server.
+        token_type:
+          type: string
+          description: "bearer"
+        expires_in:
+          type: integer
+          description: The expires in paremeter defines the number of seconds when the access token expires.
+        scope:
+          type: string
+          description: space delimited list of scopes
+
+    TokenAuthzResponse:
+      required:
+        - access_token
+        - token_type
+      properties:
+        access_token:
+          type: string
+          description: The access token issued by the server.
+        refresh_token:
+          type: string
+          description: The refresh token issued by the server.
+        token_type:
+          type: string
+          description: "bearer"
+        expires_in:
+          type: integer
+          description: The expires in paremeter defines the number of seconds when the access token expires.
+        scope:
+          type: string
+          description: space delimited list of scopes
+        id_token:
+          type: string
+          description: The id token issued by the server.

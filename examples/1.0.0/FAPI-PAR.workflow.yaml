@@ -1,0 +1,175 @@
+workflowsSpec: 1.0.0
+info:
+  title: PAR, Authorization and Token workflow
+  version: 1.0.0
+  description: >-
+    A workflow describing how to obtain a token from an OAuth2 and OpenID Connect Financial Grade authorization server which can be common for PSD2 API journeys
+sources:
+  - name: auth-api
+    url: ./FAPI-PAR.openapi.yaml
+    type: openapi
+
+workflows:
+  - workflowId: OIDC-PAR-AuthzCode
+    summary: PAR, Authorization and Token workflow
+    description: >-
+        PAR - Pushed Authorization Request - API Call - https://www.rfc-editor.org/rfc/rfc9126.html
+        Authorize - A web interaction that needs to be passed to a user agent (such as a browser) https://openid.net/specs/openid-connect-core-1_0.html
+        Token - An API call requesting the tokens
+    inputs:
+      type: object
+      properties:
+        client_id:
+          type: string
+          description: The identifier of the third party provider OAuth client. ClientId is returned during the TPP registration.
+        client_assertion:
+          type: object
+          description: |
+            Used for PAR client authentication. The assertion contains a JWS, in this an object `base64(JWS)` 
+            signed with JWT signing private key related to the TPP OAuth client. See the Model and the Assertion 
+            object for a detailed description of the content.           
+          properties:
+            iss:
+              type: string
+            sub:
+              type: string
+            aud:
+              type: string
+            exp:
+              type: string
+            iat:
+              type: string
+            jti:
+              type: string
+        redirect_uri:
+          type: string
+          description: The value of the redirect URI that was used in the previous `/as/authorize.oauth2` call.
+        code_verifier:
+          type: string
+          description: The code verifier Proof Key of Code Exchange (PKCE)
+        PARrequestBody:
+          type: object
+          description: |
+            Parameters that comprise an authorization request are sent directly to the 
+            pushed authorization request endpoint in the request body
+            [PAR Request](https://tools.ietf.org/html/draft-ietf-oauth-par-07#section-2.1)            
+          properties:
+            response_type:
+              type: string
+            client_id:
+              type: string
+            sub:
+              type: string
+            scope:
+              type: string
+            prompt:
+              type: string
+            code_challenge_method:
+              type: string
+            code_challenge:
+              type: string
+            state:
+              type: string
+            nonce:
+              type: string
+            redirect_uri:
+              type: string
+            consent_id:
+              type: string
+        TokenRequestBody:
+          type: object
+          description: Request Schema for the token endpoint in the context of an OAuth2 Authorization code flow (**Note** this is place holder object that will have values replaced dynamically)
+          properties:
+            grant_type:
+              type: string
+            code:
+              type: string
+            redirect_uri:
+              type: string
+            code_verifier:
+              type: string
+          required:
+            - grant_type
+            - code
+            - redirect_uri
+            - code_verifier
+      required:
+        - PARrequestBody
+        - TokenRequestBody
+    steps:
+      - stepId: PARStep
+        description: Pushed Authorization Request
+        operationId: auth-api.PAR
+        parameters:        
+          - name: client_id
+            in: query
+            value: $inputs.client_id
+          - name: client_assertion_type
+            in: query
+            value: 'urn:ietf:params:oauth:grant-type:jwt-bearer'            
+          - name: client_assertion
+            in: query
+            value: $inputs.client_assertion
+          - name: requestBody
+            in: body
+            value: $inputs.PARrequestBody
+        successCriteria:
+          # assertions to determine step was successful
+          - $statusCode == 200
+        outputs:
+          request_uri: $response.body.request_uri
+      
+      - stepId: AuthzCodeStep
+        description: OIDC Authorization code request
+        operationId: auth-api.Authorization
+        parameters:
+          - name: request_uri
+            in: query
+            value: $steps.PARStep.outputs.request_uri
+          - name: client_id
+            in: query
+            value: $inputs.client_id
+        successCriteria:
+          # assertions to determine step was successful
+          - $statusCode == 302
+        outputs:
+          code: $response.body.code  # Not really, this is a query parameter (need a way to represent out-of-band props)
+
+      - stepId: TokenStep
+        description: Get token from the OIDC Token endpoint
+        operationId: auth-api.Token
+        parameters:
+          - name: client_id
+            in: query
+            value: $inputs.client_id
+          - name: client_assertion_type
+            in: query
+            value: 'urn:ietf:params:oauth:grant-type:jwt-bearer'
+          - name: client_assertion
+            in: query
+            value: $inputs.client_assertion
+          - name: requestBody
+            in: body
+            target: '/grant_type'
+            value: 'authorization_code'
+          - name: requestBody
+            in: body
+            target: '/code'
+            value: $steps.AuthzCodeStep.outputs.code
+          - name: requestBody
+            in: body
+            target: '/redirect_uri'
+            value: $inputs.redirect_uri
+          - name: requestBody
+            in: body
+            target: '/code_verifier'
+            value: $inputs.code_verifier                       
+        successCriteria:
+          # assertions to determine step was successful
+          - $statusCode == 200
+        outputs:
+          tokenResponse: $response.body
+      
+    outputs:
+      access_token: $steps.TokenStep.outputs.tokenResponse
+

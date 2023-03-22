@@ -1,0 +1,83 @@
+workflowsSpec: 1.0.0
+info:
+  title: Petstore - Apply Coupons
+  version: 1.0.0
+  description: >-
+    Illustrates a workflow whereby a client a) finds a pet in the petstore, 
+    b) finds coupons for that pet, and finally
+    c) orders the pet while applying the coupons from step b.
+sources:
+  - name: pet-coupons
+    url: ./pet-coupons.openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: apply-coupon
+    summary: Apply a coupon to a pet order.
+    description: >-
+      This is how you can find a pet, find an applicable coupon, and apply that coupon in your order.
+      The workflow concludes by outputting the ID of the placed order.
+    inputs:
+      type: object
+      properties:
+        my_pet_tags:
+          type: array
+          items:
+            type: string
+          description: Desired tags to use when searching for a pet, in CSV format: e.g. "puppy, dalmation"
+    steps:
+      - stepId: find-pet
+        operationId: findPetsByTags
+        parameters:
+          - name: pet_tags
+            in: query
+            value: $inputs.my_pet_tags
+        successCriteria:
+          - $statusCode == 200
+        outputs:
+          my_pet_id: $outputs[0].id
+          # there is some implied selection here - findPetsByTags responds with a list of pets,
+          # but the client only wants to choose one, and that's what will be provided to the next step.
+          # not totally sure how to indicate that.
+      - stepId: find-coupons
+        description: Find a coupon available for the selected pet.
+        operationId: getPetCoupons
+        parameters:
+          - name: pet_id
+            in: path
+            value: $steps.find-pet.outputs.my_pet_id
+        successCriteria:
+          - $statusCode == 200
+        outputs:
+          my_coupon_code: $response.body.couponCode
+      - stepId: place-order
+        description: Use the coupon to get a discount on the desired pet.
+        operationId: placeOrder
+        parameters:
+          - name: pet_id
+            in: body
+            target: $request.body#/petId
+            value: $steps.find-pet.outputs.my_pet_id
+          - name: coupon_code
+            in: body
+            target: $request.body#/couponCode
+            value: $steps.find-pet.outputs.my_coupon_code
+          - name: quantity
+            in: body
+            target: $request.body#/quantity
+            value: 1
+          - name: status
+            in: body
+            target: $request.body#/status
+            value: "placed"
+          - name: complete
+            in: body
+            target: $request.body#/complete
+            value: false
+        successCriteria:
+          - $statusCode == 200
+        outputs:
+          my_order_id: $response.body.id
+
+
+    outputs:
+      order_id: $steps.place-order.my_order_id

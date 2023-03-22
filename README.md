@@ -38,6 +38,7 @@ The current SIG is made up of the following individuals, and feel free to submit
 - Alessandro Duminuco ([Senior Technical Leader, Cisco](https://www.linkedin.com/in/alessandroduminuco/))
 - Mark Haine ([Founder, Considrd Consulting](https://www.linkedin.com/in/mark-haine/))
 - Phil Sturgeon ([Dev Rel, Stoplight](https://www.linkedin.com/in/philipsturgeon/))
+- Kevin Duffey ([Tech Lead, Postman](https://www.linkedin.com/in/kmd/))
 
 
 ## Getting Involved
@@ -48,4 +49,4 @@ This working group is just getting started, but feel free to get involved via on
 - [Discussions](https://github.com/OAI/sig-workflows/discussions) - Use the GitHub discussions to ask questions, provide opinions and engage with the group
 - [Issues](https://github.com/OAI/sig-workflows/issues) - Feel free to submit a Github issue with any question or comment about the working group
 - [Projects](https://github.com/OAI/sig-workflows/projects) - Keep up to speed on the various projects occurring via Github projects for this group
-- Slack - if you have access to the OpenAPI slack workspace, then join the `sig-workflows` channel. If you do not have access, please request access by emailing `operations@openapis.org`. 
+- Slack - if you have access to the OpenAPI slack workspace, then join the `sig-workflows` channel. If you do not have access, you're welcome to join by clicking [here](https://communityinviter.com/apps/open-api/openapi)
