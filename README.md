@@ -40,6 +40,9 @@ The current SIG is made up of the following individuals, and feel free to submit
 - Phil Sturgeon ([Dev Rel, Stoplight](https://www.linkedin.com/in/philipsturgeon/))
 - Kevin Duffey ([Tech Lead, Postman](https://www.linkedin.com/in/kmd/))
 
+## The Workflows Specification
+
+The draft version of the Workflows Specification can be found [here](./versions/1.0.0.md).
 
 ## Getting Involved
 
