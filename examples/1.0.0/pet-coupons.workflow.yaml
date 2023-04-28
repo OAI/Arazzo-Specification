@@ -49,35 +49,62 @@ workflows:
           - $statusCode == 200
         outputs:
           my_coupon_code: $response.body.couponCode
-      - stepId: place-order
-        description: Use the coupon to get a discount on the desired pet.
-        operationId: placeOrder
+      - $ref: '#/components/steps/placeOrder'
+  - workflowId: buy-available-pet
+    summary: Buy an available pet if one is available.
+    description:
+      This workflow demonstrates a workflow very similar to `apply-coupon`, by intention.
+      It's meant to indicate how to reuse a step (`place-order`) as well as a parameter (`page`, `pageSize`).
+    steps:
+      - stepId: find-pet
+        operationId: findPetsByStatus
         parameters:
-          - name: pet_id
-            in: body
-            target: $request.body#/petId
-            value: $steps.find-pet.outputs.my_pet_id
-          - name: coupon_code
-            in: body
-            target: $request.body#/couponCode
-            value: $steps.find-pet.outputs.my_coupon_code
-          - name: quantity
-            in: body
-            target: $request.body#/quantity
-            value: 1
           - name: status
-            in: body
-            target: $request.body#/status
-            value: "placed"
-          - name: complete
-            in: body
-            target: $request.body#/complete
-            value: false
+            in: query
+            value: "available"
+          - $ref: '#/components/parameters/page'
+            value: 1
+          - $ref: '#/components/parameters/pageSize'
+            value: 1
         successCriteria:
           - $statusCode == 200
         outputs:
-          my_order_id: $response.body.id
-
-
-    outputs:
-      order_id: $steps.place-order.my_order_id
+          my_pet_id: $outputs[0].id
+      - $ref: '#/components/steps/placeOrder'
+components:
+  steps:
+    placeOrder:
+      description: This step places an order, and may be reused by many other steps - e.g., upon successful search for a Pet.
+      operationId: postCartItems
+      parameters:
+        - name: pet_id
+          in: body
+          target: $request.body#/petId
+          value: $steps.find-pet.outputs.my_pet_id
+        - name: coupon_code
+          in: body
+          target: $request.body#/couponCode
+          value: $steps.find-pet.outputs.my_coupon_code
+        - name: quantity
+          in: body
+          target: $request.body#/quantity
+          value: 1
+        - name: status
+          in: body
+          target: $request.body#/status
+          value: "placed"
+        - name: complete
+          in: body
+          target: $request.body#/complete
+          value: false
+      successCriteria:
+        - $statusCode == 200
+      outputs:
+        my_order_id: $response.body.id
+  parameters:
+    page:
+      type: integer
+      format: int32
+    pageSize:
+      type: integer
+      format: int32
