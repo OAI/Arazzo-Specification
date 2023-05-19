@@ -24,6 +24,8 @@ workflows:
           items:
             type: string
           description: Desired tags to use when searching for a pet, in CSV format: e.g. "puppy, dalmation"
+        store_id:
+          $ref: "#/components/inputs/store_id"
     steps:
       - stepId: find-pet
         operationId: findPetsByTags
@@ -55,6 +57,11 @@ workflows:
     description:
       This workflow demonstrates a workflow very similar to `apply-coupon`, by intention.
       It's meant to indicate how to reuse a step (`place-order`) as well as a parameter (`page`, `pageSize`).
+    inputs:
+      type: object
+      properties:
+        store_id:
+          $ref: "#/components/inputs/store_id"
     steps:
       - stepId: find-pet
         operationId: findPetsByStatus
@@ -72,6 +79,10 @@ workflows:
           my_pet_id: $outputs[0].id
       - $ref: '#/components/steps/placeOrder'
 components:
+  inputs:
+    store_id:
+      type: string
+      description: Indicates the domain name of the store where the customer is browsing or buying pets, e.g. "pets.example.com" or "pets.example.co.uk".
   steps:
     placeOrder:
       description: This step places an order, and may be reused by many other steps - e.g., upon successful search for a Pet.
