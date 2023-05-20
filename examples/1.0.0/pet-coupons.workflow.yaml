@@ -51,7 +51,19 @@ workflows:
           - $statusCode == 200
         outputs:
           my_coupon_code: $response.body.couponCode
-      - $ref: '#/components/steps/placeOrder'
+      - stepId: place-order
+        workflowId: place-order
+        parameters:
+          - name: pet_id
+            in: body
+            value: $steps.find-pet.outputs.my_pet_id
+          - name: coupon_code
+            in: body
+            value: $steps.find-coupons.outputs.my_coupon_code
+        successCriteria:
+          - $statusCode == 200
+        outputs:
+          my_order_id: $response.body.id
   - workflowId: buy-available-pet
     summary: Buy an available pet if one is available.
     description:
@@ -77,41 +89,67 @@ workflows:
           - $statusCode == 200
         outputs:
           my_pet_id: $outputs[0].id
-      - $ref: '#/components/steps/placeOrder'
+      - stepId: place-order
+        workflowId: place-order
+        parameters:
+          - name: pet_id
+            in: body
+            value: $steps.find-pet.outputs.my_pet_id
+        successCriteria:
+          - $statusCode == 200
+        outputs:
+          my_order_id: $response.body.id
+  - workflowId: place-order
+    summary: Place an order for a pet.
+    description:
+      This workflow places an order for a pet. It may be reused by other workflows as the "final step" in a purchase.
+    inputs:
+      type: object
+      properties:
+        pet_id:
+          type: integer
+          format: int64
+          description: The ID of the pet to place in the order.
+        quantity:
+          type: integer
+          format: int32
+          description: The number of pets to place in the order.
+          value: 1
+        coupon_code:
+          type: string
+          description: The coupon code to apply to the order.
+    steps:
+      - stepId: place-order
+        operationId: placeOrder
+        parameters:
+          - name: pet_id
+            in: body
+            target: $request.body#/petId
+            value: $inputs.pet_id
+          - name: coupon_code
+            in: body
+            target: $request.body#/couponCode
+            value: $inputs.coupon_code
+          - name: quantity
+            in: body
+            value: $inputs.quantity
+          - name: status
+            in: body
+            target: $request.body#/status
+            value: "placed"
+          - name: complete
+            in: body
+            target: $request.body#/complete
+            value: false
+        successCriteria:
+          - $statusCode == 200
+        outputs:
+          my_order_id: $response.body.id
 components:
   inputs:
     store_id:
       type: string
       description: Indicates the domain name of the store where the customer is browsing or buying pets, e.g. "pets.example.com" or "pets.example.co.uk".
-  steps:
-    placeOrder:
-      description: This step places an order, and may be reused by many other steps - e.g., upon successful search for a Pet.
-      operationId: postCartItems
-      parameters:
-        - name: pet_id
-          in: body
-          target: $request.body#/petId
-          value: $steps.find-pet.outputs.my_pet_id
-        - name: coupon_code
-          in: body
-          target: $request.body#/couponCode
-          value: $steps.find-pet.outputs.my_coupon_code
-        - name: quantity
-          in: body
-          target: $request.body#/quantity
-          value: 1
-        - name: status
-          in: body
-          target: $request.body#/status
-          value: "placed"
-        - name: complete
-          in: body
-          target: $request.body#/complete
-          value: false
-      successCriteria:
-        - $statusCode == 200
-      outputs:
-        my_order_id: $response.body.id
   parameters:
     page:
       type: integer
