@@ -73,7 +73,7 @@ workflows:
           - $ref: '#/components/parameters/page'
             value: 1
           - $ref: '#/components/parameters/pageSize'
-            value: 1
+            value: 10
         successCriteria:
           - $statusCode == 200
         outputs:
