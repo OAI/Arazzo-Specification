@@ -39,6 +39,7 @@ The current SIG is made up of the following individuals, and feel free to submit
 - Mark Haine ([Founder, Considrd Consulting](https://www.linkedin.com/in/mark-haine/))
 - Phil Sturgeon ([Dev Rel, Stoplight](https://www.linkedin.com/in/philipsturgeon/))
 - Kevin Duffey ([Tech Lead, Postman](https://www.linkedin.com/in/kmd/))
+- Shai Sachs ([Staff Engineer, Chewy](https://linkedin.com/in/shaisachs/))
 
 ## The Workflows Specification
 
