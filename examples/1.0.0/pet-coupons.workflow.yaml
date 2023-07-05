@@ -103,7 +103,6 @@ workflows:
           type: integer
           format: int32
           description: The number of pets to place in the order.
-          value: 1
         coupon_code:
           type: string
           description: The coupon code to apply to the order.
@@ -143,7 +142,7 @@ components:
           type: array
           items:
             type: string
-          description: Desired tags to use when searching for a pet, in CSV format: e.g. "puppy, dalmation"
+          description: Desired tags to use when searching for a pet, in CSV format (e.g. "puppy, dalmatian")
         store_id:
           $ref: "#/components/inputs/store_id"
     buy_available_pet_input:
