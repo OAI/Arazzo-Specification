@@ -55,7 +55,9 @@ workflows:
         successCriteria:
           - $statusCode == 200
         outputs:
-          my_order_id: $response.body.id
+          my_order_id: $workflow_order_id
+    outputs:
+      apply_coupon_pet_order_id: $steps.place-order.outputs.my_order_id
   - workflowId: buy-available-pet
     summary: Buy an available pet if one is available.
     description:
@@ -87,7 +89,9 @@ workflows:
         successCriteria:
           - $statusCode == 200
         outputs:
-          my_order_id: $response.body.id
+          my_order_id: $workflow_order_id
+    outputs:
+      buy_pet_order_id: $steps.place-order.outputs.my_order_id
   - workflowId: place-order
     summary: Place an order for a pet.
     description:
@@ -133,7 +137,9 @@ workflows:
         successCriteria:
           - $statusCode == 200
         outputs:
-          my_order_id: $response.body.id
+          step_order_id: $response.body.id
+    outputs:
+      workflow_order_id: $steps.place-order.outputs.step_order_id
 components:
   inputs:
     apply_coupon_input:
