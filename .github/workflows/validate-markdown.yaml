@@ -1,0 +1,25 @@
+name: validate-markdown
+
+# Author: @MikeRalphson
+# Issue: https://github.com/OAI/OpenAPI-Specification/issues/2130
+
+#
+# This workflow validates files in the versions directory matching 1.*.md
+#
+
+# run this on push to any branch and creation of pull-requests
+on: [push, pull_request]
+
+jobs:
+  mdv:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2 # checkout repo content
+    - uses: actions/setup-node@v1 # setup Node.js
+      with:
+        node-version: '18.x'
+    - name: Validate markdown
+      run: npx mdv versions/1.*.md
+
