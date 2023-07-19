@@ -5,7 +5,7 @@ info:
   description: >-
     A workflow describing how to obtain a token from an OAuth2 and OpenID Connect Financial Grade authorization server which can be common for PSD2 API journeys
 sources:
-  - sourceId: auth-api
+  - name: auth-api
     url: ./FAPI-PAR.openapi.yaml
     type: openapi
 
