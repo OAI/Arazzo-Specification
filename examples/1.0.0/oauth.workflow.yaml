@@ -5,11 +5,11 @@ info:
   description: >-
     APImetrics OAuth service
 sources:
-  - name: apim-auth
+  - sourceId: apim-auth
     url: ./oauth.openapi.yaml
     type: openapi
   # This is how you can reference another workflow file
-  # - name: sample
+  # - sourceId: sample
   #   url: ./sample.workflows.yml
   #   type: workflowSpec
 
