@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   description: >-
     APImetrics OAuth service
-sources:
+sourceDocuments:
   - name: apim-auth
     url: ./oauth.openapi.yaml
     type: openapi
@@ -37,9 +37,6 @@ workflows:
         #   # Or a previous refresh-token-flow.outputs.refresh_token
     steps:
       - stepId: do-the-auth-flow
-        # Open question: how do we reference a workflow from another file?
-        # e.g.: 
-        # workflowId: $sources.sample.workflows.authorization-code-flow
         workflowId: authorization-code-flow
         parameters:
         - name: client_id

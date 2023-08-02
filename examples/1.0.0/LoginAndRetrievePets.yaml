@@ -5,7 +5,7 @@ info:
     description: |
         This workflow walks you through the steps of `searching` for, `selecting`, and `purchasing` an available pet.
     version: 1.0.1
-sources:
+sourceDocuments:
 - name: petStoreDefinition
   url: https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml
   type: openapi
