@@ -59,8 +59,10 @@ workflows:
           grant_type: refresh_token
           refresh_token: $steps.do-the-auth-flow.outputs.my_refresh_token
         successCriteria:
-          - $statusCode == 200
-          - $response.body.access_token != null
+          - condition: $statusCode == 200
+          - context: $response.body
+            condition: $.access_token != null
+            type: JSONPath
         outputs:
           access_token: $response.body.access_token
           refresh_token: $response.body.refresh_token
@@ -105,8 +107,10 @@ workflows:
           value: 'client_credentials'         
 
         successCriteria:
-          - $statusCode == 200
-          - $response.body.access_token != null
+          - condition: $statusCode == 200
+          - context: $response.body
+            condition: $.access_token != null
+            type: JSONPath
         outputs:  
           access_token: $response.body.access_token
 
@@ -153,8 +157,10 @@ workflows:
             in: query
             value: '12345'
           successCriteria:
-            - $statusCode == 200
-            - $response.body.access_token != null
+            - condition: $statusCode == 200
+            - context: $response.body
+              condition: $.access_token != null
+              type: JSONPath
           outputs:  
             code: $response.body.code  # Not really, this is a query parameter
         
@@ -185,8 +191,10 @@ workflows:
             value: $steps.browser-authorize.outputs.code                     
 
           successCriteria:
-            - $statusCode == 200
-            - $response.body.access_token != null
+            - condition: $statusCode == 200
+            - context: $response.body
+              condition: $.access_token != null
+              type: JSONPath
           outputs:  
             access_token: $response.body.access_token
             refresh_token: $response.body.refresh_token

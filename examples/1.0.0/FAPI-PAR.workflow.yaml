@@ -115,7 +115,7 @@ workflows:
             value: $inputs.PARrequestBody
         successCriteria:
           # assertions to determine step was successful
-          - $statusCode == 200
+          - condition: $statusCode == 200
         outputs:
           request_uri: $response.body.request_uri
       
@@ -131,7 +131,7 @@ workflows:
             value: $inputs.client_id
         successCriteria:
           # assertions to determine step was successful
-          - $statusCode == 302
+          - condition: $statusCode == 302
         outputs:
           code: $response.body.code  # Not really, this is a query parameter (need a way to represent out-of-band props)
 
@@ -166,7 +166,7 @@ workflows:
             value: $inputs.code_verifier                       
         successCriteria:
           # assertions to determine step was successful
-          - $statusCode == 200
+          - condition: $statusCode == 200
         outputs:
           tokenResponse: $response.body
       

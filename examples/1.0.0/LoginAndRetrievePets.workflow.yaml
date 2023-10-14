@@ -35,7 +35,7 @@ workflows:
         value: $inputs.password
     successCriteria:
       # assertions to determine step was successful
-      - $statusCode == 200
+      - condition: $statusCode == 200
     outputs:
       # outputs from this step
       tokenExpires: $response.header.X-Expires-After
@@ -53,7 +53,7 @@ workflows:
         in: header
         value: $steps.loginUser.outputs.sessionToken    
     successCriteria:
-      - $statusCode == 200
+      - condition: $statusCode == 200
     outputs:
       # outputs from this step
       availablePets: $response.body
