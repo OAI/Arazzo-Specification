@@ -26,7 +26,7 @@ workflows:
             in: query
             value: $inputs.my_pet_tags
         successCriteria:
-          - $statusCode == 200
+          - condition: $statusCode == 200
         outputs:
           my_pet_id: $outputs[0].id
           # there is some implied selection here - findPetsByTags responds with a list of pets,
@@ -40,7 +40,7 @@ workflows:
             in: path
             value: $steps.find-pet.outputs.my_pet_id
         successCriteria:
-          - $statusCode == 200
+          - condition: $statusCode == 200
         outputs:
           my_coupon_code: $response.body.couponCode
       - stepId: place-order
@@ -53,7 +53,7 @@ workflows:
             in: body
             value: $steps.find-coupons.outputs.my_coupon_code
         successCriteria:
-          - $statusCode == 200
+          - condition: $statusCode == 200
         outputs:
           my_order_id: $response.body.id
   - workflowId: buy-available-pet
@@ -75,7 +75,7 @@ workflows:
           - $ref: '#/components/parameters/pageSize'
             value: 10
         successCriteria:
-          - $statusCode == 200
+          - condition: $statusCode == 200
         outputs:
           my_pet_id: $outputs[0].id
       - stepId: place-order
@@ -85,7 +85,7 @@ workflows:
             in: body
             value: $steps.find-pet.outputs.my_pet_id
         successCriteria:
-          - $statusCode == 200
+          - condition: $statusCode == 200
         outputs:
           my_order_id: $response.body.id
   - workflowId: place-order
@@ -130,7 +130,7 @@ workflows:
             target: $request.body#/complete
             value: false
         successCriteria:
-          - $statusCode == 200
+          - condition: $statusCode == 200
         outputs:
           my_order_id: $response.body.id
 components:
