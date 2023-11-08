@@ -5,8 +5,8 @@ info:
     description: |
         This workflow walks you through the steps of `searching` for, `selecting`, and `purchasing` an available pet.
     version: 1.0.1
-sourceDocuments:
-- name: petStoreDefinition
+sourceDescriptions:
+- name: petStoreDescription
   url: https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml
   type: openapi
 
@@ -24,7 +24,7 @@ workflows:
   steps:
   - stepId: loginStep
     description: This step demonstrates the user login step
-    operationId: petStoreDefinition.loginUser
+    operationId: petStoreDescription.loginUser
     parameters:
       # parameters to inject into the loginUser operation (parameter name must be resolvable at the referenced operation and the value is determined using {expression} syntax)
       - name: username

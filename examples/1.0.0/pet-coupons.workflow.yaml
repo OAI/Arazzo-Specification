@@ -6,7 +6,7 @@ info:
     Illustrates a workflow whereby a client a) finds a pet in the petstore, 
     b) finds coupons for that pet, and finally
     c) orders the pet while applying the coupons from step b.
-sourceDocuments:
+sourceDescriptions:
   - name: pet-coupons
     url: ./pet-coupons.openapi.yaml
     type: openapi

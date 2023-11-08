@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   description: >-
     APImetrics OAuth service
-sourceDocuments:
+sourceDescriptions:
   - name: apim-auth
     url: ./oauth.openapi.yaml
     type: openapi
