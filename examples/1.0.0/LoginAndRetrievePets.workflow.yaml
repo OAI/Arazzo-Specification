@@ -1,4 +1,4 @@
-workflowsSpec: 1.0.0
+workflowsSpec: 1.0.0-prerelease
 info:
     title: A pet purchasing workflow
     summary: This workflow showcases how to purchase a pet through a sequence of API calls
