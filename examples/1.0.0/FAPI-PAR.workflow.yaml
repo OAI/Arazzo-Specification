@@ -1,4 +1,4 @@
-workflowsSpec: 1.0.0
+workflowsSpec: 1.0.0-prerelease
 info:
   title: PAR, Authorization and Token workflow
   version: 1.0.0

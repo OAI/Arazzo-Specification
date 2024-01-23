@@ -1,4 +1,4 @@
-workflowsSpec: 1.0.0
+workflowsSpec: 1.0.0-prerelease
 info:
   title: APImetrics OAuth service
   version: 1.0.0
