@@ -40,13 +40,10 @@ workflows:
         workflowId: authorization-code-flow
         parameters:
         - name: client_id
-          in: workflow
           value: $inputs.my_client_id
         - name: redirect_uri
-          in: workflow
           value: $inputs.my_redirect_uri
         - name: client_secret
-          in: workflow
           value: $inputs.my_client_secret
         outputs:
           my_refresh_token: $outputs.refresh_token
