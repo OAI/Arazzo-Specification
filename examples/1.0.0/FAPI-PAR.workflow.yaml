@@ -99,7 +99,7 @@ workflows:
     steps:
       - stepId: PARStep
         description: Pushed Authorization Request
-        operationId: auth-api.PAR
+        operationId: $sourceDescriptions.auth-api.PAR
         parameters:        
           - name: client_id
             in: query
@@ -121,7 +121,7 @@ workflows:
       
       - stepId: AuthzCodeStep
         description: OIDC Authorization code request
-        operationId: auth-api.Authorization
+        operationId: $sourceDescriptions.auth-api.Authorization
         parameters:
           - name: request_uri
             in: query
@@ -137,7 +137,7 @@ workflows:
 
       - stepId: TokenStep
         description: Get token from the OIDC Token endpoint
-        operationId: auth-api.Token
+        operationId: $sourceDescriptions.auth-api.Token
         parameters:
           - name: client_id
             in: query
