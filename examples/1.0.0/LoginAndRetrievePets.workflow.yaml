@@ -43,7 +43,7 @@ workflows:
       sessionToken: $response.body
   - stepId: getPetStep
     description: retrieve a pet by status from the GET pets endpoint
-    operationRef: https://petstore3.swagger.io/api/v3/openapi.json#/paths/users/~findbystatus~1{status}/get
+    operationPath: $sourceDescriptions.petStoreDescription#/paths/~1pet~1findByStatus
     dependsOn: loginStep
     parameters:
       - name: status
