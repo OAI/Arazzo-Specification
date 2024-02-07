@@ -116,22 +116,22 @@ workflows:
         parameters:
           - name: pet_id
             in: body
-            target: $request.body#/petId
+            target: /petId
             value: $inputs.pet_id
           - name: coupon_code
             in: body
-            target: $request.body#/couponCode
+            target: /couponCode
             value: $inputs.coupon_code
           - name: quantity
             in: body
             value: $inputs.quantity
           - name: status
             in: body
-            target: $request.body#/status
+            target: /status
             value: "placed"
           - name: complete
             in: body
-            target: $request.body#/complete
+            target: /complete
             value: false
         successCriteria:
           - condition: $statusCode == 200
