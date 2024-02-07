@@ -1,9 +1,9 @@
 workflowsSpec: 1.0.0-prerelease
 info:
-  title: APImetrics OAuth service
+  title: Example OAuth service
   version: 1.0.0
   description: >-
-    APImetrics OAuth service
+    Example OAuth service
 sourceDescriptions:
   - name: apim-auth
     url: ./oauth.openapi.yaml
@@ -101,7 +101,7 @@ workflows:
         - name: grant_type
           in: body
           style: form
-          value: 'client_credentials'         
+          value: 'client_credentials'
 
         successCriteria:
           - condition: $statusCode == 200
@@ -177,15 +177,15 @@ workflows:
           - name: grant_type
             in: body
             style: form
-            value: 'authorization_code' 
+            value: 'authorization_code'
           - name: redirect_uri
             in: body
             style: form
-            value: $inputs.redirect_uri      
+            value: $inputs.redirect_uri
           - name: code
             in: body
             style: form
-            value: $steps.browser-authorize.outputs.code                     
+            value: $steps.browser-authorize.outputs.code
 
           successCriteria:
             - condition: $statusCode == 200
