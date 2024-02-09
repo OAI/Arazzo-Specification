@@ -27,12 +27,12 @@ The current SIG is made up of the following individuals, and feel free to submit
 
 ### Champions
 
-- David O'Neill ([CEO, APImetrics](https://www.linkedin.com/in/davidon/))
+- David O'Neill ([COO, APIContext](https://www.linkedin.com/in/davidon/))
 - Kin Lane ([Chief Evangelist, Postman](https://www.linkedin.com/in/kinlane/))
 
 ### Contributors
 
-- Nick Denny ([VP Engineering, APImetrics](https://www.linkedin.com/in/nickdenny/))
+- Nick Denny ([Chief Engineer, APIContext](https://www.linkedin.com/in/nickdenny/))
 - Frank Kilcommins ([API Evangelist, SmartBear](https://www.linkedin.com/in/frank-kilcommins))
 - Mike Ralphson ([OpenAPI Specification Lead, Postman](https://www.linkedin.com/in/mikeralphson/))
 - Alessandro Duminuco ([Senior Technical Leader, Cisco](https://www.linkedin.com/in/alessandroduminuco/))
