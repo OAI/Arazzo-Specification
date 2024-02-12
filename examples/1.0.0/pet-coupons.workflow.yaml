@@ -161,8 +161,10 @@ components:
       description: Indicates the domain name of the store where the customer is browsing or buying pets, e.g. "pets.example.com" or "pets.example.co.uk".
   parameters:
     page:
+      in: query
       type: integer
       format: int32
     pageSize:
+      in: query
       type: integer
       format: int32
