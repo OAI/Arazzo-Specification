@@ -44,7 +44,6 @@ workflows:
   - stepId: getPetStep
     description: retrieve a pet by status from the GET pets endpoint
     operationPath: $sourceDescriptions.petStoreDescription#/paths/~1pet~1findByStatus
-    dependsOn: loginStep
     parameters:
       - name: status
         in: query
