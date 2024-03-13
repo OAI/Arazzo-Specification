@@ -47,10 +47,8 @@ workflows:
         workflowId: place-order
         parameters:
           - name: pet_id
-            in: body
             value: $steps.find-pet.outputs.my_pet_id
           - name: coupon_code
-            in: body
             value: $steps.find-coupons.outputs.my_coupon_code
         successCriteria:
           - condition: $statusCode == 200
@@ -84,7 +82,6 @@ workflows:
         workflowId: place-order
         parameters:
           - name: pet_id
-            in: body
             value: $steps.find-pet.outputs.my_pet_id
         successCriteria:
           - condition: $statusCode == 200
@@ -113,26 +110,15 @@ workflows:
     steps:
       - stepId: place-order
         operationId: placeOrder
-        parameters:
-          - name: pet_id
-            in: body
-            target: /petId
-            value: $inputs.pet_id
-          - name: coupon_code
-            in: body
-            target: /couponCode
-            value: $inputs.coupon_code
-          - name: quantity
-            in: body
-            value: $inputs.quantity
-          - name: status
-            in: body
-            target: /status
-            value: "placed"
-          - name: complete
-            in: body
-            target: /complete
-            value: false
+        requestBody:
+          payload:
+            contentType: application/json
+            payload:
+              petId: $inputs.pet_id
+              quantity: $inputs.quantity
+              couponCode: $inputs.coupon_code
+              status: placed
+              complete: false
         successCriteria:
           - condition: $statusCode == 200
         outputs:
