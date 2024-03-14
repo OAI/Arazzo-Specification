@@ -111,14 +111,13 @@ workflows:
       - stepId: place-order
         operationId: placeOrder
         requestBody:
+          contentType: application/json
           payload:
-            contentType: application/json
-            payload:
-              petId: $inputs.pet_id
-              quantity: $inputs.quantity
-              couponCode: $inputs.coupon_code
-              status: placed
-              complete: false
+            petId: $inputs.pet_id
+            quantity: $inputs.quantity
+            couponCode: $inputs.coupon_code
+            status: placed
+            complete: false
         successCriteria:
           - condition: $statusCode == 200
         outputs:

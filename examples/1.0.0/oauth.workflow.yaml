@@ -53,11 +53,10 @@ workflows:
           This is where you do the refresh
         operationId: get-token
         requestBody:
+          contentType: application/x-www-form-urlencoded
           payload:
-            contentType: application/x-www-form-urlencoded
-            payload:
-              grant_type: refresh_token
-              refresh_token: $steps.do-the-auth-flow.outputs.my_refresh_token
+            grant_type: refresh_token
+            refresh_token: $steps.do-the-auth-flow.outputs.my_refresh_token
         successCriteria:
           - condition: $statusCode == 200
           - context: $response.body
