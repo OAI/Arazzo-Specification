@@ -72,9 +72,9 @@ workflows:
           - name: status
             in: query
             value: "available"
-          - $ref: '#/components/parameters/page'
+          - name: $components.parameters.page
             value: 1
-          - $ref: '#/components/parameters/pageSize'
+          - name: $components.parameters.pageSize
             value: 10
         successCriteria:
           - condition: $statusCode == 200
