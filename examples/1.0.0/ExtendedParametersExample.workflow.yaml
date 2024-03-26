@@ -6,10 +6,6 @@ sourceDescriptions:
   - name: animals
     type: openapi
     url: ./animals.yaml
-parameters:
-  - in: header
-    name: Authorization
-    value: Bearer someSecretToken
 workflows:
   - workflowId: animal-workflow
     parameters:
