@@ -110,9 +110,8 @@ workflows:
           - name: client_assertion
             in: query
             value: $inputs.client_assertion
-          - name: requestBody
-            in: body
-            value: $inputs.PARrequestBody
+        requestBody:
+          payload: $inputs.PARrequestBody
         successCriteria:
           # assertions to determine step was successful
           - condition: $statusCode == 200
@@ -148,22 +147,14 @@ workflows:
           - name: client_assertion
             in: query
             value: $inputs.client_assertion
-          - name: requestBody
-            in: body
-            target: '/grant_type'
-            value: 'authorization_code'
-          - name: requestBody
-            in: body
-            target: '/code'
-            value: $steps.AuthzCodeStep.outputs.code
-          - name: requestBody
-            in: body
-            target: '/redirect_uri'
-            value: $inputs.redirect_uri
-          - name: requestBody
-            in: body
-            target: '/code_verifier'
-            value: $inputs.code_verifier                       
+        requestBody:
+          payload: |
+            {
+              "grant_type": "authorization_code",
+              "code": "{$steps.AuthzCodeStep.outputs.code}",
+              "redirect_uri": "{$inputs.redirect_uri}",
+              "code_verifier": "{$inputs.code_verifier}"
+            }                      
         successCriteria:
           # assertions to determine step was successful
           - condition: $statusCode == 200
