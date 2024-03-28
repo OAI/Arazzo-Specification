@@ -52,9 +52,11 @@ workflows:
         description: >-
           This is where you do the refresh
         operationId: get-token
-        parameters:
-          grant_type: refresh_token
-          refresh_token: $steps.do-the-auth-flow.outputs.my_refresh_token
+        requestBody:
+          contentType: application/x-www-form-urlencoded
+          payload:
+            grant_type: refresh_token
+            refresh_token: $steps.do-the-auth-flow.outputs.my_refresh_token
         successCriteria:
           - condition: $statusCode == 200
           - context: $response.body
@@ -89,20 +91,12 @@ workflows:
         description: >-
           This is where you get the token
         operationId: get-token
-        parameters:
-        - name: client_id
-          in: body
-          style: form
-          value: $inputs.client_id
-        - name: client_secret
-          in: body
-          style: form
-          value: $inputs.client_secret
-        - name: grant_type
-          in: body
-          style: form
-          value: 'client_credentials'
-
+        requestBody:
+          contentType: application/x-www-form-urlencoded
+          payload:
+            client_id: $inputs.client_id
+            client_secret: $inputs.client_secret
+            grant_type: client_credentials
         successCriteria:
           - condition: $statusCode == 200
           - context: $response.body
@@ -165,28 +159,14 @@ workflows:
           description: >-
             This is where you get the token
           operationId: get-token
-          parameters:
-          - name: client_id
-            in: body
-            style: form
-            value: $inputs.client_id
-          - name: client_secret
-            in: body
-            style: form
-            value: $inputs.client_secret
-          - name: grant_type
-            in: body
-            style: form
-            value: 'authorization_code'
-          - name: redirect_uri
-            in: body
-            style: form
-            value: $inputs.redirect_uri
-          - name: code
-            in: body
-            style: form
-            value: $steps.browser-authorize.outputs.code
-
+          requestBody:
+            contentType: application/x-www-form-urlencoded
+            payload:
+              grant_type: authorization_code
+              code: $steps.browser-authorize.outputs.code
+              redirect_uri: $inputs.redirect_uri
+              client_id: $inputs.client_id
+              client_secret: $inputs.client_secret
           successCriteria:
             - condition: $statusCode == 200
             - context: $response.body
