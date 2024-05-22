@@ -1,4 +1,4 @@
-workflowsSpec: 1.0.0-prerelease
+arazzo: 1.0.0
 info:
   title: PAR, Authorization and Token workflow
   version: 1.0.0

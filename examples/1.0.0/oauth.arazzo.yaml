@@ -1,4 +1,4 @@
-workflowsSpec: 1.0.0-prerelease
+arazzo: 1.0.0
 info:
   title: Example OAuth service
   version: 1.0.0
@@ -10,8 +10,8 @@ sourceDescriptions:
     type: openapi
   # This is how you can reference another workflow file
   # - name: sample
-  #   url: ./sample.workflows.yml
-  #   type: workflowSpec
+  #   url: ./sample.arazzo.yml
+  #   type: arazzo
 
 workflows:
   - workflowId: refresh-token-flow

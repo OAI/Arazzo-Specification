@@ -1,4 +1,4 @@
-workflowsSpec: 1.0.0
+arazzo: 1.0.0
 info:
   title: Public Zoo API
   version: '1.0'
