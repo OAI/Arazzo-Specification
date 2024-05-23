@@ -15,7 +15,8 @@ cp -p js/* ../../deploy/js 2> /dev/null
 cp -p markdown/* ../../deploy/ 2> /dev/null
 
 
-latest=`git describe --abbrev=0 --tags`
+# latest=`git describe --abbrev=0 --tags` -- introduce after release tags created
+latest=1.0.0
 latestCopied=none
 for filename in ../../versions/[123456789].*.md ; do
   version=$(basename "$filename" .md)
