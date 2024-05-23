@@ -6,7 +6,7 @@
 # run this script from the root of the repo. It is designed to be run by a GitHub workflow.
 # It contains bashisms
 
-mkdir -p deploy/tapestrySpec
+mkdir -p deploy/arazzo
 mkdir -p deploy/js
 
 cd scripts/md2html

@@ -51,7 +51,7 @@ jobs:
         delete-branch: true
         path: deploy
         labels: Housekeeping
-        title: Update ReSpec versions for API Tapestry
+        title: Update ReSpec versions for Arazzo
         commit-message: Update ReSpec versions
         signoff: true
         body: |
