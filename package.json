@@ -1,0 +1,40 @@
+{
+    "name": "arazzo",
+    "version": "1.0.0",
+    "description": "Arazzo Specification",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/OAI/Arazzo-Specification.git"
+    },
+    "keywords": [
+        "Arazzo",  
+        "Workflows", 
+        "Specification",
+        "API",
+        "Swagger"
+    ],
+    "author": {
+      "name": "OpenAPI Initiative - Arazzo Working Group",
+      "email": "tsc@openapis.org",
+      "url": "https://openapis.org/"
+    },
+    "readmeFilename": "README.md",
+    "license": "Apache-2.0",
+    "bugs": {
+      "url": "https://github.com/OAI/Arazzo-Specification/issues"
+    },
+    "homepage": "https://github.com/yourusername/your-project-name#readme",
+    "dependencies": {
+        "cheerio": "^1.0.0-rc.5",
+        "highlight.js": "^11.9.0",
+        "markdown-it": "^14.1.0",
+        "yargs": "^17.7.2"
+    },
+    "devDependencies": {
+        "mdv": "^1.3.4",
+        "yaml": "2.4.2" 
+    }
+  }
