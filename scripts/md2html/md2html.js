@@ -56,9 +56,9 @@ function preface(title,options) {
         publishDate: options.publishDate,
         subtitle: 'Version '+options.subtitle,
         processVersion: 2017,
-        edDraftURI: "https://github.com/OAI/sig-workflows/",
+        edDraftURI: "https://github.com/OAI/Arazzo-Specification/",
         github: {
-            repoURL: "https://github.com/OAI/sig-workflows/",
+            repoURL: "https://github.com/OAI/Arazzo-Specification/",
             branch: "main"
         },
         shortName: "Arazzo",
