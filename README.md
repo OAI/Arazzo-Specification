@@ -15,7 +15,7 @@ Use cases for machine-readable API workflow definition documents include, but ar
 - automated regulatory compliance checks
 - deterministic API invocation by AI-based LLMs
 
-The Arazzo Specification does not mandate a specific development process such as _design-first_ or _code-first_. It does facilitate either technique by establishing clear workflow interaction with an HTTP API described using the OpenAPI Specification.
+The Arazzo Specification does not mandate a specific development process such as _design-first_ or _code-first_. It does facilitate either technique by establishing clear workflow interactions with HTTP APIs described using the OpenAPI Specification.
 
 This GitHub project is the starting point for Arazzo. Here you will find the information you need about the Arazzo Specification, simple examples of what it looks like, and some general information regarding the project.
 
