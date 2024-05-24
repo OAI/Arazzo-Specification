@@ -10,7 +10,7 @@ The Arazzo Specification can articulate these workflows in a deterministic human
 Use cases for machine-readable API workflow definition documents include, but are not limited to:
 - interactive _living_ workflow documentation
 - automated documentation generation (e.g. Developer Portal documentation)
-- code and SKD generation driven by functional use cases
+- code and SDK generation driven by functional use cases
 - automation of test cases
 - automated regulatory compliance checks
 - deterministic API invocation by AI-based LLMs
