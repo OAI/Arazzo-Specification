@@ -72,10 +72,10 @@ function preface(title,options) {
 
     // SEO
     preface += '<meta name="description" content="The Arazzo Specification provides a mechanism that can define sequences of calls and their dependencies to be woven together and expressed in the context of delivering a particular outcome or set of outcomes when dealing with API descriptions (such as OpenAPI descriptions)">';
-    preface += '<link rel="canonical" href="https://spec.openapis.org/tapestrySpec/latest.html" />';
+    preface += '<link rel="canonical" href="https://spec.openapis.org/arazzo/latest.html" />';
 
     if (options.respec) {
-        preface += '<script src="../js/respec-oai.js" class="remove"></script>';
+        preface += '<script src="../js/respec-arazzo.js" class="remove"></script>';
         preface += `<script class="remove">var respecConfig = ${JSON.stringify(respec)};</script>`;
         try {
           preface += fs.readFileSync('./analytics/google.html','utf8');
