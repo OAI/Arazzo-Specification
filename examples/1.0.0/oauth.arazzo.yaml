@@ -61,7 +61,7 @@ workflows:
           - condition: $statusCode == 200
           - context: $response.body
             condition: $.access_token != null
-            type: JSONPath
+            type: jsonpath
         outputs:
           access_token: $response.body.access_token
           refresh_token: $response.body.refresh_token
@@ -101,7 +101,7 @@ workflows:
           - condition: $statusCode == 200
           - context: $response.body
             condition: $.access_token != null
-            type: JSONPath
+            type: jsonpath
         outputs:  
           access_token: $response.body.access_token
 
@@ -151,7 +151,7 @@ workflows:
           - condition: $statusCode == 200
           - context: $response.body
             condition: $.access_token != null
-            type: JSONPath
+            type: jsonpath
         outputs:  
           code: $response.body.code  # Not really, this is a query parameter
       
@@ -171,7 +171,7 @@ workflows:
           - condition: $statusCode == 200
           - context: $response.body
             condition: $.access_token != null
-            type: JSONPath
+            type: jsonpath
         outputs:  
           access_token: $response.body.access_token
           refresh_token: $response.body.refresh_token
