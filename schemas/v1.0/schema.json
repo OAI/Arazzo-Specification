@@ -1,0 +1,347 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Arazzo Specification",
+    "type": "object",
+    "properties": {
+      "arazzo": {
+        "type": "string",
+        "description": "The version number of the Arazzo Specification that the Arazzo Description uses."
+      },
+      "info": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "A human-readable title of the Arazzo Description."
+          },
+          "summary": {
+            "type": "string",
+            "description": "A short summary of the Arazzo Description."
+          },
+          "description": {
+            "type": "string",
+            "description": "A description of the purpose of the workflows defined."
+          },
+          "version": {
+            "type": "string",
+            "description": "The version identifier of the Arazzo document."
+          }
+        },
+        "required": ["title", "version"]
+      },
+      "sourceDescriptions": {
+        "type": "array",
+        "items": {
+          "$ref": "#/$defs/SourceDescription"
+        },
+        "minItems": 1
+      },
+      "workflows": {
+        "type": "array",
+        "items": {
+          "$ref": "#/$defs/Workflow"
+        },
+        "minItems": 1
+      },
+      "components": {
+        "type": "object",
+        "properties": {
+          "inputs": {
+            "type": "object",
+            "additionalProperties": {
+              "type" : "object"
+            },
+            "description": "An object to hold reusable JSON Schema objects to be referenced from workflow inputs."
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/$defs/Parameter"
+            },
+            "description": "An object to hold reusable Parameter Objects."
+          },
+          "successActions": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/$defs/SuccessAction"
+            },
+            "description": "An object to hold reusable Success Actions Objects."
+          },
+          "failureActions": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/$defs/FailureAction"
+            },
+            "description": "An object to hold reusable Failure Actions Objects."
+          }
+        }
+      }
+    },
+    "required": ["arazzo", "info", "sourceDescriptions", "workflows"],
+    "$defs": {
+      "SourceDescription": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "A unique name for the source description."
+          },
+          "url": {
+            "type": "string",
+            "description": "A URL to a source description to be used by a workflow."
+          },
+          "type": {
+            "type": "string",
+            "enum": ["openapi", "arazzo"],
+            "description": "The type of source description. Possible values are 'openapi' or 'arazzo'."
+          }
+        },
+        "required": ["name", "url", "type"]
+      },
+      "Workflow": {
+        "type": "object",
+        "properties": {
+          "workflowId": {
+            "type": "string",
+            "description": "Unique string to represent the workflow."
+          },
+          "summary": {
+            "type": "string",
+            "description": "A summary of the purpose or objective of the workflow."
+          },
+          "description": {
+            "type": "string",
+            "description": "A description of the workflow."
+          },
+          "inputs": {
+            "type": "object",
+            "description": "A JSON Schema object representing the input parameters used by this workflow."
+          },
+          "dependsOn": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "A list of workflows that must be completed before this workflow can be processed."
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Step"
+            }
+          },
+          "successActions": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "A list of success actions that are applicable for all steps described under this workflow."
+          },
+          "failureActions": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "A list of failure actions that are applicable for all steps described under this workflow."
+          },
+          "outputs": {
+            "type": "object",
+            "description": "A map between a friendly name and a dynamic output value."
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Parameter"
+            },
+            "description": "A list of parameters that are applicable for all steps described under this workflow."
+          }
+        },
+        "required": ["workflowId", "steps"]
+      },
+      "Step": {
+        "type": "object",
+        "properties": {
+          "stepId": {
+            "type": "string",
+            "description": "Unique string to represent the step."
+          },
+          "description": {
+            "type": "string",
+            "description": "A description of the step."
+          },
+          "operationId": {
+            "type": "string",
+            "description": "The name of an existing, resolvable operation."
+          },
+          "operationPath": {
+            "type": "string",
+            "description": "A reference to a source description combined with a JSON Pointer to reference an operation."
+          },
+          "workflowId": {
+            "type": "string",
+            "description": "The workflowId referencing an existing workflow within the Arazzo Description."
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Parameter"
+            },
+            "description": "A list of parameters that must be passed to an operation or workflow."
+          },
+          "requestBody": {
+            "$ref": "#/$defs/RequestBody"
+          },
+          "successCriteria": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/Criterion"
+            },
+            "description": "A list of assertions to determine the success of the step."
+          },
+          "onSuccess": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/SuccessAction"
+            },
+            "description": "An array of success action objects that specify what to do upon step success."
+          },
+          "onFailure": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/FailureAction"
+            },
+            "description": "An array of failure action objects that specify what to do upon step failure."
+          },
+          "outputs": {
+            "type": "object",
+            "description": "A map between a friendly name and a dynamic output value defined using a runtime expression.",
+            "additionalProperties": {
+                "type": "string"
+              }
+          }
+        },
+        "required": ["stepId"]
+      },
+      "Criterion": {
+        "type": "object",
+        "properties": {
+          "context": {
+            "type": "string",
+            "description": "A runtime expression used to set the context for the condition to be applied on."
+          },
+          "condition": {
+            "type": "string",
+            "description": "The condition to apply."
+          },
+          "type": {
+            "type": ["string", "object"],
+            "description": "The type of condition to be applied.",
+            "enum" :  ["simple", "regex", "jsonpath", "xpath"]
+          }
+        },
+        "required": ["condition"]
+      },
+      "SuccessAction": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the success action."
+          },
+          "type": {
+            "type": "string",
+            "enum": ["end", "goto"],
+            "description": "The type of action to take. Possible values are 'end' or 'goto'."
+          },
+          "workflowId": {
+            "type": "string",
+            "description": "The workflowId referencing an existing workflow within the Arazzo Description to transfer to upon success of the step. This field is only relevant when the type field value is 'goto'."
+          },
+          "stepId": {
+            "type": "string",
+            "description": "The stepId to transfer to upon success of the step. This field is only relevant when the type field value is 'goto'."
+          },
+          "criteria": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Criterion"
+            },
+            "description": "A list of assertions to determine if this action should be executed."
+          }
+        },
+        "required": ["name", "type"]
+      },
+      "FailureAction": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the failure action."
+          },
+          "type": {
+            "type": "string",
+            "enum": ["end", "retry", "goto"],
+            "description": "The type of action to take. Possible values are 'end', 'retry', or 'goto'."
+          },
+          "workflowId": {
+            "type": "string",
+            "description": "The workflowId referencing an existing workflow within the Arazzo Description to transfer to upon failure of the step. This field is only relevant when the type field value is 'goto' or 'retry'."
+          },
+          "stepId": {
+            "type": "string",
+            "description": "The stepId to transfer to upon failure of the step. This field is only relevant when the type field value is 'goto' or 'retry'."
+          },
+          "retryAfter": {
+            "type": "number",
+            "description": "A non-negative decimal indicating the seconds to delay after the step failure before another attempt should be made. This field only applies when the type field value is 'retry'."
+          },
+          "retryLimit": {
+            "type": "integer",
+            "description": "A non-negative integer indicating how many attempts to retry the step may be attempted before failing the overall step. If not specified then a single retry should be attempted. This field only applies when the type field value is 'retry'."
+          },
+          "criteria": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Criterion"
+            },
+            "description": "A list of assertions to determine if this action should be executed."
+          }
+        },
+        "required": ["name", "type"]
+      },
+      "RequestBody": {
+        "type": "object",
+        "properties": {
+          "contentType": {
+            "type": "string",
+            "description": "The Content-Type for the request content."
+          },
+          "payload": {
+            "description": "A value representing the request body payload."
+          }
+        }
+      },
+      "Parameter": {
+        "type": "object",
+        "properties": {
+          "reference" : {
+            "type" : "string"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the parameter."
+          },
+          "in": {
+            "type": "string",
+            "enum": ["path", "query", "header", "cookie"],
+            "description": "The name location of the parameter."
+          },
+          "value": {
+            "description": "The value to pass in the parameter."
+          }
+        },
+        "required": ["name", "value"]
+      }
+    }
+  }
+  
