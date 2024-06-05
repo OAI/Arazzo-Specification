@@ -57,6 +57,6 @@ jobs:
         body: |
           This pull request is automatically triggered by GitHub action `respec`.
 
-          The versions/v*.md files of the API Tapestry Specification have changed, so the HTML files are automatically being regenerated.
+          The versions/v*.md files of the Arazzo Specification have changed, so the HTML files are automatically being regenerated.
 
 
