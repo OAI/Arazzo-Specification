@@ -33,7 +33,7 @@ jobs:
     - uses: actions/checkout@v2 # checkout gh-pages branch
       with:
         token: ${{ secrets.OAS_REPO_TOKEN }}
-        repository: OAI/OpenAPI-Specification  
+        repository: frankkilcommins/OpenAPI-Specification  
         ref: gh-pages
         path: deploy
 
