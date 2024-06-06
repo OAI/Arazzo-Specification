@@ -1,10 +1,12 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
+    "id" : "https://spec.openapis.org/oas/3.1/schema/2022-10-07",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Arazzo Specification",
     "type": "object",
     "properties": {
       "arazzo": {
         "type": "string",
+        "pattern": "^\\d+\\.\\d+\\.\\d+$",
         "description": "The version number of the Arazzo Specification that the Arazzo Description uses."
       },
       "info": {
@@ -31,17 +33,17 @@
       },
       "sourceDescriptions": {
         "type": "array",
+        "minItems": 1,
         "items": {
           "$ref": "#/$defs/SourceDescription"
-        },
-        "minItems": 1
+        }
       },
       "workflows": {
         "type": "array",
+        "minItems": 1,
         "items": {
           "$ref": "#/$defs/Workflow"
-        },
-        "minItems": 1
+        }
       },
       "components": {
         "type": "object",
@@ -88,7 +90,8 @@
           },
           "url": {
             "type": "string",
-            "description": "A URL to a source description to be used by a workflow."
+            "description": "A URL to a source description to be used by a workflow.",
+            "format" : "uri"
           },
           "type": {
             "type": "string",
@@ -133,7 +136,7 @@
           "successActions": {
             "type": "array",
             "items": {
-              "type": "object"
+              "$ref" : "#/$defs/SuccessAction"
             },
             "description": "A list of success actions that are applicable for all steps described under this workflow."
           },
@@ -146,10 +149,17 @@
           },
           "outputs": {
             "type": "object",
-            "description": "A map between a friendly name and a dynamic output value."
+            "description": "A map between a friendly name and a dynamic output value.",
+            "patternProperties": {
+              "^[a-zA-Z0-9\\.\\-_]+$": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
           },
           "parameters": {
             "type": "array",
+            "uniqueItems": true,
             "items": {
               "$ref": "#/$defs/Parameter"
             },
@@ -234,7 +244,7 @@
             "description": "The condition to apply."
           },
           "type": {
-            "type": ["string", "object"],
+            "type": "string", 
             "description": "The type of condition to be applied.",
             "enum" :  ["simple", "regex", "jsonpath", "xpath"]
           }
@@ -339,8 +349,7 @@
           "value": {
             "description": "The value to pass in the parameter."
           }
-        },
-        "required": ["name", "value"]
+        }
       }
     }
   }
