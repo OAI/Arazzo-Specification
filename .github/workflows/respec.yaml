@@ -46,7 +46,7 @@ jobs:
       uses: peter-evans/create-pull-request@v5
       with:
         token: ${{ secrets.OAS_REPO_TOKEN }}
-        branch: update-respec-version
+        branch: update-arazzo-respec-version
         base: gh-pages
         delete-branch: true
         path: deploy
