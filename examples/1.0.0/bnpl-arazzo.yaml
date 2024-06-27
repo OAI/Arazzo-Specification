@@ -1,0 +1,252 @@
+arazzo: 1.0.0
+info:
+  title: BNPL Workflow description
+  version: 1.0.0
+sourceDescriptions:
+  - name: BnplApi
+    url: https://raw.githubusercontent.com/OAI/Arazzo-Specification/main/examples/1.0.0/bnpl-openapi.yaml
+    type: openapi
+workflows:
+- workflowId: ApplyForLoanAtCheckout
+  summary: Apply for a loan at checkout using a BNPL platform
+  description: Describes the steps to secure a loan at checkout from a BNPL platform. It is a multistep process that requires multiple API calls across several API providers to be completed successfully.
+  inputs:
+      type: object
+      required:
+      - customer
+      - products
+      properties:
+        customer:
+          description: |
+            Customer can either be the customer details, which will be used for enrollment, or a link to an existing customer resource as the customer already uses the BNPL platform
+          oneOf:
+          - type: object
+            required:
+            - firstName
+            - lastName
+            - dateOfBirth
+            - postalCode
+            properties:
+              firstName:
+                description: First name of customer
+                type: string
+                minLength: 1
+                maxLength: 70
+              lastName:
+                description: Last name of customer
+                type: string
+                minLength: 1
+                maxLength: 70
+              dateOfBirth:
+                description: Customer date of birth
+                type: string
+                format: date-time
+              postalCode:
+                description: Zip code or postal code of customer
+                type: string
+                minLength: 1
+                maxLength: 70
+              additionalProperties: false
+          - type: object
+            required:
+            - uri
+            properties:
+              uri:
+                description: URI that points to an existing customer resource, as customer already enrolled on platform
+                type: string
+                format: uri
+            additionalProperties: false
+        products:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+            - productCode
+            - purchaseAmount
+            properties:
+              merchantCategoryCode:
+                description: Merchant category code of merchant. Only required for marketplace ecommerce platforms
+                type: string
+                pattern: '^[0-9]{4}$'
+              productCode:
+                description: Product code for loan application. Required for eligibility check
+                type: string
+              purchaseAmount:
+                description: Product purchase amount and currency code
+                type: object
+                required:
+                  - currency
+                  - amount
+                properties:
+                  currency:
+                    description: Currency code
+                    type: string
+                    pattern: "^[A-Z]{3}$"
+                  amount:
+                    description: Amount
+                    type: number
+  steps:
+  - stepId: checkLoanCanBeProvided
+    description: |
+      Call the BNPL API to filter the basket for products qualifying for checkout loans. Pass in the array of products from the workflow input as the payload for the API call.
+
+      Act on the response payload:
+      
+      - If a list of qualifying products is returned then submit customer choices.
+      - If the list of qualifying products is empty then end the workflow
+    operationId: findEligibleProducts
+    parameters:
+      - name: products
+        in: body
+        value: $inputs.products
+      - name: customer
+        in: body
+        value: $inputs.customer.uri
+    successCriteria:
+      - condition: $statusCode == 200
+    onSuccess:
+      - name: existingCustomerNotEligible
+        type: end
+        criteria:
+          - condition: $statusCode == 200
+          - condition: $response.body.existingCustomerNotEligible == false
+      - name: qualifyingProductsFound
+        type: goto
+        stepId: getCustomerTermsAndConditions
+        criteria:
+          - condition: $statusCode == 200
+          - context: $response.body
+            type: jsonpath
+            condition: $[?count(@.products) > 0]
+      - name: qualifyingProductsNotFound
+        type: end
+        criteria:
+          - condition: $statusCode == 200
+          - context: $response.body
+            type: jsonpath
+            condition: $[?count(@.products) == 0]
+    outputs:
+      eligibilityCheckRequired: $response.body.eligibilityCheckRequired
+      eligibleProducts: $response.body.products
+      totalLoanAmount: $response.body.totalAmount
+  - stepId: getCustomerTermsAndConditions
+    description: |
+      Get the terms and conditions for the BNPL loans. This is static data and therefore has no arguments.
+
+      The data will be displayed to the customer and they'll accept the terms out-of-band.
+
+      After this step the flow will need to do a customer eligibility check if required.
+    operationId: getTermsAndConditions
+    successCriteria:
+      - condition: $statusCode == 200
+    onSuccess:
+      - name: eligibilityCheckRequired
+        type: goto
+        stepId: createCustomer
+        criteria:
+        - condition: $steps.checkLoanCanBeProvided.outputs.eligibilityCheckRequired == true
+      - name: eligibilityCheckNotRequired
+        type: goto
+        stepId: initiateBnplTransaction
+        criteria:
+        - condition: $steps.checkLoanCanBeProvided.outputs.eligibilityCheckRequired == false
+    outputs:
+      termsAndConditions: $response.body
+  - stepId: createCustomer
+    description: |
+      Call the BNPL platform and verify the customer is eligible for the loan, which creates a customer resource. This step is skipped if the customer is already enrolled in the BNPL platform.
+
+      Accepting the terms and conditions is set to true as the assumption is they have been accepted when this step is invoked.
+
+      If the customer is eligible for the BNPL loan then a customer resource is created 
+    operationId: createCustomer
+    parameters:
+      - name: customerAttributes
+        in: body
+        value: $inputs.customer
+      - name: termsAndConditionsAccepted
+        in: body
+        value: true
+    successCriteria:
+      - condition: $statusCode == 200
+      - condition: $statusCode == 201
+    onSuccess:
+      - name: customerIsEligible
+        type: goto
+        stepId: initiateBnplTransaction
+        criteria:
+          - condition: $statusCode == 201
+      - name: customerIsNotEligible
+        type: end
+        criteria:
+          - condition: $statusCode == 200
+    outputs:
+      customer: $response.body.links.self
+  - stepId: initiateBnplTransaction
+    description: Initiate the BNPL transaction by sending the customer identifier, eligible products, and indicative loan amount to initiate the loan process
+    operationId: createBnplTransaction
+    parameters:
+      - name: enrolledCustomer
+        in: body
+        value: $inputs.customer.uri
+      - name: newCustomer
+        in: body
+        value: $steps.createCustomer.outputs.customer
+      - name: products
+        in: body
+        value: $steps.checkLoanCanBeProvided.outputs.eligibleProducts
+    successCriteria:
+      - condition: $statusCode == 202
+    onSuccess:
+      - name: CustomerAuthorizationRequired
+        type: goto
+        stepId: authenticateCustomerAndAuthorizeLoan
+        condition: $response.body.redirectAuthToken != null
+      - name: CustomerAuthorizationNotRequired
+        type: goto
+        stepId: retrieveFinalizedPaymentPlan
+        condition: $response.body.redirectAuthToken == null
+    outputs:
+      redirectAuthToken: $response.body.redirectAuthToken
+      loanTransactionResourceUrl: $response.body.links.self
+  - stepId: authenticateCustomerAndAuthorizeLoan
+    description: |
+      Authenticate the customer and seek authorization for the loan.
+
+      Notes:
+      
+      - Authenticate in this case does not necessarily mean with a valid set of credentials. It could be to prove the identity of the end user, possibly doing an UMA style interaction (which is too complex to tie into this example).
+      - A redirect is returned for to be sent to the customer. The customer should follow this, but the success of the authorisation is out-of-band.
+      - This flow mimics OAuth style authorization but is not an exact match as it does not rely on an authorisation code/access token exchange (as this seems somewhat artificial in this context).
+
+    operationId: getAuthorization
+    parameters:
+      - name: redirectAuthToken
+        in: query
+        value: $steps.authenticateCustomerAndAuthorizeLoan.outputs.redirectAuthToken
+    successCriteria:
+      - condition: $statusCode == 302
+    outputs:
+      redirectUrl: $response.headers.Location
+  - stepId: retrieveFinalizedPaymentPlan
+    description: Retrieve finalized payment plan to show to customer once authorization is complete
+    operationId: retrieveBnplLoanTransaction
+    parameters:
+      - name: loanTransactionId
+        in: path
+        value: $steps.initiateBnplTransaction.outputs.loanTransactionId
+    successCriteria:
+      - condition: $statusCode == 200
+  - stepId: updateOrderStatus
+    description: Send update from eCommerce platform to indicate order fulfilled and loan is therefore active
+    operationId: updateBnplLoanTransactionStatus
+    parameters:
+      - name: loanTransactionId
+        in: path
+        value: $steps.initiateBnplTransaction.outputs.loanTransactionId
+      - name: loanStatus
+        in: body
+        value: "Completed"
+    successCriteria:
+      - condition: $statusCode == 204
