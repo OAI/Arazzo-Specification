@@ -169,8 +169,7 @@ workflows:
         in: body
         value: true
     successCriteria:
-      - condition: $statusCode == 200
-      - condition: $statusCode == 201
+      - condition: $statusCode == 200 || $statusCode == 201
     onSuccess:
       - name: customerIsEligible
         type: goto
