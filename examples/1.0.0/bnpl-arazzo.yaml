@@ -96,13 +96,13 @@ workflows:
       - If a list of qualifying products is returned then submit customer choices.
       - If the list of qualifying products is empty then end the workflow
     operationId: findEligibleProducts
-    parameters:
-      - name: products
-        in: body
-        value: $inputs.products
-      - name: customer
-        in: body
-        value: $inputs.customer.uri
+    requestBody:
+      contentType: application/json
+      payload: | 
+        {
+          "customer": "{$inputs.customer}",
+          "products": "{$inputs.products}"
+        }
     successCriteria:
       - condition: $statusCode == 200
     onSuccess:
@@ -161,13 +161,16 @@ workflows:
 
       If the customer is eligible for the BNPL loan then a customer resource is created 
     operationId: createCustomer
-    parameters:
-      - name: customerAttributes
-        in: body
-        value: $inputs.customer
-      - name: termsAndConditionsAccepted
-        in: body
-        value: true
+    requestBody:
+      contentType: application/json
+      payload: |
+        {
+          "firstName": "{$inputs.customer.firstName}",
+          "lastName": "{$inputs.customer.lastName}",
+          "dateOfBirth": "{$inputs.customer.dateOfBirth}",
+          "postalCode": "{$inputs.customer.postalCode}"
+          "termsAndConditionsAccepted": true
+        }
     successCriteria:
       - condition: $statusCode == 200 || $statusCode == 201
     onSuccess:
@@ -185,16 +188,14 @@ workflows:
   - stepId: initiateBnplTransaction
     description: Initiate the BNPL transaction by sending the customer identifier, eligible products, and indicative loan amount to initiate the loan process
     operationId: createBnplTransaction
-    parameters:
-      - name: enrolledCustomer
-        in: body
-        value: $inputs.customer.uri
-      - name: newCustomer
-        in: body
-        value: $steps.createCustomer.outputs.customer
-      - name: products
-        in: body
-        value: $steps.checkLoanCanBeProvided.outputs.eligibleProducts
+    requestBody:
+      contentType: application/json
+      payload: | 
+        {
+          "enrolledCustomer": "{$inputs.customer.uri}",
+          "newCustomer": "{$steps.createCustomer.outputs.customer}",
+          "products": "{$steps.checkLoanCanBeProvided.outputs.eligibleProducts}"
+        }
     successCriteria:
       - condition: $statusCode == 202
     onSuccess:
@@ -237,6 +238,8 @@ workflows:
         value: $steps.initiateBnplTransaction.outputs.loanTransactionId
     successCriteria:
       - condition: $statusCode == 200
+    outputs:
+      finalizedPaymentPlan: $response.body
   - stepId: updateOrderStatus
     description: Send update from eCommerce platform to indicate order fulfilled and loan is therefore active
     operationId: updateBnplLoanTransactionStatus
@@ -244,8 +247,10 @@ workflows:
       - name: loanTransactionId
         in: path
         value: $steps.initiateBnplTransaction.outputs.loanTransactionId
-      - name: loanStatus
-        in: body
-        value: "Completed"
+    requestBody:
+      contentType: application/json
+      payload: { "loanStatus": "Completed" }
     successCriteria:
       - condition: $statusCode == 204
+  outputs:
+    finalizedPaymentPlan: $steps.retrieveFinalizedPaymentPlan.finalizedPaymentPlan

@@ -51,7 +51,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CustomerProperties'
+              allOf:
+                 - $ref: '#/components/schemas/CustomerProperties'
+                 - description: Terms and conditions have been reviewed and accepted
+                   type: object
+                   required:
+                     - termsAndConditionsAccepted
+                   properties:
+                     termsAndConditionsAccepted:
+                      type: boolean
       responses:
         "200":
           description: Customer is not eligible for BNPL loan
