@@ -75,7 +75,7 @@ function preface(title,options) {
     preface += '<link rel="canonical" href="https://spec.openapis.org/arazzo/latest.html" />';
 
     if (options.respec) {
-        preface += '<script src="../js/respec-arazzo.js" class="remove"></script>';
+        preface += '<script src="../js/respec-oai.js" class="remove"></script>';
         preface += `<script class="remove">var respecConfig = ${JSON.stringify(respec)};</script>`;
         try {
           preface += fs.readFileSync('./analytics/google.html','utf8');
@@ -96,7 +96,7 @@ function preface(title,options) {
         preface += fs.readFileSync(path.resolve(__dirname,'gist.css'),'utf8').split('\n').join(' ');
         preface += '</style>';
         preface += `<h1 id="title">${title.split('|')[0]}</h1>`;
-        preface += `<section id="abstract" title="${abstract}">`;
+        preface += `<section id="abstract"><h2>${abstract}</h2>`;
         preface += 'The Arazzo Specification provides a mechanism that can define sequences of calls and their dependencies to be woven together and expressed in the context of delivering a particular outcome or set of outcomes when dealing with API descriptions (such as OpenAPI descriptions).';
         preface += '</section>';
         preface += '<section class="notoc" id="sotd">';
