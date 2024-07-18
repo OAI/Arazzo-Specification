@@ -202,11 +202,13 @@ workflows:
       - name: CustomerAuthorizationRequired
         type: goto
         stepId: authenticateCustomerAndAuthorizeLoan
-        condition: $response.body.redirectAuthToken != null
+        criteria:
+          - condition: $response.body.redirectAuthToken != null
       - name: CustomerAuthorizationNotRequired
         type: goto
         stepId: retrieveFinalizedPaymentPlan
-        condition: $response.body.redirectAuthToken == null
+        criteria:
+          - condition: $response.body.redirectAuthToken == null
     outputs:
       redirectAuthToken: $response.body.redirectAuthToken
       loanTransactionResourceUrl: $response.body.links.self
