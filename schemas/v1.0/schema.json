@@ -50,9 +50,6 @@
         "properties": {
           "inputs": {
             "type": "object",
-            "additionalProperties": {
-              "type" : "object"
-            },
             "description": "An object to hold reusable JSON Schema objects to be referenced from workflow inputs."
           },
           "parameters": {
