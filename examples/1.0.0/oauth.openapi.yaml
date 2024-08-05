@@ -72,7 +72,7 @@ paths:
                   type: string
                 client_secret:
                   type: string
-              requiredProperties:
+              required:
                 - grant_type
                 - client_id
       responses:

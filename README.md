@@ -1,5 +1,5 @@
 # The Arazzo Specification
-![alt Arazzo logo](./images/Arrazo-logo.png)
+![alt Arazzo logo](./images/Arazzo-logo.png)
 
 The Arazzo Specification is a community-driven open specification within the [OpenAPI Initiative](https://www.openapis.org/), a Linux Foundation Collaborative Project.
 

@@ -118,13 +118,15 @@ paths:
           description: Which page of results to display. First page is 1.
           required: true
           schema:
-            type: int32
+            type: integer
+            format: int32
         - name: pageSize
           in: query
           description: Number of results to display per page.
           required: false
           schema:
-            type: int32
+            type: integer
+            format: int32
             default: 10
       responses:
         '200':
