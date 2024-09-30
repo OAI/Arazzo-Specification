@@ -24,7 +24,7 @@ workflows:
   steps:
   - stepId: loginStep
     description: This step demonstrates the user login step
-    operationId: petStoreDescription.loginUser
+    operationId: $sourceDescriptions.petStoreDescription.loginUser
     parameters:
       # parameters to inject into the loginUser operation (parameter name must be resolvable at the referenced operation and the value is determined using {expression} syntax)
       - name: username
@@ -43,14 +43,14 @@ workflows:
       sessionToken: $response.body
   - stepId: getPetStep
     description: retrieve a pet by status from the GET pets endpoint
-    operationPath: $sourceDescriptions.petStoreDescription#/paths/~1pet~1findByStatus
+    operationPath: '{$sourceDescriptions.petStoreDescription.url}#/paths/~1pet~1findByStatus'
     parameters:
       - name: status
         in: query
         value: 'available'
       - name: Authorization
         in: header
-        value: $steps.loginUser.outputs.sessionToken    
+        value: $steps.loginStep.outputs.sessionToken    
     successCriteria:
       - condition: $statusCode == 200
     outputs:
