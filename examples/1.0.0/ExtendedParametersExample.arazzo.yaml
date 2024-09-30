@@ -23,4 +23,4 @@ workflows:
             value: SUPER_SECRET
         operationId: animals.postAnimal
       - stepId: get-step
-        operationId: animals.getRandomAnimal
+        operationId: $sourceDescriptions.animals.getRandomAnimal
