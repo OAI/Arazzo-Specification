@@ -1,4 +1,4 @@
-## Weekly meetings happen on Thursdays at 9am - 10am Pacific
+## Bi-Weekly meetings happen on Wednesdays at 5PM GMT
 
 This agenda gives visibility into discussion topics for the weekly Technical Developer Community (TDC) meetings. Sharing agenda items in advance allows people to plan to attend meetings where they have an interest in specific topics. 
 
