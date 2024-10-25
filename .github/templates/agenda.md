@@ -7,7 +7,7 @@ Whether attending or not, **anyone can comment on this issue prior to the meetin
 Meetings take place over Zoom: [https://zoom.us/j/91426197903](https://zoom.us/j/91426197903?pwd=cjNGcjgzWmRqZ1YyRW9PM3FFNFVFUT09), dial-in passcode: 763054
 
 ### Accessibility & Etiquette
-* Participants must abide by our [Code-of-Conduct](https://github.com/OAI/OpenAPI-Specification/blob/main/CODE_OF_CONDUCT.md#code-of-conduct).
+* Participants must abide by our [Code-of-Conduct](https://github.com/OAI/Arazzo-Specification?tab=coc-ov-file#code-of-conduct).
 
 
 * We invite you to feel comfortable to challenge any language or behaviour that is harmful or not inclusive during this meeting.
