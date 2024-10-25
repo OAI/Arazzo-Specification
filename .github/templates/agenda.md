@@ -9,7 +9,6 @@ Meetings take place over Zoom: [https://zoom.us/j/91426197903](https://zoom.us/j
 ### Accessibility & Etiquette
 * Participants must abide by our [Code-of-Conduct](https://github.com/OAI/OpenAPI-Specification/blob/main/CODE_OF_CONDUCT.md#code-of-conduct).
 
-* [Meetings are recorded](https://openapi.meetrecord.com/redoc#tag/Recordings/operation/get_recordings_api_v1_recordings_get) for future reference, and for those who are not able to attend in-person.
 
 * We invite you to feel comfortable to challenge any language or behaviour that is harmful or not inclusive during this meeting.
 
