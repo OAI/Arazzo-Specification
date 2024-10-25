@@ -25,11 +25,10 @@ Meetings take place over Zoom: [https://zoom.us/j/91426197903](https://zoom.us/j
 
 | Topic | Owner | Decision/NextStep |
 |-|-|-|
-Intros and governance meta-topics (5 mins) | TDC | |
-Reports from Special Interest Groups (5 mins) | SIG members | |
-Any other business (add comments below to suggest topics) | TDC | |
-[Approved spec PRs](https://github.com/OAI/Arazzo-Specification/pulls?q=is%3Apr+is%3Aopen+review%3Aapproved) | @OAI/tsc | |
-[Active Projects](https://github.com/OAI/Arazzo-Specification/projects?query=is%3Aopen) | @OAI/openapi-maintainers | |
-[New issues needing attention](https://github.com/search?q=repo%3Aoai%2Farazzo-specification+is%3Aissue+comments%3A0+no%3Alabel+is%3Aopen) | @OAI/triage  | |
+Intros and governance meta-topics (5 mins) | TDC / Arazzo maintainers | |
+Any other business (add comments below to suggest topics) | TDC / Arazzo maintainers | |
+[Approved spec PRs](https://github.com/OAI/Arazzo-Specification/pulls?q=is%3Apr+is%3Aopen+review%3Aapproved) | Arazzo maintainers| |
+[Active Projects](https://github.com/OAI/Arazzo-Specification/projects?query=is%3Aopen) | Arazzo maintainers | |
+[New issues needing attention](https://github.com/search?q=repo%3Aoai%2Farazzo-specification+is%3Aissue+comments%3A0+no%3Alabel+is%3Aopen) | Arazzo maintainers  | |
 
 /cc [@OAI/tsc](https://github.com/orgs/OAI/teams/tsc) please suggest items for inclusion.
