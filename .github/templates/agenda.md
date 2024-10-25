@@ -1,6 +1,6 @@
 ## Bi-Weekly meetings happen on Wednesdays at 5PM GMT
 
-This agenda gives visibility into discussion topics for the weekly Technical Developer Community (TDC) meetings. Sharing agenda items in advance allows people to plan to attend meetings where they have an interest in specific topics. 
+This agenda gives visibility into discussion topics for the bi-weekly Arazzo Specification Technical Developer Community (TDC) meetings. Sharing agenda items in advance allows people to plan to attend meetings where they have an interest in specific topics. 
 
 Whether attending or not, **anyone can comment on this issue prior to the meeting to suggest topics or to add comments on planned topics or proposals**.
 
