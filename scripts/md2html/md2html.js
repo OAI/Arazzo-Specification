@@ -12,7 +12,6 @@ complete control over formatting and syntax highlighting */
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
-const util = require('util');
 
 const hljs = require('highlight.js');
 const cheerio = require('cheerio');
@@ -25,7 +24,7 @@ let argv = require('yargs')
     .string('maintainers')
     .alias('m','maintainers')
     .describe('maintainers','path to MAINTAINERS.md')
-    .require(1)
+    .demandCommand(1)
     .argv;
 const abstract = 'What is the Arazzo Specification?';
 let maintainers = [];
@@ -51,21 +50,43 @@ const md = require('markdown-it')({
 function preface(title,options) {
     const respec = {
         specStatus: "base",
+        latestVersion: "https://spec.openapis.org/arazzo/latest.html",
         editors: maintainers,
         formerEditors: emeritus,
         publishDate: options.publishDate,
         subtitle: 'Version '+options.subtitle,
-        processVersion: 2017,
         edDraftURI: "https://github.com/OAI/Arazzo-Specification/",
-        github: {
-            repoURL: "https://github.com/OAI/Arazzo-Specification/",
-            branch: "main"
-        },
         shortName: "Arazzo",
-        noTOC: false,
+        historyURI: null, // prevent ReSpec from fetching a W3C history based on the shortName
         lint: false,
-        additionalCopyrightHolders: "the Linux Foundation",
-        includePermalinks: true
+        logos:[{
+            src: "https://raw.githubusercontent.com/OAI/OpenAPI-Style-Guide/master/graphics/bitmap/OpenAPI_Logo_Pantone.png",
+            alt: "OpenAPI Initiative",
+            height: 48,
+            url: "https://openapis.org/"}],
+        otherLinks: [
+            {
+                key: "Participate",
+                data: [
+                    {
+                        value: "GitHub OAI/Arazzo-Specification",
+                        href: "https://github.com/OAI/Arazzo-Specification/",
+                    },
+                    {
+                        value: "File a bug",
+                        href: "https://github.com/OAI/Arazzo-Specification/issues",
+                    },
+                    {
+                        value: "Commit history",
+                        href: `https://github.com/OAI/Arazzo-Specification/commits/main/versions/${options.subtitle}.md`,
+                    },
+                    {
+                        value: "Pull requests",
+                        href: "https://github.com/OAI/Arazzo-Specification/pulls",
+                    },
+                ],
+            },
+        ],
     };
 
     let preface = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>${md.utils.escapeHtml(title)}</title>`;
@@ -75,7 +96,7 @@ function preface(title,options) {
     preface += '<link rel="canonical" href="https://spec.openapis.org/arazzo/latest.html" />';
 
     if (options.respec) {
-        preface += '<script src="../js/respec-arazzo.js" class="remove"></script>';
+        preface += '<script src="../js/respec-w3c.js" class="remove"></script>';
         preface += `<script class="remove">var respecConfig = ${JSON.stringify(respec)};</script>`;
         try {
           preface += fs.readFileSync('./analytics/google.html','utf8');
@@ -85,6 +106,7 @@ function preface(title,options) {
         preface += '<style>';
         preface += '#respec-ui { visibility: hidden; }';
         preface += 'h1,h2,h3 { color: #629b34; }';
+        preface += '.dt-published { color: #629b34; } .dt-published::before { content: "Published "; }';
         preface += 'a[href] { color: #45512c; }'; // third OAI colour is #8ad000
         preface += 'body:not(.toc-inline) #toc h2 { color: #45512c; }';
         preface += 'table { display: block; width: 100%; overflow: auto; }';
@@ -93,13 +115,16 @@ function preface(title,options) {
         preface += 'table tr { background-color: #fff; border-top: 1px solid #c6cbd1; }';
         preface += 'table tr:nth-child(2n) { background-color: #f6f8fa; }';
         preface += 'pre { background-color: #f6f8fa !important; }';
-        preface += fs.readFileSync(path.resolve(__dirname,'gist.css'),'utf8').split('\n').join(' ');
+        preface += 'code { color: #c83500 } th code { color: inherit }';
+        preface += 'a.bibref { text-decoration: underline;}';
+        preface += fs.readFileSync(path.resolve(__dirname,'gist.css'),'utf8').split(/\r?\n/).join(' ');
         preface += '</style>';
         preface += `<h1 id="title">${title.split('|')[0]}</h1>`;
-        preface += `<section id="abstract" title="${abstract}">`;
+        preface += `<p class="copyright">Copyright © ${options.publishDate.getFullYear()} the Linux Foundation</p>`;
+        preface += `<section class="notoc" id="abstract"><h2>${abstract}</h2>`;
         preface += 'The Arazzo Specification provides a mechanism that can define sequences of calls and their dependencies to be woven together and expressed in the context of delivering a particular outcome or set of outcomes when dealing with API descriptions (such as OpenAPI descriptions).';
         preface += '</section>';
-        preface += '<section class="notoc" id="sotd">';
+        preface += '<section class="override" id="sotd" data-max-toc="0">';
         preface += '<h2>Status of This Document</h2>';
         preface += 'The source-of-truth for the specification is the GitHub markdown file referenced above.';
         preface += '</section>';
@@ -120,7 +145,7 @@ function doMaintainers() {
         maintainers.push({name:t});
     });
     if ($("ul").length < 2) return;
-    u = $("ul").last();    
+    u = $("ul").last();
     $(u).children('li').each(function(e){
         let t = $(this).text().split('@')[0];
         emeritus.push({name:t});
@@ -158,7 +183,7 @@ if (argv.respec) {
     argv.publishDate = getPublishDate(s);
 }
 
-let lines = s.split('\r').join().split('\n');
+let lines = s.split(/\r?\n/);
 
 let prevHeading = 0;
 let lastIndent = 0;
@@ -221,7 +246,7 @@ for (let l in lines) {
             let link = comp[0].split('<a ')[1].replace('name=','id=');
             const anchor = link.split("'").join('"').split('"')[1];
             line = '#'.repeat(newIndent)+' <span>'+title+'</span>';
-            linkTarget = '<a id="'+anchor+'"></a>';
+            linkTarget = '<span id="'+anchor+'"></span>';
         }
         else {
             let title = line.split('# ')[1];
@@ -240,10 +265,8 @@ for (let l in lines) {
         lastIndent = indent;
     }
 
-    if (line.indexOf('"></a>')>=0) {
-        line = line.replace(' name=',' id=');
-        line = line.replace('"></a>','"> </a>');
-    }
+    // replace deprecated <a name="..."></a> with <span id="..."></span>
+    line = line.replace(/<a name="([^"]+)"><\/a>/g,'<span id="$1"></span>');
 
     line = line.split('\\|').join('&#124;'); // was &brvbar
 
@@ -258,7 +281,7 @@ for (let l in lines) {
         if (line.indexOf('[RFC')>=0) {
             line = line.replace(/\[RFC ?([0-9]{1,5})\]/g,function(match,group1){
                 console.warn('Fixing RFC reference',match,group1);
-                return '[[!RFC'+group1+']]';
+                return '[[RFC'+group1+']]';
             });
         }
 
