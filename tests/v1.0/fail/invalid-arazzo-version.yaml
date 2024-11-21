@@ -1,0 +1,11 @@
+arazzo: 2
+info:
+  title: Invalid Arazzo Version
+  version: 0.0.1
+sourceDescriptions:
+- name: test
+  url: https://spec.openapis.org/arazzo/v1.0.0
+workflows:
+- workflowId: workflow1
+  steps:
+  - stepId: step1
