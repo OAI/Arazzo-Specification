@@ -57,4 +57,4 @@ workflows:
       # outputs from this step
       availablePets: $response.body
   outputs:
-      available: $steps.getPetStep.availablePets
+      available: $steps.getPetStep.outputs.availablePets
