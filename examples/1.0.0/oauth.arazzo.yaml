@@ -37,6 +37,8 @@ workflows:
         #   # Or a previous refresh-token-flow.outputs.refresh_token
     steps:
       - stepId: do-the-auth-flow
+        description: >-
+          This is where you do the authorization code flow
         workflowId: authorization-code-flow
         parameters:
         - name: client_id
@@ -63,9 +65,9 @@ workflows:
             condition: $.access_token != null
             type: jsonpath
         outputs:
-          access_token: $response.body.access_token
-          refresh_token: $response.body.refresh_token
-          expires_in: $response.body.expires_in
+          access_token: $response.body#/access_token
+          refresh_token: $response.body#/refresh_token
+          expires_in: $response.body#/expires_in
 
     outputs:
       access_token: $steps.do-the-refresh.outputs.access_token
@@ -103,7 +105,7 @@ workflows:
             condition: $.access_token != null
             type: jsonpath
         outputs:  
-          access_token: $response.body.access_token
+          access_token: $response.body#/access_token
 
     outputs:
       access_token: $steps.get-client-creds-token.outputs.access_token
@@ -153,7 +155,7 @@ workflows:
             condition: $.access_token != null
             type: jsonpath
         outputs:  
-          code: $response.body.code  # Not really, this is a query parameter
+          code: $response.body#/code  # Not really, this is a query parameter
       
       - stepId: get-access-token
         description: >-
@@ -173,9 +175,9 @@ workflows:
             condition: $.access_token != null
             type: jsonpath
         outputs:  
-          access_token: $response.body.access_token
-          refresh_token: $response.body.refresh_token
-          expires_in: $response.body.expires_in
+          access_token: $response.body#/access_token
+          refresh_token: $response.body#/refresh_token
+          expires_in: $response.body#/expires_in
     outputs:
       access_token: $steps.get-access-token.outputs.access_token
       refresh_token: $steps.get-access-token.outputs.refresh_token
