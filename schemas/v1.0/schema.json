@@ -704,8 +704,7 @@
                         "path",
                         "query",
                         "header",
-                        "cookie",
-                        "body"
+                        "cookie"
                     ]
                 },
                 "value": {
