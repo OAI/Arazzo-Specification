@@ -4,7 +4,8 @@
     "description": "Arazzo Specification",
     "scripts": {
         "build": "bash ./scripts/md2html/build.sh",
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "format-markdown": "bash ./scripts/format-markdown.sh ./{versions,schemas/**}/*.md"
     },
     "repository": {
         "type": "git",
@@ -37,6 +38,7 @@
     },
     "devDependencies": {
         "mdv": "^1.3.4",
-        "yaml": "2.4.2"
+        "yaml": "2.4.2",
+        "markdownlint-cli": "^0.42.0"
     }
 }
