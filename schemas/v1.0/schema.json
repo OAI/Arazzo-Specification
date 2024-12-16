@@ -1,7 +1,7 @@
 {
     "$id": "https://spec.openapis.org/arazzo/1.0/schema/2024-08-01",
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "description": "The description of OpenAPI Initiative Arazzo v1.0.0 documents without schema validation, as defined by https://spec.openapis.org/arazzo/v1.0.0",
+    "description": "The description of Arazzo v1.0.x documents",
     "type": "object",
     "properties": {
         "arazzo": {
@@ -44,7 +44,7 @@
     "unevaluatedProperties": false,
     "$defs": {
         "info": {
-            "$comment": "https://spec.openapis.org/arazzo/v1.0.0#info-object",
+            "$comment": "https://spec.openapis.org/arazzo/v1.0#info-object",
             "description": "Provides metadata about the Arazzo description",
             "type": "object",
             "properties": {
@@ -73,7 +73,7 @@
             "unevaluatedProperties": false
         },
         "source-description-object": {
-            "$comment": "https://spec.openapis.org/arazzo/v1.0.0#source-description-object",
+            "$comment": "https://spec.openapis.org/arazzo/v1.0#source-description-object",
             "description": "Describes a source description (such as an OpenAPI description) that will be referenced by one or more workflows described within an Arazzo description",
             "type": "object",
             "properties": {
@@ -103,7 +103,7 @@
             "unevaluatedProperties": false
         },
         "workflow-object": {
-            "$comment": "https://spec.openapis.org/arazzo/v1.0.0#workflow-object",
+            "$comment": "https://spec.openapis.org/arazzo/v1.0#workflow-object",
             "description": "Describes the steps to be taken across one or more APIs to achieve an objective",
             "type": "object",
             "properties": {
@@ -204,7 +204,7 @@
             "unevaluatedProperties": false
         },
         "step-object": {
-            "$comment": "https://spec.openapis.org/arazzo/v1.0.0#step-object'",
+            "$comment": "https://spec.openapis.org/arazzo/v1.0#step-object'",
             "description": "Describes a single workflow step which MAY be a call to an API operation (OpenAPI Operation Object or another Workflow Object)",
             "type": "object",
             "properties": {
@@ -371,7 +371,7 @@
             "unevaluatedProperties": false
         },
         "request-body-object": {
-            "$comment": "https://spec.openapis.org/arazzo/v1.0.0#request-body-object",
+            "$comment": "https://spec.openapis.org/arazzo/v1.0#request-body-object",
             "description": "The request body to pass to an operation as referenced by operationId or operationPath",
             "type": "object",
             "properties": {
@@ -393,7 +393,7 @@
             "unevaluatedProperties": false
         },
         "criterion-object": {
-            "$comment": "https://spec.openapis.org/arazzo/v1.0.0#criterion-object",
+            "$comment": "https://spec.openapis.org/arazzo/v1.0#criterion-object",
             "description": "An object used to specify the context, conditions, and condition types that can be used to prove or satisfy assertions specified in Step Object successCriteria, Success Action Object criteria, and Failure Action Object criteria",
             "type": "object",
             "properties": {
@@ -438,7 +438,7 @@
             "unevaluatedProperties": false
         },
         "criterion-expression-type-object": {
-            "$comment": "https://spec.openapis.org/arazzo/v1.0.0#criterion-expression-type-object",
+            "$comment": "https://spec.openapis.org/arazzo/v1.0#criterion-expression-type-object",
             "description": "An object used to describe the type and version of an expression used within a Criterion Object",
             "type": "object",
             "properties": {
@@ -505,7 +505,7 @@
             "$ref": "#/$defs/specification-extensions"
         },
         "success-action-object": {
-            "$comment": "https://spec.openapis.org/arazzo/v1.0.0#success-action-object",
+            "$comment": "https://spec.openapis.org/arazzo/v1.0#success-action-object",
             "description": "A single success action which describes an action to take upon success of a workflow step",
             "type": "object",
             "properties": {
@@ -571,7 +571,7 @@
             "unevaluatedProperties": false
         },
         "failure-action-object": {
-            "$comment": "https://spec.openapis.org/arazzo/v1.0.0#failure-action-object",
+            "$comment": "https://spec.openapis.org/arazzo/v1.0#failure-action-object",
             "description": "A single failure action which describes an action to take upon failure of a workflow step",
             "type": "object",
             "properties": {
@@ -664,7 +664,7 @@
             "unevaluatedProperties": false
         },
         "reusable-object": {
-            "$comment": "https://spec.openapis.org/arazzo/v1.0.0#reusable-object",
+            "$comment": "https://spec.openapis.org/arazzo/v1.0#reusable-object",
             "description": "A simple object to allow referencing of objects contained within the Components Object",
             "type": "object",
             "properties": {
@@ -690,7 +690,7 @@
             "unevaluatedProperties": false
         },
         "parameter-object": {
-            "$comment": "https://spec.openapis.org/arazzo/v1.0.0#parameter-object",
+            "$comment": "https://spec.openapis.org/arazzo/v1.0#parameter-object",
             "description": "Describes a single step parameter",
             "type": "object",
             "properties": {
@@ -704,8 +704,7 @@
                         "path",
                         "query",
                         "header",
-                        "cookie",
-                        "body"
+                        "cookie"
                     ]
                 },
                 "value": {
@@ -728,7 +727,7 @@
             "unevaluatedProperties": false
         },
         "payload-replacement-object": {
-            "$comment": "https://spec.openapis.org/arazzo/v1.0.0#payload-replacement-object",
+            "$comment": "https://spec.openapis.org/arazzo/v1.0#payload-replacement-object",
             "description": "Describes a location within a payload (e.g., a request body) and a value to set within the location",
             "type": "object",
             "properties": {
@@ -749,7 +748,7 @@
             "$ref": "#/$defs/specification-extensions"
         },
         "components-object": {
-            "$comment": "https://spec.openapis.org/arazzo/v1.0.0#components-object",
+            "$comment": "https://spec.openapis.org/arazzo/v1.0#components-object",
             "description": "Holds a set of reusable objects for different aspects of the Arazzo Specification",
             "type": "object",
             "properties": {
@@ -794,14 +793,14 @@
             "$ref": "#/$defs/specification-extensions"
         },
         "specification-extensions": {
-            "$comment": "https://spec.openapis.org/arazzo/v1.0.0#specification-extensions",
+            "$comment": "https://spec.openapis.org/arazzo/v1.0#specification-extensions",
             "description": "While the Arazzo Specification tries to accommodate most use cases, additional data can be added to extend the specification at certain points",
             "patternProperties": {
                 "^x-": true
             }
         },
         "schema": {
-            "$comment": "https://spec.openapis.org/arazzo/v1.0.0#schema-object",
+            "$comment": "https://spec.openapis.org/arazzo/v1.0#schema-object",
             "$ref": "https://json-schema.org/draft/2020-12/schema"
         }
     }
