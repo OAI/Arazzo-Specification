@@ -471,7 +471,6 @@ $defs:
           - query
           - header
           - cookie
-          - body
       value:
         description: The value to pass in the parameter
         type:
