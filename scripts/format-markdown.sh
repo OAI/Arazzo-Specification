@@ -3,6 +3,11 @@
 SRCDIR="$(dirname "${BASH_SOURCE[0]}")" # check on Windows
 
 for filename in $*; do
+  # check if the $filename exists and if it's writeable
+  if [ ! -w $filename ]; then
+  echo "No matching file found: $filename"
+  continue;
+  fi
   # mostly to format code blocks with examples, unfortunately messes up bullet lists and tables
   npx prettier --write --single-quote $filename
 

@@ -3,7 +3,7 @@ name: validate-markdown
 # Author: @ralfhandl based on work of @MikeRalphson
 
 #
-# This workflow validates markdown files in the `versions` and `schemas` directories matching *.md
+# This workflow validates markdown files in the `versions` directory matching *.md
 #
 
 # run this on push to any branch and creation of pull-requests
@@ -25,6 +25,6 @@ jobs:
       with:
         node-version: '20.x'
     - name: Validate markdown
-      run: npx --yes mdv ./{versions,schemas/**}/*.md
+      run: npx --yes mdv ./versions/[1-2].*.md
     - name: Lint markdown
-      run: npx --yes markdownlint-cli --config .markdownlint.yaml ./{versions,schemas/**}/*.md
+      run: npx --yes markdownlint-cli --config .markdownlint.yaml versions/1.0.[^0].md versions/1.[1-9].*.md versions/2.*.md

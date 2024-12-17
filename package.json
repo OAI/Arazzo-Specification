@@ -5,7 +5,7 @@
     "scripts": {
         "build": "bash ./scripts/md2html/build.sh",
         "test": "echo \"Error: no test specified\" && exit 1",
-        "format-markdown": "bash ./scripts/format-markdown.sh ./{versions,schemas/**}/*.md"
+        "format-markdown": "bash ./scripts/format-markdown.sh versions/1.0.[^0].md versions/1.[1-9].*.md versions/2.*.md"
     },
     "repository": {
         "type": "git",
