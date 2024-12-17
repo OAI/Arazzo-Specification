@@ -14,8 +14,7 @@ cd scripts/md2html
 # temporarily copy installed version of respec into build directory
 cp -p ../../node_modules/respec/builds/respec-w3c.* ../../deploy/js/
 
-# latest=`git describe --abbrev=0 --tags` -- introduce after release tags created
-latest=1.0.0
+latest=`git describe --abbrev=0 --tags`
 latestCopied=none
 lastMinor="-"
 for filename in $(ls -1 ../../versions/[123456789].*.md | sort -r) ; do
