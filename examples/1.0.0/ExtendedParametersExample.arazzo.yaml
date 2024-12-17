@@ -21,6 +21,6 @@ workflows:
           - in: cookie
             name: authentication
             value: SUPER_SECRET
-        operationId: animals.postAnimal
+        operationId: $sourceDescriptions.animals.postAnimal
       - stepId: get-step
-        operationId: animals.getRandomAnimal
+        operationId: $sourceDescriptions.animals.getRandomAnimal

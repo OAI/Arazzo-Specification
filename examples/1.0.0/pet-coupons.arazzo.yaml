@@ -20,6 +20,7 @@ workflows:
       $ref: "#/components/inputs/apply_coupon_input"
     steps:
       - stepId: find-pet
+        description: Find a pet based on the provided tags.
         operationId: findPetsByTags
         parameters:
           - name: pet_tags
@@ -28,7 +29,7 @@ workflows:
         successCriteria:
           - condition: $statusCode == 200
         outputs:
-          my_pet_id: $outputs[0].id
+          my_pet_id: $response.body#/0/id
           # there is some implied selection here - findPetsByTags responds with a list of pets,
           # but the client only wants to choose one, and that's what will be provided to the next step.
           # not totally sure how to indicate that.
@@ -42,8 +43,9 @@ workflows:
         successCriteria:
           - condition: $statusCode == 200
         outputs:
-          my_coupon_code: $response.body.couponCode
+          my_coupon_code: $response.body#/couponCode
       - stepId: place-order
+        description: Place an order for the pet, applying the coupon.
         workflowId: place-order
         parameters:
           - name: pet_id
@@ -53,7 +55,7 @@ workflows:
         successCriteria:
           - condition: $statusCode == 200
         outputs:
-          my_order_id: $workflow_order_id
+          my_order_id: $outputs.workflow_order_id
     outputs:
       apply_coupon_pet_order_id: $steps.place-order.outputs.my_order_id
   - workflowId: buy-available-pet
@@ -65,6 +67,7 @@ workflows:
       $ref: "#/components/inputs/buy_available_pet_input"
     steps:
       - stepId: find-pet
+        description: Find a pet that is available for purchase.
         operationId: findPetsByStatus
         parameters:
           - name: status
@@ -77,8 +80,9 @@ workflows:
         successCriteria:
           - condition: $statusCode == 200
         outputs:
-          my_pet_id: $outputs[0].id
+          my_pet_id: $response.body#/0/id
       - stepId: place-order
+        description: Place an order for the pet.
         workflowId: place-order
         parameters:
           - name: pet_id
@@ -86,7 +90,7 @@ workflows:
         successCriteria:
           - condition: $statusCode == 200
         outputs:
-          my_order_id: $workflow_order_id
+          my_order_id: $outputs.workflow_order_id
     outputs:
       buy_pet_order_id: $steps.place-order.outputs.my_order_id
   - workflowId: place-order
@@ -109,6 +113,7 @@ workflows:
           description: The coupon code to apply to the order.
     steps:
       - stepId: place-order
+        description: Place an order for the pet.
         operationId: placeOrder
         requestBody:
           contentType: application/json
@@ -121,7 +126,7 @@ workflows:
         successCriteria:
           - condition: $statusCode == 200
         outputs:
-          step_order_id: $response.body.id
+          step_order_id: $response.body#/id
     outputs:
       workflow_order_id: $steps.place-order.outputs.step_order_id
 components:

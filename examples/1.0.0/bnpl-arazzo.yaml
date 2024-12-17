@@ -1,6 +1,8 @@
 arazzo: 1.0.0
 info:
   title: BNPL Workflow description
+  description: >-
+    Describes the steps to secure a loan at checkout from a BNPL platform. It is a multi-step process that requires multiple API calls across several API providers to be completed successfully.
   version: 1.0.0
 sourceDescriptions:
   - name: BnplApi
@@ -110,7 +112,7 @@ workflows:
         type: end
         criteria:
           - condition: $statusCode == 200
-          - condition: $response.body.existingCustomerNotEligible == false
+          - condition: $response.body#/existingCustomerNotEligible == false
       - name: qualifyingProductsFound
         type: goto
         stepId: getCustomerTermsAndConditions
@@ -127,9 +129,9 @@ workflows:
             type: jsonpath
             condition: $[?count(@.products) == 0]
     outputs:
-      eligibilityCheckRequired: $response.body.eligibilityCheckRequired
-      eligibleProducts: $response.body.products
-      totalLoanAmount: $response.body.totalAmount
+      eligibilityCheckRequired: $response.body#/eligibilityCheckRequired
+      eligibleProducts: $response.body#/products
+      totalLoanAmount: $response.body#/totalAmount
   - stepId: getCustomerTermsAndConditions
     description: |
       Get the terms and conditions for the BNPL loans. This is static data and therefore has no arguments.
@@ -184,7 +186,7 @@ workflows:
         criteria:
           - condition: $statusCode == 200
     outputs:
-      customer: $response.body.links.self
+      customer: $response.body#/links/self
   - stepId: initiateBnplTransaction
     description: Initiate the BNPL transaction by sending the customer identifier, eligible products, and indicative loan amount to initiate the loan process
     operationId: createBnplTransaction
@@ -203,15 +205,15 @@ workflows:
         type: goto
         stepId: authenticateCustomerAndAuthorizeLoan
         criteria:
-          - condition: $response.body.redirectAuthToken != null
+          - condition: $response.body#/redirectAuthToken != null
       - name: CustomerAuthorizationNotRequired
         type: goto
         stepId: retrieveFinalizedPaymentPlan
         criteria:
-          - condition: $response.body.redirectAuthToken == null
+          - condition: $response.body#/redirectAuthToken == null
     outputs:
-      redirectAuthToken: $response.body.redirectAuthToken
-      loanTransactionResourceUrl: $response.body.links.self
+      redirectAuthToken: $response.body#/redirectAuthToken
+      loanTransactionResourceUrl: $response.body#/links/self
   - stepId: authenticateCustomerAndAuthorizeLoan
     description: |
       Authenticate the customer and seek authorization for the loan.

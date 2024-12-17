@@ -116,7 +116,7 @@ workflows:
           # assertions to determine step was successful
           - condition: $statusCode == 200
         outputs:
-          request_uri: $response.body.request_uri
+          request_uri: $response.body#/request_uri
       
       - stepId: AuthzCodeStep
         description: OIDC Authorization code request
@@ -132,7 +132,7 @@ workflows:
           # assertions to determine step was successful
           - condition: $statusCode == 302
         outputs:
-          code: $response.body.code  # Not really, this is a query parameter (need a way to represent out-of-band props)
+          code: $response.body#/code  # Not really, this is a query parameter (need a way to represent out-of-band props)
 
       - stepId: TokenStep
         description: Get token from the OIDC Token endpoint
