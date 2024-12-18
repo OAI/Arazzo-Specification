@@ -14,7 +14,6 @@ on:
       - 'versions/**'
     branches:
       - main
-
   workflow_dispatch: {}
 
 jobs:
@@ -23,14 +22,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2 # checkout main branch
+    - uses: actions/checkout@v4 # checkout main branch
       with:
         fetch-depth: 0
 
+    - uses: actions/setup-node@v4 # setup Node.js
+      with:
+        node-version: '20.x'
+    
     - name: Install dependencies
-      run: npm i
+      run: npm ci
 
-    - uses: actions/checkout@v2 # checkout gh-pages branch
+    - uses: actions/checkout@v4 # checkout gh-pages branch
       with:
         token: ${{ secrets.OAS_REPO_TOKEN }}
         repository: OAI/OpenAPI-Specification  
@@ -43,7 +46,7 @@ jobs:
   # need to create a pull request against a reomte repository here 
   # to update the gh-pages branch on the OAI repo
     - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v5
+      uses: peter-evans/create-pull-request@v6
       with:
         token: ${{ secrets.OAS_REPO_TOKEN }}
         branch: update-arazzo-respec-version
@@ -51,12 +54,13 @@ jobs:
         delete-branch: true
         path: deploy
         labels: Housekeeping
-        title: Update ReSpec versions for Arazzo
-        commit-message: Update ReSpec versions
+        reviewers: darrelmiller,webron,earth2marsh,webron,lornajane,mikekistler,miqui,handrews,karenetheridge # ralfhandl
+        title: Arazzo - Update ReSpec-rendered specification versions
+        commit-message: Update ReSpec-rendered specification versions
         signoff: true
         body: |
           This pull request is automatically triggered by GitHub action `respec`.
 
-          The versions/v*.md files of the Arazzo Specification have changed, so the HTML files are automatically being regenerated.
+          The `versions/*.md` files of the Arazzo Specification have changed, so the HTML files are automatically being regenerated.
 
 
