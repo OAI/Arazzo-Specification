@@ -50,7 +50,7 @@ jobs:
           delete-branch: true
           path: deploy
           labels: Housekeeping,Schema
-          reviewers: darrelmiller,webron,earth2marsh,lornajane,mikekistler,miqui,ralfhandl,handrews
+          reviewers: darrelmiller,webron,earth2marsh,lornajane,mikekistler,miqui,handrews
           title: Publish Arazzo Schema Iterations
           commit-message: New Arazzo schema iterations
           signoff: true
