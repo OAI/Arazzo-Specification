@@ -22,4 +22,3 @@ jobs:
         node-version: '18.x'
     - name: Validate markdown
       run: npx mdv versions/1.*.md
-
