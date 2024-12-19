@@ -239,7 +239,7 @@ Describes the steps to be taken across one or more APIs to achieve an objective.
 
 Field Name | Type | Description
 ---|:---:|---
-<a name="workflowId"></a>workflowId | `string` | **REQUIRED**. Unique string to represent the workflow. The id MUST be unique amongst all workflows describe in the Arazzo Description. The `workflowId` value is **case-sensitive**. Tools and libraries MAY use the `workflowId` to uniquely identify a workflow, therefore, it is RECOMMENDED to follow common programming naming conventions. SHOULD conform to the regular expression `[A-Za-z0-9_\-]+`.
+<a name="workflowId"></a>workflowId | `string` | **REQUIRED**. Unique string to represent the workflow. The id MUST be unique amongst all workflows described in the Arazzo Description. The `workflowId` value is **case-sensitive**. Tools and libraries MAY use the `workflowId` to uniquely identify a workflow, therefore, it is RECOMMENDED to follow common programming naming conventions. SHOULD conform to the regular expression `[A-Za-z0-9_\-]+`.
 <a name="workflowSummary"></a>summary | `string` | A summary of the purpose or objective of the workflow.
 <a name="workflowDescription"></a>description | `string` | A description of the workflow. [CommonMark syntax](https://spec.commonmark.org/) MAY be used for rich text representation.
 <a name="workflowInputs"></a>inputs | `JSON Schema` | A JSON Schema 2020-12 object representing the input parameters used by this workflow.
