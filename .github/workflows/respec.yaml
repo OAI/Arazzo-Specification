@@ -22,6 +22,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Generate access token
+      id: generate-token
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ secrets.OAI_SPEC_PUBLISHER_APPID }}
+        private-key: ${{ secrets.OAI_SPEC_PUBLISHER_PRIVATE_KEY }}
+        owner: OAI
+        repositories: OpenAPI-Specification
+
     - uses: actions/checkout@v4 # checkout main branch
       with:
         fetch-depth: 0
@@ -35,7 +44,7 @@ jobs:
 
     - uses: actions/checkout@v4 # checkout gh-pages branch
       with:
-        token: ${{ secrets.OAS_REPO_TOKEN }}
+        token: ${{ steps.generate-token.outputs.token }}
         repository: OAI/OpenAPI-Specification  
         ref: gh-pages
         path: deploy
@@ -48,13 +57,13 @@ jobs:
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v6
       with:
-        token: ${{ secrets.OAS_REPO_TOKEN }}
+        token: ${{ steps.generate-token.outputs.token }}
         branch: update-arazzo-respec-version
         base: gh-pages
         delete-branch: true
         path: deploy
         labels: Housekeeping
-        reviewers: darrelmiller,webron,earth2marsh,webron,lornajane,mikekistler,miqui,handrews,karenetheridge # ralfhandl
+        reviewers: darrelmiller,webron,earth2marsh,webron,lornajane,mikekistler,miqui,handrews,karenetheridge,ralfhandl
         title: Arazzo - Update ReSpec-rendered specification versions
         commit-message: Update ReSpec-rendered specification versions
         signoff: true
