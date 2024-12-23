@@ -19,7 +19,7 @@ on:
 jobs:
   respec:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Generate access token
