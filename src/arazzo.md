@@ -949,5 +949,5 @@ The proposed MIME media type for Arazzo documents (e.g. workflows) that require 
 
 Version   | Date              | Notes
 ---       | ---               | ---
-1.0.1     | 2025-01-01        | Patch release of the Arazzo Specification 1.0.1
+1.0.1     | 2025-01-09        | Patch release of the Arazzo Specification 1.0.1
 1.0.0     | 2024-05-29        | First release of the Arazzo Specification
