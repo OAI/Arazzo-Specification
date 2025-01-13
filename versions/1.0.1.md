@@ -1,0 +1,953 @@
+# Arazzo Specification
+
+#### Version 1.0.1
+
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [BCP 14](https://tools.ietf.org/html/bcp14) [RFC2119](https://tools.ietf.org/html/rfc2119) [RFC8174](https://tools.ietf.org/html/rfc8174) when, and only when, they appear in all capitals, as shown here.
+
+This document is licensed under [The Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0.html).
+
+## Introduction
+
+Being able to express specific sequences of calls and articulate the dependencies between them to achieve a particular goal is desirable in the context of API descriptions. The aim of the Arazzo Specification is to provide a mechanism that can define sequences of calls and their dependencies to be woven together and expressed in the context of delivering a particular outcome or set of outcomes when dealing with API descriptions (such as OpenAPI descriptions).
+
+The Arazzo Specification can articulate these workflows in a human-readable and machine-readable manner, thus improving the capability of API specifications to tell the story of the API in a manner that can improve the consuming developer experience.
+
+<!-- TOC depthFrom:1 depthTo:3 withLinks:1 updateOnSave:1 orderedList:0 -->
+## Table of Contents
+
+- [Definitions](#definitions)
+    - [Arazzo Description](#arazzo-description)
+- [Specification](#specification)
+  - [Versions](#versions)
+  - [Format](#format)
+  - [Arazzo Description Structure](#arazzo-description-structure)
+  - [Data Types](#data-types)
+  - [Relative References in URLs](#relative-references-in-urls)
+  - [Schema](#schema)
+    - [Arazzo Specification Object](#arazzo-specification-object)
+    - [Info Object](#info-object)
+    - [Source Description Object](#source-description-object)
+    - [Workflow Object](#workflow-object)
+    - [Step Object](#step-object)
+    - [Parameter Object](#parameter-object)
+    - [Success Action Object](#success-action-object)
+    - [Failure Action Object](#failure-action-object)
+    - [Components Object](#components-object)
+    - [Reusable Object](#reusable-object)
+    - [Criterion Object](#criterion-object)
+    - [Request Body Object](#request-body-object)
+    - [Payload Replacement Object](#payload-replacement-object)
+  - [Runtime Expressions](#runtime-expressions)
+  - [Specification Extensions](#specification-extensions)
+  - [Security Considerations](#security-considerations)
+  - [IANA Considerations](#iana-considerations)
+- [Appendix A: Revision History](#appendix-a-revision-history)
+<!-- /TOC -->
+
+## Definitions
+
+##### Arazzo Description
+A self-contained document (or set of documents) which defines or describes API workflows (specific sequence of calls to achieve a particular goal in the context of an API definition). An Arazzo Description uses and conforms to the Arazzo Specification, and `MUST` contain a valid Arazzo Specification version field (`arazzo`), an [info](#info-object) field, a `sourceDescriptions` field with at least one defined [Source Description](#source-description-object), and there `MUST` be at least one [Workflow](#workflow-object) defined in the `workflows` fixed field.
+
+## Specification
+
+### Versions
+
+The Arazzo Specification is versioned using a `major`.`minor`.`patch` versioning scheme. The `major`.`minor` portion of the version string (for example 1.0) SHALL designate the Arazzo feature set. `.patch` versions address errors in, or provide clarifications to, this document, not the feature set. The patch version SHOULD NOT be considered by tooling, making no distinction between 1.0.0 and 1.0.1 for example.
+
+### Format
+
+An Arazzo Description that conforms to the Arazzo Specification is itself a JSON object, which may be represented either in JSON or YAML format.
+
+All field names in the specification are **case sensitive**.
+This includes all fields that are used as keys in a map, except where explicitly noted that keys are **case insensitive**.
+
+In order to preserve the ability to round-trip between YAML and JSON formats, YAML version [1.2](https://yaml.org/spec/1.2/spec.html) is RECOMMENDED along with some additional constraints:
+
+- Tags MUST be limited to those allowed by the [JSON Schema ruleset](https://yaml.org/spec/1.2/spec.html#id2803231).
+- Keys used in YAML maps MUST be limited to a scalar string, as defined by the [YAML Failsafe schema ruleset](https://yaml.org/spec/1.2/spec.html#id2802346).
+
+### Arazzo Description Structure
+
+It is RECOMMENDED that the entry Arazzo document be named: `arazzo.json` or `arazzo.yaml`.
+
+An Arazzo Description MAY be made up of a single document or be divided into multiple, connected parts at the discretion of the author. If workflows from other documents are being referenced, they MUST be included as a [Source Description Object](#source-description-object). In a multi-document description, the document containing the [Arazzo Specification Object](#arazzo-specification-object) is known as the **entry Arazzo document**.
+
+### Data Types
+
+Data types in the Arazzo Specification are based on the types supported by the [JSON Schema Specification Draft 2020-12](https://tools.ietf.org/html/draft-bhutton-json-schema-00#section-4.2.1). Note that integer as a type is also supported and is defined as a JSON number without a fraction or exponent part.
+
+As defined by the [JSON Schema Validation vocabulary](https://tools.ietf.org/html/draft-bhutton-json-schema-validation-00#section-7), data types can have an optional modifier property: `format`. Arazzo additionally supports the formats (similar to the OpenAPI specification) to provide fine detail for primitive data types.
+
+The formats defined are:
+[`type`](#data-types) | `format` | Comments
+------ | -------- | --------
+`integer` | `int32` | signed 32 bits
+`integer` | `int64` | signed 64 bits (a.k.a long)
+`number` | `float` | |
+`number` | `double` | |
+`string` | `password` | A hint to UIs to obscure input.
+
+
+### Relative References in URLs
+
+Unless specified otherwise, all properties that are URLs MAY be relative references as defined by [RFC3986](https://tools.ietf.org/html/rfc3986#section-4.2).
+Unless specified otherwise, relative references are resolved using the URL of the referring document.
+
+### Schema
+
+In the following description, if a field is not explicitly **REQUIRED** or described with a MUST or SHALL, it can be considered OPTIONAL.
+
+#### Arazzo Specification Object
+
+This is the root object of the [Arazzo Description](#arazzo-description).
+
+##### Fixed Fields
+
+Field Name | Type | Description
+---|:---:|---
+<a name="arazzoVersion"></a>arazzo | `string` | **REQUIRED**. This string MUST be the [version number](#versions) of the Arazzo Specification that the Arazzo Description uses. The `arazzo` field MUST be used by tooling to interpret the Arazzo Description.
+<a name="arazzoInfo"></a>info | [Info Object](#info-object) | **REQUIRED**. Provides metadata about the workflows contain within the Arazzo Description. The metadata MAY be used by tooling as required.
+<a name="arazzoSources"></a>sourceDescriptions | [[Source Description Object](#source-description-object)] | **REQUIRED**. A list of source descriptions (such as an OpenAPI description) this Arazzo Description SHALL apply to. The list MUST have at least one entry.
+<a name="workflows"></a>workflows | [[Workflow Object](#workflow-object)] | **REQUIRED**. A list of workflows. The list MUST have at least one entry.
+<a name="components"></a>components | [Components Object](#components-object) | An element to hold various schemas for the Arazzo Description.
+
+This object MAY be extended with [Specification Extensions](#specification-extensions).
+
+##### Arazzo Specification Object Example
+
+```yaml
+arazzo: 1.0.0
+info:
+  title: A pet purchasing workflow
+  summary: This Arazzo Description showcases the workflow for how to purchase a pet through a sequence of API calls
+  description: |
+      This Arazzo Description walks you through the workflow and steps of `searching` for, `selecting`, and `purchasing` an available pet.
+  version: 1.0.1
+sourceDescriptions:
+- name: petStoreDescription
+  url: https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml
+  type: openapi
+
+workflows:
+- workflowId: loginUserAndRetrievePet
+  summary: Login User and then retrieve pets
+  description: This workflow lays out the steps to login a user and then retrieve pets
+  inputs:
+      type: object
+      properties:
+          username:
+              type: string
+          password:
+              type: string
+  steps:
+  - stepId: loginStep
+    description: This step demonstrates the user login step
+    operationId: loginUser
+    parameters:
+      # parameters to inject into the loginUser operation (parameter name must be resolvable at the referenced operation and the value is determined using {expression} syntax)
+      - name: username
+        in: query
+        value: $inputs.username
+      - name: password
+        in: query
+        value: $inputs.password
+    successCriteria:
+      # assertions to determine step was successful
+      - condition: $statusCode == 200
+    outputs:
+      # outputs from this step
+      tokenExpires: $response.header.X-Expires-After
+      rateLimit: $response.header.X-Rate-Limit
+      sessionToken: $response.body
+  - stepId: getPetStep
+    description: retrieve a pet by status from the GET pets endpoint
+    operationPath: '{$sourceDescriptions.petstoreDescription.url}#/paths/~1pet~1findByStatus/get'
+    parameters:
+      - name: status
+        in: query
+        value: 'available'
+      - name: Authorization
+        in: header
+        value: $steps.loginUser.outputs.sessionToken
+    successCriteria:
+      - condition: $statusCode == 200
+    outputs:
+      # outputs from this step
+      availablePets: $response.body
+  outputs:
+      available: $steps.getPetStep.outputs.availablePets
+```
+
+#### Info Object
+
+The object provides metadata about API workflows defined in this Arazzo document.
+The metadata MAY be used by the clients if needed.
+
+##### Fixed Fields
+
+Field Name | Type | Description
+---|:---:|---
+<a name="infoTitle"></a>title | `string` | **REQUIRED**. A human readable title of the Arazzo Description.
+<a name="infoSummary"></a>summary | `string` | A short summary of the Arazzo Description.
+<a name="infoDescription"></a>description | `string` | A description of the purpose of the workflows defined. [CommonMark syntax](https://spec.commonmark.org/) MAY be used for rich text representation.
+<a name="infoVersion"></a>version | `string` | **REQUIRED**. The version identifier of the Arazzo document (which is distinct from the [Arazzo Specification version](#versions)).
+
+
+This object MAY be extended with [Specification Extensions](#specification-extensions).
+
+##### Info Object Example
+
+```yaml
+title: A pet purchasing workflow
+summary: This workflow showcases how to purchase a pet through a sequence of API calls
+description: |
+    This workflow walks you through the steps of searching for, selecting, and purchasing an available pet.
+version: 1.0.1
+```
+
+#### Source Description Object
+
+Describes a source description (such as an OpenAPI description) that will be referenced by one or more workflows described within an Arazzo Description.
+
+An object storing a map between named description keys and location URLs to the source descriptions (such as an OpenAPI description) this Arazzo Description SHALL apply to. Each source location `string` MUST be in the form of a URI-reference as defined by [RFC3986](https://tools.ietf.org/html/rfc3986#section-4.1).
+
+##### Fixed Fields
+
+Field Name | Type | Description
+---|:---:|---
+<a name="sourceName"></a>name | `string` | **REQUIRED**. A unique name for the source description. Tools and libraries MAY use the `name` to uniquely identify a source description, therefore, it is RECOMMENDED to follow common programming naming conventions. SHOULD conform to the regular expression `[A-Za-z0-9_\-]+`.
+<a name="sourceURL"></a>url | `string` | **REQUIRED**. A URL to a source description to be used by a workflow. If a relative reference is used, it MUST be in the form of a URI-reference as defined by [RFC3986](https://tools.ietf.org/html/rfc3986#section-4.2).
+<a name="sourceType"></a>type | `string` | The type of source description. Possible values are `"openapi"` or `"arazzo"`.
+
+
+This object MAY be extended with [Specification Extensions](#specification-extensions).
+
+##### Source Description Object Example
+
+```yaml
+name: petStoreDescription
+url: https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml
+type: openapi
+```
+
+#### Workflow Object
+
+Describes the steps to be taken across one or more APIs to achieve an objective. The workflow object MAY define inputs needed in order to execute workflow steps, where the defined steps represent a call to an API operation or another workflow, and a set of outputs.
+
+##### Fixed Fields
+
+Field Name | Type | Description
+---|:---:|---
+<a name="workflowId"></a>workflowId | `string` | **REQUIRED**. Unique string to represent the workflow. The id MUST be unique amongst all workflows described in the Arazzo Description. The `workflowId` value is **case-sensitive**. Tools and libraries MAY use the `workflowId` to uniquely identify a workflow, therefore, it is RECOMMENDED to follow common programming naming conventions. SHOULD conform to the regular expression `[A-Za-z0-9_\-]+`.
+<a name="workflowSummary"></a>summary | `string` | A summary of the purpose or objective of the workflow.
+<a name="workflowDescription"></a>description | `string` | A description of the workflow. [CommonMark syntax](https://spec.commonmark.org/) MAY be used for rich text representation.
+<a name="workflowInputs"></a>inputs | `JSON Schema` | A JSON Schema 2020-12 object representing the input parameters used by this workflow.
+<a name="dependsOn"></a>dependsOn | [`string`] | A list of workflows that MUST be completed before this workflow can be processed. Each value provided MUST be a `workflowId`. If the workflow depended on is defined within the current Workflow Document, then specify the `workflowId` of the relevant local workflow. If the workflow is defined in a separate Arazzo Document then the workflow MUST be defined in the `sourceDescriptions` and the `workflowId` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g., `$sourceDescriptions.<name>.<workflowId>`) to avoid ambiguity or potential clashes.
+<a name="workflowSteps"></a>steps | [[Step Object](#step-object)] | **REQUIRED**. An ordered list of steps where each step represents a call to an API operation or to another workflow.
+<a name="workflowSuccessActions"></a>successActions | [[Success Action Object](#success-action-object) \| [Reusable Object](#reusable-object)] | A list of success actions that are applicable for all steps described under this workflow. These success actions can be overridden at the step level but cannot be removed there. If a Reusable Object is provided, it MUST link to success actions defined in the [components/successActions](#components-object) of the current Arazzo document. The list MUST NOT include duplicate success actions.
+<a name="workflowFailureActions"></a>failureActions | [[Failure Action Object](#failure-action-object) \| [Reusable Object](#reusable-object)] | A list of failure actions that are applicable for all steps described under this workflow. These failure actions can be overridden at the step level but cannot be removed there. If a Reusable Object is provided, it MUST link to failure actions defined in the [components/failureActions](#components-object) of the current Arazzo document. The list MUST NOT include duplicate failure actions.
+<a name="workflowOutputs"></a>outputs | Map[`string`, {expression}] |  A map between a friendly name and a dynamic output value. The name MUST use keys that match the regular expression: `^[a-zA-Z0-9\.\-_]+$`.
+<a name="workflowParameters"></a>parameters | [[Parameter Object](#parameter-object) \| [Reusable Object](#reusable-object)] | A list of parameters that are applicable for all steps described under this workflow. These parameters can be overridden at the step level but cannot be removed there. Each parameter MUST be passed to an operation or workflow as referenced by `operationId`, `operationPath`, or `workflowId` as specified within each step. If a Reusable Object is provided, it MUST link to a parameter defined in the [components/parameters](#components-object) of the current Arazzo document. The list MUST NOT include duplicate parameters.
+
+
+This object MAY be extended with [Specification Extensions](#specification-extensions).
+
+##### Workflow Object Example
+
+```yaml
+workflowId: loginUser
+summary: Login User
+description: This workflow lays out the steps to login a user
+inputs:
+    type: object
+    properties:
+        username:
+            type: string
+        password:
+            type: string
+steps:
+  - stepId: loginStep
+    description: This step demonstrates the user login step
+    operationId: loginUser
+    parameters:
+      # parameters to inject into the loginUser operation (parameter name must be resolvable at the referenced operation and the value is determined using {expression} syntax)
+      - name: username
+        in: query
+        value: $inputs.username
+      - name: password
+        in: query
+        value: $inputs.password
+    successCriteria:
+        # assertions to determine step was successful 
+        - condition: $statusCode == 200
+    outputs:
+        # outputs from this step
+        tokenExpires: $response.header.X-Expires-After
+        rateLimit: $response.header.X-Rate-Limit
+outputs:
+    tokenExpires: $steps.loginStep.outputs.tokenExpires
+```
+
+#### Step Object
+
+Describes a single workflow step which MAY be a call to an API operation ([OpenAPI Operation Object](https://spec.openapis.org/oas/latest.html#operation-object)) or another [Workflow Object](#workflow-object).
+
+##### Fixed Fields
+
+Field Name | Type | Description
+---|:---:|---
+<a name="stepDescription"></a>description | `string` | A description of the step. [CommonMark syntax](https://spec.commonmark.org/) MAY be used for rich text representation.
+<a name="stepId"></a>stepId | `string` | **REQUIRED**. Unique string to represent the step. The `stepId` MUST be unique amongst all steps described in the workflow. The `stepId` value is **case-sensitive**. Tools and libraries MAY use the `stepId` to uniquely identify a workflow step, therefore, it is RECOMMENDED to follow common programming naming conventions. SHOULD conform to the regular expression `[A-Za-z0-9_\-]+`.
+<a name="stepOperationId"></a>operationId | `string` | The name of an existing, resolvable operation, as defined with a unique `operationId` and existing within one of the `sourceDescriptions`. The referenced operation will be invoked by this workflow step. If multiple (non `arazzo` type) `sourceDescriptions` are defined, then the `operationId` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g., `$sourceDescriptions.<name>.<operationId>`) to avoid ambiguity or potential clashes. This field is mutually exclusive of the `operationPath` and `workflowId` fields respectively.
+<a name="stepOperationPath"></a>operationPath | `string` | A reference to a [Source Description Object](#source-description-object) combined with a [JSON Pointer](https://tools.ietf.org/html/rfc6901) to reference an operation. This field is mutually exclusive of the `operationId` and `workflowId` fields respectively. The operation being referenced MUST be described within one of the `sourceDescriptions` descriptions. A [Runtime Expression](#runtime-expressions) syntax MUST be used to identify the source description document. If the referenced operation has an `operationId` defined then the `operationId` SHOULD be preferred over the `operationPath`.
+<a name="stepWorkflowId"></a>workflowId | `string` | The [workflowId](#fixed-fields-2) referencing an existing workflow within the Arazzo Description. If the referenced workflow is contained within an `arazzo` type `sourceDescription`, then the `workflowId` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g., `$sourceDescriptions.<name>.<workflowId>`) to avoid ambiguity or potential clashes. The field is mutually exclusive of the `operationId` and `operationPath` fields respectively.
+<a name="stepParameters"></a>parameters | [[Parameter Object](#parameter-object) \| [Reusable Object](#reusable-object)] | A list of parameters that MUST be passed to an operation or workflow as referenced by `operationId`, `operationPath`, or `workflowId`. If a parameter is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a parameter defined in the [components/parameters](#components-object) of the current Arazzo document. The list MUST NOT include duplicate parameters.
+<a name="stepRequestBody"></a>requestBody | [Request Body Object](#request-body-object) | The request body to pass to an operation as referenced by `operationId` or `operationPath`. The `requestBody` is fully supported in HTTP methods where the HTTP 1.1 specification [RFC9110](https://tools.ietf.org/html/rfc9110#section-9.3) explicitly defines semantics for "content" like request bodies, such as within POST, PUT, and PATCH methods. For methods where the HTTP specification provides less clarity—such as GET, HEAD, and DELETE—the use of `requestBody` is permitted but does not have well-defined semantics. In these cases, its use SHOULD be avoided if possible.
+<a name="stepSuccessCriteria"></a>successCriteria | [[Criterion Object](#criterion-object)] | A list of assertions to determine the success of the step. Each assertion is described using a [Criterion Object](#criterion-object). All assertions `MUST` be satisfied for the step to be deemed successful.
+<a name="stepOnSuccess"></a>onSuccess | [[Success Action Object](#success-action-object) \| [Reusable Object](#reusable-object)] | An array of success action objects that specify what to do upon step success. If omitted, the next sequential step shall be executed as the default behavior. If multiple success actions have similar `criteria`, the first sequential action matching the criteria SHALL be the action executed. If a success action is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a success action defined in the [components](#components-object) of the current Arazzo document. The list MUST NOT include duplicate success actions.
+<a name="stepOnFailure"></a>onFailure | [[Failure Action Object](#failure-action-object) \| [Reusable Object](#reusable-object)] | An array of failure action objects that specify what to do upon step failure. If omitted, the default behavior is to break and return. If multiple failure actions have similar `criteria`, the first sequential action matching the criteria SHALL be the action executed. If a failure action is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a failure action defined in the [components](#components-object) of the current Arazzo document. The list MUST NOT include duplicate failure actions.
+<a name="stepOutputs"></a>outputs | Map[`string`, {expression}] |  A map between a friendly name and a dynamic output value defined using a [Runtime Expression](#runtime-expressions). The name MUST use keys that match the regular expression: `^[a-zA-Z0-9\.\-_]+$`.
+
+This object MAY be extended with [Specification Extensions](#specification-extensions).
+
+##### Step Object Example
+
+**Single step**
+
+```yaml
+stepId: loginStep
+description: This step demonstrates the user login step
+operationId: loginUser
+parameters:
+    # parameters to inject into the loginUser operation (parameter name must be resolvable at the referenced operation and the value is determined using {expression} syntax)
+    - name: username
+      in: query
+      value: $inputs.username
+    - name: password
+      in: query
+      value: $inputs.password
+successCriteria:
+    # assertions to determine step was successful
+    - condition: $statusCode == 200
+outputs:
+    # outputs from this step
+    tokenExpires: $response.header.X-Expires-After
+    rateLimit: $response.header.X-Rate-Limit
+```
+
+**Multiple steps**
+
+```yaml
+steps:
+  - stepId: loginStep
+    description: This step demonstrates the user login step
+    operationId: loginUser
+    parameters:
+        # parameters to inject into the loginUser operation (parameter name must be resolvable at the referenced operation and the value is determined using {expression} syntax)
+      - name: username
+        in: query
+        value: $inputs.username
+      - name: password
+        in: query
+        value: $inputs.password
+    successCriteria:
+        # assertions to determine step was successful
+      - condition: $statusCode == 200
+    outputs:
+        # outputs from this step
+        tokenExpires: $response.header.X-Expires-After
+        rateLimit: $response.header.X-Rate-Limit
+        sessionToken: $response.body
+  - stepId: getPetStep
+    description: retrieve a pet by status from the GET pets endpoint
+    operationPath: '{$sourceDescriptions.petStoreDescription.url}#/paths/~1pet~1findByStatus/get'
+    parameters:
+      - name: status
+        in: query
+        value: 'available'
+      - name: Authorization
+        in: header
+        value: $steps.loginUser.outputs.sessionToken
+    successCriteria:
+      - condition: $statusCode == 200
+    outputs:
+        # outputs from this step
+        availablePets: $response.body
+```
+
+#### Parameter Object
+
+Describes a single step parameter. A unique parameter is defined by the combination of a `name` and `in` fields. There are four possible locations specified by the `in` field:
+  - path - Used together with OpenAPI style [Path Templating](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#path-templating), where the parameter value is actually part of the operation's URL. This does not include the host or base path of the API. For example, in `/items/{itemId}`, the path parameter is `itemId`.
+  - query - Parameters that are appended to the URL. For example, in `/items?id=###`, the query parameter is `id`.
+  - header - Custom headers that are expected as part of the request. Note that [RFC9110](https://tools.ietf.org/html/rfc9110#name-field-names) states field names (which includes header) are case-insensitive.
+  - cookie - Used to pass a specific cookie value to the source API.
+
+##### Fixed Fields
+Field Name | Type | Description
+---|:---:|---
+<a name="parameterName"></a> name | `string` | **REQUIRED**. The name of the parameter. Parameter names are _case sensitive_.
+<a name="parameterIn"></a> in | `string` | The location of the parameter. Possible values are `"path"`, `"query"`, `"header"`, or `"cookie"`. When the step in context specifies a `workflowId`, then all parameters map to workflow inputs. In all other scenarios (e.g., a step specifies an `operationId`), the `in` field MUST be specified.
+<a name="parameterValue"></a> value | Any \| {expression} | **REQUIRED**. The value to pass in the parameter. The value can be a constant or a [Runtime Expression](#runtime-expressions) to be evaluated and passed to the referenced operation or workflow.
+
+This object MAY be extended with [Specification Extensions](#specification-extensions).
+
+##### Parameter Object Example
+**Query Example**
+
+```yaml
+- name: username
+  in: query
+  value: $inputs.username
+```
+
+**Header Example**
+
+```yaml
+- name: X-Api-Key
+  in: header
+  value: $inputs.x-api-key
+```
+
+#### Success Action Object
+
+A single success action which describes an action to take upon success of a workflow step. There are two possible values for the `type` field.
+  - end - The workflow ends, and context returns to the caller with applicable outputs
+  - goto - A one-way transfer of workflow control to the specified label (either a `workflowId` or `stepId`)
+
+##### Fixed Fields
+Field Name | Type | Description
+---|:---:|---
+<a name="successActionName"></a> name | `string` | **REQUIRED**. The name of the success action. Names are _case sensitive_.
+<a name="successActionType"></a> type | `string` | **REQUIRED**. The type of action to take. Possible values are `"end"` or `"goto"`.
+<a name="successWorkflowId"></a> workflowId | `string` | The [workflowId](#fixed-fields-2) referencing an existing workflow within the Arazzo Description to transfer to upon success of the step. This field is only relevant when the `type` field value is `"goto"`.
+If the referenced workflow is contained within an `arazzo` type `sourceDescription`, then the `workflowId` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g., `$sourceDescriptions.<name>.<workflowId>`) to avoid ambiguity or potential clashes.  This field is mutually exclusive to `stepId`.
+<a name="successStepId"></a> stepId | `string` | The `stepId` to transfer to upon success of the step. This field is only relevant when the `type` field value is `"goto"`. The referenced `stepId` MUST be within the current workflow. This field is mutually exclusive to `workflowId`.
+<a name="successCriteria"></a> criteria | [[Criterion Object](#criterion-object)] | A list of assertions to determine if this action SHALL be executed. Each assertion is described using a [Criterion Object](#criterion-object). All criteria assertions `MUST` be satisfied for the action to be executed.
+
+
+
+This object MAY be extended with [Specification Extensions](#specification-extensions).
+
+##### Success Action Object Example
+
+```yaml
+name: JoinWaitingList
+type: goto
+stepId: joinWaitingListStep
+criteria:
+    # assertions to determine if this success action should be executed
+    - context: $response.body
+      condition: $[?count(@.pets) > 0]
+      type: jsonpath
+```
+
+#### Failure Action Object
+
+A single failure action which describes an action to take upon failure of a workflow step. There are three possible values for the `type` field.
+  - end - The workflow ends, and context returns to the caller with applicable outputs
+  - retry - The current step will be retried. The retry will be constrained by the `retryAfter` and `retryLimit` fields. If a `stepId` or `workflowId` are specified, then the reference is executed and the context is returned, after which the current step is retried.
+  - goto - A one-way transfer of workflow control to the specified label (either a `workflowId` or `stepId`)
+
+##### Fixed Fields
+Field Name | Type | Description
+---|:---:|---
+<a name="failureActionName"></a> name | `string` | **REQUIRED**. The name of the failure action. Names are _case sensitive_.
+<a name="failureActionType"></a> type | `string` | **REQUIRED**. The type of action to take. Possible values are `"end"`, `"retry"`, or `"goto"`.
+<a name="failureWorkflowId"></a> workflowId | `string` | The [workflowId](#fixed-fields-2) referencing an existing workflow within the Arazzo Description to transfer to upon failure of the step. This field is only relevant when the `type` field value is `"goto"` or `"retry"`. If the referenced workflow is contained within an `arazzo` type `sourceDescription`, then the `workflowId` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g., `$sourceDescriptions.<name>.<workflowId>`) to avoid ambiguity or potential clashes.  This field is mutually exclusive to `stepId`. When used with `"retry"`, context transfers back upon completion of the specified workflow.
+<a name="failureStepId"></a> stepId | `string` | The `stepId` to transfer to upon failure of the step. This field is only relevant when the `type` field value is `"goto"` or `"retry"`. The referenced `stepId` MUST be within the current workflow. This field is mutually exclusive to `workflowId`. When used with `"retry"`, context transfers back upon completion of the specified step.
+<a name="failureRetryAfter"></a> retryAfter | `number` | A non-negative decimal indicating the seconds to delay after the step failure before another attempt SHALL be made. **Note:** if an HTTP [Retry-After](https://tools.ietf.org/html/rfc9110.html#name-retry-after) response header was returned to a step from a targeted operation, then it SHOULD overrule this particular field value. This field only applies when the `type` field value is `"retry"`.
+<a name="failureRetryLimit"></a> retryLimit | `integer` | A non-negative integer indicating how many attempts to retry the step MAY be attempted before failing the overall step. If not specified then a single retry SHALL be attempted. This field only applies when the `type` field value is `"retry"`. The `retryLimit` MUST be exhausted prior to executing subsequent failure actions.
+<a name="failureCriteria"></a> criteria | [[Criterion Object](#criterion-object)] | A list of assertions to determine if this action SHALL be executed. Each assertion is described using a [Criterion Object](#criterion-object).
+
+
+This object MAY be extended with [Specification Extensions](#specification-extensions).
+
+##### Failure Action Object Example
+
+```yaml
+name: retryStep
+type: retry
+retryAfter: 1
+retryLimit: 5
+criteria:
+    # assertions to determine if this action should be executed
+    - condition: $statusCode == 503
+```
+
+#### Components Object
+
+Holds a set of reusable objects for different aspects of the Arazzo Specification. All objects defined within the components object will have no effect on the Arazzo Description unless they are explicitly referenced from properties outside the components object.
+
+Components are scoped to the Arazzo document they are defined in. For example, if a step defined in Arazzo document "A" references a workflow defined in Arazzo document "B", the components in "A" are not considered when evaluating the workflow referenced in "B".
+
+##### Fixed Fields
+
+Field Name | Type | Description
+---|:---|---
+<a name="componentInputs"></a> inputs | Map[`string`, `JSON Schema`] | An object to hold reusable JSON Schema objects to be referenced from workflow inputs.
+<a name="componentParameters"></a>parameters | Map[`string`, [Parameter Object](#parameter-object)] | An object to hold reusable Parameter Objects
+<a name="componentSuccessActions"></a>successActions | Map[`string`, [Success Action Object](#success-action-object)] | An object to hold reusable Success Actions Objects.
+<a name="componentFailureActions"></a>failureActions | Map[`string`, [Failure Action Object](#failure-action-object)] | An object to hold reusable Failure Actions Objects.
+
+This object MAY be extended with [Specification Extensions](#specification-extensions).
+
+
+All the fixed fields declared above are objects that MUST use keys that match the regular expression: `^[a-zA-Z0-9\.\-_]+$`. The key is used to refer to the input or parameter in other parts of the Workflow Description.
+
+Field Name Examples:
+
+```
+User
+User_1
+User_Name
+user-name
+my.org.User
+```
+
+##### Components Object Example
+
+```yaml
+components:
+  parameters:
+    storeId:
+      name: storeId
+      in: header
+      value: $inputs.x-store-id
+  inputs:
+    pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+  failureActions:
+    refreshToken:
+      name: refreshExpiredToken
+      type: retry
+      retryAfter: 1
+      retryLimit: 5
+      workflowId: refreshTokenWorkflowId
+      criteria:
+          # assertions to determine if this action should be executed
+          - condition: $statusCode == 401       
+```
+
+```json
+"components": {
+  "parameters": {
+    "storeId": {
+      "name": "storeId",
+      "in": "header",
+      "value": "$inputs.x-store-id"
+    }
+  },
+  "inputs": {
+    "pagination": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "pageSize": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    }
+  },
+  "failureActions": {
+    "refreshToken": {
+      "name": "refreshExpiredToken",
+      "type": "retry",
+      "retryAfter": 1,
+      "retryLimit": 5,
+      "workflowId": "refreshTokenWorkflowId",
+      "criteria": [
+        {
+          "condition": "{$statusCode == 401}"
+        }
+      ]
+    }
+  }
+}
+```
+
+#### Reusable Object
+
+A simple object to allow referencing of objects contained within the [Components Object](#components-object). It can be used from locations within steps or workflows in the Arazzo Description. **Note** - Input Objects MUST use standard JSON Schema referencing via the `$ref` keyword while all non JSON Schema objects use this object and its expression based referencing mechanism.
+
+
+##### Fixed Fields
+Field Name | Type | Description
+---|:---:|---
+<a name="reusableObjectReference"></a>reference | `{expression}` | **REQUIRED**. A [Runtime Expression](#runtime-expressions) used to reference the desired object.
+<a name="reusableObjectValue"></a>value | `string` | Sets a value of the referenced parameter. This is only applicable for parameter object references.
+
+This object cannot be extended with additional properties and any properties added MUST be ignored.
+
+##### Reusable Object Example
+
+```yaml
+  reference: $components.successActions.notify
+```
+
+```json
+  {
+    "reference": "$components.successActions.notify"
+  }
+```
+
+```yaml
+  reference: $components.parameters.page
+  value: 1
+```
+
+```json
+  {
+    "reference": "$components.parameters.page",
+    "value": 1
+  }
+```
+
+#### Criterion Object
+
+An object used to specify the context, conditions, and condition types that can be used to prove or satisfy assertions specified in [Step Object](#step-object) `successCriteria`, [Success Action Object](#success-action-object) `criteria`, and [Failure Action Object](#failure-action-object) `criteria`.
+
+There are four flavors of conditions supported:
+- simple - where basic literals, operators, and loose comparisons are used in combination with [Runtime Expressions](#runtime-expressions).
+- regex - where a regex pattern is applied on the supplied context. The context is defined by a [Runtime Expression](#runtime-expressions).
+- jsonpath - where a JSONPath expression is applied. The root node context is defined by a [Runtime Expression](#runtime-expressions).
+- xpath - where an XPath expression is applied. The root node context is defined by a [Runtime Expression](#runtime-expressions).
+
+##### Literals
+As part of a condition expression, you can use `boolean`, `null`, `number`, or `string` data types.
+
+Type | Literal value
+---|---
+`boolean` | `true` or `false`
+`null` |  `null`
+`number` | Any number format supported in [Data Types](#data-types)
+`string` | Strings MUST use single quotes (') around the string. To use a literal single quote, escape the literal single quote using an additional single quote ('').
+
+##### Operators
+Operator | Description
+---|---
+`<`| Less than
+`<=`| Less than or equal
+`>`| Greater than
+`>=`| Greater than or equal
+`==`| Equal
+`!=`| Not equal
+`!`| Not
+`&&`| And
+<code>\|\|</code>| Or
+`()`| Logical Grouping
+`[]`| Index (0-based)
+`.`| Property de-reference
+
+String comparisons `MUST` be case insensitive.
+
+##### Fixed Fields
+Field Name | Type | Description
+---|:---:|---
+<a name="criterionContext"></a>context | `{expression}` | A [Runtime Expression](#runtime-expressions) used to set the context for the condition to be applied on. If `type` is specified, then the `context` MUST be provided (e.g. `$response.body` would set the context that a JSONPath query expression could be applied to).
+<a name="criterionCondition"></a>condition | `string` | **REQUIRED**. The condition to apply. Conditions can be simple (e.g. `$statusCode == 200` which applies an operator on a value obtained from a runtime expression), or a regex, or a JSONPath expression. For regex or JSONPath, the `type` and `context` MUST be specified.
+<a name="criterionType"></a>type | `string` \| [Criterion Expression Type Object](#criterion-expression-type-object) | The type of condition to be applied. If specified, the options allowed are `simple`, `regex`, `jsonpath` or `xpath`. If omitted, then the condition is assumed to be `simple`, which at most combines literals, operators and [Runtime Expressions](#runtime-expressions). If `jsonpath`, then the expression MUST conform to [JSONPath](https://tools.ietf.org/html/rfc9535). If `xpath` the expression MUST conform to [XML Path Language 3.1](https://www.w3.org/TR/xpath-31/#d2e24229). Should other variants of JSONPath or XPath be required, then a [Criterion Expression Type Object](#criterion-expression-type-object) MUST be specified.
+
+
+This object MAY be extended with [Specification Extensions](#specification-extensions).
+
+##### Criterion Object Example
+
+**Simple Condition Example**
+
+```yaml
+- condition: $statusCode == 200
+```
+
+**Regex Condition Example**
+```yaml
+- context: $statusCode
+  condition: '^200$'
+  type: regex
+```
+
+**JSONPath Condition Example**
+```yaml
+- context: $response.body
+  condition: $[?count(@.pets) > 0]
+  type: jsonpath
+```
+
+#### Criterion Expression Type Object
+
+An object used to describe the type and version of an expression used within a [Criterion Object](#criterion-object). If this object is not defined, then the following defaults apply:
+ - JSONPath as described by [RFC9535](https://tools.ietf.org/html/rfc9535)
+ - XPath as described by [XML Path Language 3.1](https://www.w3.org/TR/xpath-31)
+
+Defining this object gives the ability to utilize tooling compatible with older versions of either JSONPath or XPath.
+
+##### Fixed Fields
+Field Name | Type | Description
+---|:---:|---
+<a name="criterionExpressionType"></a>type | `string` | **REQUIRED**. The type of condition to be applied. The options allowed are `jsonpath` or `xpath`. 
+<a name="criterionExpressionVersion"></a>version | `string` | **REQUIRED**. A short hand string representing the version of the expression type being used. The allowed values for JSONPath are `draft-goessner-dispatch-jsonpath-00`. The allowed values for XPath are `xpath-30`, `xpath-20`, or `xpath-10`.
+
+This object MAY be extended with [Specification Extensions](#specification-extensions).
+
+##### Criterion Expression Type Example
+
+**JSONPath Example**
+```yaml
+  type: jsonpath
+  version: draft-goessner-dispatch-jsonpath-00
+```
+
+**XPath Example**
+```yaml
+  type: xpath
+  version: xpath-30
+```
+
+#### Request Body Object
+
+A single request body describing the `Content-Type` and request body content to be passed by a step to an operation.
+
+##### Fixed Fields
+Field Name | Type | Description
+---|:---:|---
+<a name="requestBodyContentType"></a>contentType | `string` | The Content-Type for the request content. If omitted then refer to Content-Type specified at the targeted operation to understand serialization requirements.
+<a name="requestBodyPayload"></a>payload | Any | A value representing the request body payload. The value can be a literal value or can contain [Runtime Expressions](#runtime-expressions) which MUST be evaluated prior to calling the referenced operation. To represent examples of media types that cannot be naturally represented in JSON or YAML, use a string value to contain the example, escaping where necessary.
+<a name="requestBodyReplacements"></a>replacements | [[Payload Replacement Object](#payload-replacement-object)] | A list of locations and values to set within a payload.
+
+This object MAY be extended with [Specification Extensions](#specification-extensions).
+
+##### RequestBody Object Example
+
+**JSON Templated Example**
+```yaml
+  contentType: application/json
+  payload: |
+    {
+      "petOrder": {
+        "petId": "{$inputs.pet_id}",
+        "couponCode": "{$inputs.coupon_code}",
+        "quantity": "{$inputs.quantity}",
+        "status": "placed",
+        "complete": false
+      }
+    }
+```
+
+**JSON Object Example**
+```yaml
+  contentType: application/json
+  payload: 
+    petOrder:
+      petId: $inputs.pet_id
+      couponCode: $inputs.coupon_code
+      quantity: $inputs.quantity
+      status: placed
+      complete: false
+```
+
+**Complete Runtime Expression**
+```yaml
+  contentType: application/json
+  payload: $inputs.petOrderRequest
+```
+
+**XML Templated Example**
+```yaml
+  contentType: application/xml
+  payload: |
+    <petOrder>
+      <petId>{$inputs.pet_id}</petId>
+      <couponCode>{$inputs.coupon_code}</couponCode>
+      <quantity>{$inputs.quantity}</quantity>
+      <status>placed</status>
+      <complete>false</complete>
+    </petOrder>
+```
+
+**Form Data Example**
+```yaml
+  contentType: application/x-www-form-urlencoded
+  payload: 
+    client_id: $inputs.clientId
+    grant_type: $inputs.grantType
+    redirect_uri: $inputs.redirectUri
+    client_secret: $inputs.clientSecret
+    code: $steps.browser-authorize.outputs.code
+    scope: $inputs.scope  
+``` 
+
+**Form Data String Example**
+```yaml
+  contentType: application/x-www-form-urlencoded
+  payload: "client_id={$inputs.clientId}&grant_type={$inputs.grantType}&redirect_uri={$inputs.redirectUri}&client_secret={$inputs.clientSecret}&code{$steps.browser-authorize.outputs.code}&scope=$inputs.scope}"
+```
+
+#### Payload Replacement Object
+Describes a location within a payload (e.g., a request body) and a value to set within the location. 
+
+##### Fixed Fields
+Field Name | Type | Description
+---|:---:|---
+<a name="payloadReplacementTarget"></a>target | `string` | **REQUIRED**. A [JSON Pointer](https://tools.ietf.org/html/rfc6901) or [XPath Expression](https://www.w3.org/TR/xpath-31/#id-expressions) which MUST be resolved against the request body. Used to identify the location to inject the `value`.
+<a name="payloadReplacementValue"></a> value | Any \| {expression} | **REQUIRED**. The value set within the target location. The value can be a constant or a [Runtime Expression](#runtime-expressions) to be evaluated and passed to the referenced operation or workflow.
+
+This object MAY be extended with [Specification Extensions](#specification-extensions).
+
+##### Payload Replacement Object Example
+
+**Runtime Expression Example**
+```yaml
+  target: /petId
+  value: $inputs.pet_id
+```
+
+**Literal Example**
+```yaml
+  target: /quantity
+  value: 10
+```
+
+
+### Runtime Expressions
+A runtime expression allows values to be defined based on information that will be available within the HTTP message in an actual API call, or within objects serialized from the Arazzo document such as [workflows](#workflow-object) or [steps](#step-object).
+
+The runtime expression is defined by the following [ABNF](https://tools.ietf.org/html/rfc5234) syntax:
+
+```abnf
+      expression = ( "$url" / "$method" / "$statusCode" / "$request." source / "$response." source / "$inputs." name / "$outputs." name / "$steps." name / "$workflows." name / "$sourceDescriptions." name / "$components." name / "$components.parameters." parameter-name)
+      parameter-name = name ; Reuses 'name' rule for parameter names
+      source = ( header-reference / query-reference / path-reference / body-reference )
+      header-reference = "header." token
+      query-reference = "query." name
+      path-reference = "path." name
+      body-reference = "body" ["#" json-pointer ]
+      json-pointer    = *( "/" reference-token )
+      reference-token = *( unescaped / escaped )
+      unescaped       = %x00-2E / %x30-7D / %x7F-10FFFF
+         ; %x2F ('/') and %x7E ('~') are excluded from 'unescaped'
+      escaped         = "~" ( "0" / "1" )
+        ; representing '~' and '/', respectively
+      name = *( CHAR )
+      token = 1*tchar
+      tchar = "!" / "#" / "$" / "%" / "&" / "'" / "*" / "+" / "-" / "." /
+        "^" / "_" / "`" / "|" / "~" / DIGIT / ALPHA
+```
+
+#### Examples
+
+Source Location | example expression  | notes
+---|:---|:---|
+HTTP Method            | `$method`         | The allowable values for the `$method` will be those for the HTTP operation.
+Requested media type | `$request.header.accept`        |
+Request parameter      | `$request.path.id`        | Request parameters MUST be declared in the `parameters` section of the parent operation or they cannot be evaluated. This includes request headers.
+Request body property   | `$request.body#/user/uuid`   | In operations which accept payloads, references may be made to portions of the `requestBody` or the entire body.
+Request URL            | `$url`            |
+Response value         | `$response.body#/status`       |  In operations which return payloads, references may be made to portions of the response body or the entire body.
+Response header        | `$response.header.Server` |  Single header values only are available
+workflow input        | `$inputs.username` or `$workflows.foo.inputs.username` |  Single input values only are available
+Step output value        | `$steps.someStepId.outputs.pets` |  In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$steps.someStepId.outputs.pets#/0/id`) or the entire body.
+Workflow output value | `$outputs.bar` or `$workflows.foo.outputs.bar` |  In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$workflows.foo.outputs.mappedResponse#/name`) or the entire body.
+Components parameter | `$components.parameters.foo` | Accesses a foo parameter defined within the Components Object.
+
+Runtime expressions preserve the type of the referenced value.
+Expressions can be embedded into string values by surrounding the expression with `{}` curly braces.
+
+
+### Specification Extensions
+
+While the Arazzo Specification tries to accommodate most use cases, additional data can be added to extend the specification at certain points.
+
+The extension properties are implemented as patterned fields that are always prefixed by `"x-"`.
+
+Field Pattern | Type | Description
+---|:---:|---
+<a name="arazzoExtensions"></a>^x- | Any | Allows extensions to the Arazzo Specification. The field name MUST begin with `x-`, for example, `x-internal-id`. Field names beginning `x-oai-`, `x-oas-`, and `x-arazzo` are reserved for uses defined by the [OpenAPI Initiative](https://www.openapis.org/). The value MAY be `null`, a primitive, an array or an object.
+
+The extensions may or may not be supported by the available tooling, but those may be extended as well to add requested support (if tools are internal or open-sourced).
+
+## Security Considerations
+
+The Arazzo Specification does not enforce a security mechanism. Security is left to the implementer, though TLS, specifically HTTPS may be recommended for exchanging sensitive workflows.
+
+Arazzo Descriptions can be JSON or YAML values. As such, all security considerations defined in [RFC8259](https://tools.ietf.org/html/rfc8259) and within YAML version [1.2](https://yaml.org/spec/1.2/spec.html) apply.
+
+Arazzo Descriptions are frequently written by untrusted third parties, to be deployed on public Internet servers. Processing an Arazzo Description can cause both safe and unsafe operations to be performed on arbitrary network resources. It is the responsibility of the description consumer to ensure that the operations performed are not harmful.
+
+## IANA Considerations
+
+The proposed MIME media types for the Arazzo Specification are described below.
+
+### application/vnd.oai.workflows
+
+The default (or general) MIME type for Arazzo documents (e.g. workflows) is defined as follows:
+
+&emsp; Media type name: application
+
+&emsp; Media subtype name: vnd.oai.workflows
+
+&emsp; Required parameters: N/A
+
+&emsp; Optional parameters: version (e.g. version=1.0.0 to indicate that the type of workflow conforms to version 1.0.0 of the Arazzo Specification).
+
+&emsp; Encoding considerations: Encoding considerations are identical to those specified for the `application/json` and `application/yaml` media types, respectively.
+
+&emsp; Security considerations: See [security considerations](#security-considerations) above.
+
+&emsp; Interoperability considerations: N/A
+
+**Note:** When using the `application/vnd.oai.workflows` media type the consumer should be prepared to receive YAML formatted content
+
+### application/vnd.oai.workflows+json
+
+The proposed MIME media type for Arazzo documents (e.g. workflows) that require a JSON-specific media type is defined as follows:
+
+&emsp; Media type name: application
+
+&emsp; Media subtype name: vnd.oai.workflows+json
+
+&emsp; Required parameters: N/A
+
+&emsp; Optional parameters: version (e.g. version=1.0.0 to indicate that the type of Arazzo document conforms to version 1.0.0 of the Arazzo Specification).
+
+&emsp; Encoding considerations: Encoding considerations are identical to those specified for the `application/json` media type.
+
+&emsp; Security considerations: See [security considerations](#security-considerations) above.
+
+&emsp; Interoperability considerations: N/A
+
+### application/vnd.oai.workflows+yaml
+
+The proposed MIME media type for Arazzo documents (e.g. workflows) that require a YAML-specific media type is defined as follows:
+
+&emsp; Media type name: application
+
+&emsp; Media subtype name: vnd.oai.workflows+yaml
+
+&emsp; Required parameters: N/A
+
+&emsp; Optional parameters: version (e.g. version=1.0.0 to indicate that the type of Arazzo document conforms to version 1.0.0 of the Arazzo Specification).
+
+&emsp; Encoding considerations: Encoding considerations are identical to those specified for the `application/yaml` media type.
+
+&emsp; Security considerations: See [security considerations](#security-considerations) above.
+
+&emsp; Interoperability considerations: N/A
+
+## Appendix A: Revision History
+
+Version   | Date              | Notes
+---       | ---               | ---
+1.0.1     | 2025-01-16        | Patch release of the Arazzo Specification 1.0.1
+1.0.0     | 2024-05-29        | First release of the Arazzo Specification
