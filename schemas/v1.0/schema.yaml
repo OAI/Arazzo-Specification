@@ -275,18 +275,17 @@ $defs:
       condition:
         description: The condition to apply
         type: string
-    anyOf:
-      - type: object
-        properties:
-          type:
-            description: The type of condition to be applied
-            enum:
+      type:
+        description: The type of condition to be applied
+        default: simple
+        oneOf:
+          - enum:
               - simple
               - regex
               - jsonpath
               - xpath
-            default: simple
-      - $ref: '#/$defs/criterion-expression-type-object'
+            type: string
+          - $ref: '#/$defs/criterion-expression-type-object'
     required:
       - condition
     dependentRequired:
@@ -320,7 +319,8 @@ $defs:
         then:
           properties:
             version:
-              const: draft-goessner-dispatch-jsonpath-00
+              enum:
+                - draft-goessner-dispatch-jsonpath-00
       - if:
           required:
             - type
