@@ -16,7 +16,10 @@
         "Workflows",
         "Specification",
         "API",
-        "Swagger"
+        "Swagger",
+        "OpenAPI",
+        "OAS",
+        "OAI"
     ],
     "author": {
         "name": "OpenAPI Initiative - Arazzo Working Group",
