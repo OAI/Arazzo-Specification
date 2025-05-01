@@ -417,7 +417,6 @@ $defs:
             type:
               enum:
                 - goto
-                - retry
         then:
           oneOf:
             - required:
