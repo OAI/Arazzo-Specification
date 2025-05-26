@@ -26,8 +26,8 @@ const parseYamlFromFile = (filePath) => {
 
 setMetaSchemaOutputFormat(BASIC);
 
-const validateArazzo = await validate("./src/schema/validation/schema.yaml");
-const fixtures = './test/schema';
+const validateArazzo = await validate("./src/schemas/validation/schema.yaml");
+const fixtures = './tests/schema';
 
 describe("v1.0", () => {
   describe("Pass", () => {
