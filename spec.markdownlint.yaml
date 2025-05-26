@@ -1,0 +1,28 @@
+# Heading style (ATX is leading # symbols)
+MD003:
+  style: atx
+
+# Unordered list symbol must be *
+MD004:
+  style: asterisk
+
+# Unordered list indentation size
+MD007:
+    indent: 2
+
+# Allow additional blank lines
+MD012: false
+
+# Maximum line length
+MD013:
+    line_length: 800
+    tables: false
+
+# Headings need blank lines before and after
+MD022: true
+
+# Duplicate headings are allowed
+MD024: false
+
+# Allow inline HTML
+MD033: false

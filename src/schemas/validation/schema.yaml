@@ -1,4 +1,4 @@
-$id: 'https://spec.openapis.org/arazzo/1.0/schema/2024-08-01'
+$id: 'https://spec.openapis.org/arazzo/1.0/schema/WORK-IN-PROGRESS'
 $schema: 'https://json-schema.org/draft/2020-12/schema'
 description: |-
   The description of Arazzo v1.0.x documents
