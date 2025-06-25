@@ -26,22 +26,16 @@ const parseYamlFromFile = (filePath) => {
 
 setMetaSchemaOutputFormat(BASIC);
 
-let validateArazzo;
-try {
-  validateArazzo = await validate("./schemas/v1.0/schema.yaml");
-}
-catch (error) {
-  console.error(error.output);
-  process.exit(1)
-}
+const validateArazzo = await validate("./src/schemas/validation/schema.yaml");
+const fixtures = './tests/schema';
 
 describe("v1.0", () => {
   describe("Pass", () => {
-    readdirSync(`./tests/v1.0/pass`, { withFileTypes: true })
+    readdirSync(`${fixtures}/pass`, { withFileTypes: true })
       .filter((entry) => entry.isFile() && /\.yaml$/.test(entry.name))
       .forEach((entry) => {
         test(entry.name, () => {
-          const instance = parseYamlFromFile(`./tests/v1.0/pass/${entry.name}`);
+          const instance = parseYamlFromFile(`${fixtures}/pass/${entry.name}`);
           const output = validateArazzo(instance, BASIC);
           expect(output).to.deep.equal({ valid: true });
         });
@@ -49,11 +43,11 @@ describe("v1.0", () => {
   });
 
   describe("Fail", () => {
-    readdirSync(`./tests/v1.0/fail`, { withFileTypes: true })
+    readdirSync(`${fixtures}/fail`, { withFileTypes: true })
       .filter((entry) => entry.isFile() && /\.yaml$/.test(entry.name))
       .forEach((entry) => {
         test(entry.name, () => {
-          const instance = parseYamlFromFile(`./tests/v1.0/fail/${entry.name}`);
+          const instance = parseYamlFromFile(`${fixtures}/fail/${entry.name}`);
           const output = validateArazzo(instance, BASIC);
           expect(output.valid).to.equal(false);
         });

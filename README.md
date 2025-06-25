@@ -42,7 +42,7 @@ The OpenAPI Initiative encourages participation from individuals and companies a
 - [Bi-weekly Call](https://github.com/OAI/Arazzo-Specification/discussions/5) - Wednesdays at 09:00 AM PDT
 - [Discussions](https://github.com/OAI/Arazzo-Specification/discussions) - Use the GitHub discussions to ask questions, provide opinions and engage with the group
 - [Issues](https://github.com/OAI/Arazzo-Specification/issues) - Feel free to submit a Github issue with any question or comment about the working group
-- Slack - if you have access to the OpenAPI slack workspace, then join the `arazzo` channel. If you do not have access, you're welcome to join by clicking [here](https://communityinviter.com/apps/open-api/openapi)
+- Slack - if you have access to the OpenAPI slack workspace, then join the `arazzo` channel. If you do not have access, [you're welcome to join](https://communityinviter.com/apps/open-api/openapi)
 
 ## Licensing
 
