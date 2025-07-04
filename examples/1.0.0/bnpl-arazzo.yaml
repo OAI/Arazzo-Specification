@@ -232,7 +232,7 @@ workflows:
     successCriteria:
       - condition: $statusCode == 302
     outputs:
-      redirectUrl: $response.headers.Location
+      redirectUrl: $response.header.Location
   - stepId: retrieveFinalizedPaymentPlan
     description: Retrieve finalized payment plan to show to customer once authorization is complete
     operationId: retrieveBnplLoanTransaction
