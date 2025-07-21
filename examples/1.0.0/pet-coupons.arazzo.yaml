@@ -46,7 +46,7 @@ workflows:
           my_coupon_code: $response.body#/couponCode
       - stepId: place-order
         description: Place an order for the pet, applying the coupon.
-        workflowId: place-order
+        operationId: place-order
         parameters:
           - name: pet_id
             value: $steps.find-pet.outputs.my_pet_id
