@@ -571,7 +571,7 @@ components:
       "workflowId": "refreshTokenWorkflowId",
       "criteria": [
         {
-          "condition": "{$statusCode == 401}"
+          "condition": "$statusCode == 401"
         }
       ]
     }
