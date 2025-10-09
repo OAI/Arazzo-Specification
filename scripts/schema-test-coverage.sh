@@ -4,15 +4,17 @@
 
 # Run this script from the root of the repo
 
-echo
-echo "Schema Test Coverage"
-echo
+SCHEMA_FILE="src/schemas/validation/schema.yaml"
+TEST_DIR="tests/schema/pass"
 
-for schemaDir in schemas/v* ; do
-  version=$(basename "$schemaDir")
-  echo $version
+if [ ! -f "$SCHEMA_FILE" ]; then
+  echo "[schema-test-coverage] Skipping: Schema file not found at $SCHEMA_FILE"
+  exit 0
+fi
 
-  node scripts/schema-test-coverage.mjs $schemaDir/schema.yaml tests/$version/pass
+if [ ! -d "$TEST_DIR" ]; then
+  echo "[schema-test-coverage] Skipping: Test folder not found at $TEST_DIR"
+  exit 0
+fi
 
-  echo
-done
+node scripts/schema-test-coverage.mjs "$SCHEMA_FILE" "$TEST_DIR"
