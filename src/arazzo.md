@@ -170,7 +170,7 @@ workflows:
         value: 'available'
       - name: Authorization
         in: header
-        value: $steps.loginUser.outputs.sessionToken
+        value: $steps.loginStep.outputs.sessionToken
     successCriteria:
       - condition: $statusCode == 200
     outputs:
@@ -369,7 +369,7 @@ steps:
         value: 'available'
       - name: Authorization
         in: header
-        value: $steps.loginUser.outputs.sessionToken
+        value: $steps.loginStep.outputs.sessionToken
     successCriteria:
       - condition: $statusCode == 200
     outputs:
