@@ -127,6 +127,18 @@ workflows:
           - context: $response.body
             type: jsonpath
             condition: $[?count(@.products) == 0]
+    onFailure:
+      - name: Unauthorized
+        type: end
+        criteria:
+          - condition: $statusCode == 401
+      - name: Too many requests
+        type: retry
+        retryAfter: 1
+        retryLimit: 1
+        criteria:
+          - condition: $statusCode == 429
+        stepId: checkLoanCanBeProvided
     outputs:
       eligibilityCheckRequired: $response.body#/eligibilityCheckRequired
       eligibleProducts: $response.body#/products
