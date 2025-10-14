@@ -704,10 +704,10 @@ Defining this object gives the ability to utilize tooling compatible with older 
 
 ##### Fixed Fields
 
-| Field Name | Type | Description |
-| --- | :---: | --- |
-| <a name="criterionExpressionType"></a>type | `string` | **REQUIRED**. The type of condition to be applied. The options allowed are `jsonpath` or `xpath`.  |
-| <a name="criterionExpressionVersion"></a>version | `string` | **REQUIRED**. A short hand string representing the version of the expression type being used. The allowed values for JSONPath are `draft-goessner-dispatch-jsonpath-00`. The allowed values for XPath are `xpath-30`, `xpath-20`, or `xpath-10`. |
+| Field Name | Type | Description                                                                                                                                                                                                                   |
+| --- | :---: |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <a name="criterionExpressionType"></a>type | `string` | **REQUIRED**. The type of condition to be applied. The options allowed are `jsonpath` or `xpath`.                                                                                                                             |
+| <a name="criterionExpressionVersion"></a>version | `string` | **REQUIRED**. A short hand string representing the version of the expression type being used. The allowed values for JSONPath are `jsonpath-rfc9535`. The allowed values for XPath are `xpath-30`, `xpath-20`, or `xpath-10`. |
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
@@ -717,7 +717,7 @@ A JSONPath example:
 
 ```yaml
   type: jsonpath
-  version: draft-goessner-dispatch-jsonpath-00
+  version: jsonpath-rfc9535
 ```
 
 An XPath example:
