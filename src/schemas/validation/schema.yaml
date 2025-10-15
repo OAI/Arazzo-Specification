@@ -424,13 +424,6 @@ $defs:
                 - workflowId
             - required:
                 - stepId
-      - if:
-          properties:
-            type:
-              const: retry
-        then:
-          required:
-            - retryAfter
     required:
       - name
       - type
