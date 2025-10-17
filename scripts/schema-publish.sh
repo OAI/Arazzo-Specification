@@ -39,7 +39,6 @@ publish_schema() {
   local jekyllLander=$(find "$deploydir/$base" -maxdepth 1 -name "*.md")
 
   # Move the jekyll lander markdown for this iteration to the deploy destination.
-  # The lander files only exist in the gh-pages branch.
   if [ ! -z "$jekyllLander" ]; then
     mv $jekyllLander $target.md
     echo " * $newestCommitDate: $schema & jekyll lander $(basename $jekyllLander)"
