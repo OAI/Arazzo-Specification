@@ -8,7 +8,7 @@ schemaDir="src/schemas/validation"
 branch=$(git branch --show-current)
 
 if [ -z "$1" ]; then
-  if [[ $branch =~ ^v([0-9]+\.[0-9]+)-dev$ ]]; then
+  if [[ $branch =~ ^v([0-9]+\.[0-9]+)-dev ]]; then
     deploydir="./deploy/arazzo/${BASH_REMATCH[1]}"
   else
     echo "Unable to determine version from branch name; should be vX.Y-dev"
