@@ -62,7 +62,7 @@ jobs:
           path: deploy
           labels: Arazzo,Schema
           reviewers: earth2marsh,lornajane,mikekistler,miqui,ralfhandl,whitlockjc,handrews,karenetheridge,frankkilcommins
-          title: Arazzo - Publish Schema Iterations
+          title: "Arazzo - publish ${{ github.ref_name }} schema iterations"
           commit-message: "New Arazzo schema iterations published from ${{ github.ref_name }}"
           signoff: true
           body: |
