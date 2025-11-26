@@ -35,6 +35,8 @@ The Arazzo Specification can articulate these workflows in a human-readable and 
     - [Components Object](#components-object)
     - [Reusable Object](#reusable-object)
     - [Criterion Object](#criterion-object)
+    - [Expression Type Object](#expression-type-object)
+    - [Selector Object](#selector-object)
     - [Request Body Object](#request-body-object)
     - [Payload Replacement Object](#payload-replacement-object)
   - [Runtime Expressions](#runtime-expressions)
