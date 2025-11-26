@@ -248,7 +248,7 @@ Describes the steps to be taken across one or more APIs to achieve an objective.
 | <a name="workflowSteps"></a>steps | [[Step Object](#step-object)] | **REQUIRED**. An ordered list of steps where each step represents a call to an API operation or to another workflow. |
 | <a name="workflowSuccessActions"></a>successActions | [[Success Action Object](#success-action-object) \| [Reusable Object](#reusable-object)] | A list of success actions that are applicable for all steps described under this workflow. These success actions can be overridden at the step level but cannot be removed there. If a Reusable Object is provided, it MUST link to success actions defined in the [components/successActions](#components-object) of the current Arazzo document. The list MUST NOT include duplicate success actions. |
 | <a name="workflowFailureActions"></a>failureActions | [[Failure Action Object](#failure-action-object) \| [Reusable Object](#reusable-object)] | A list of failure actions that are applicable for all steps described under this workflow. These failure actions can be overridden at the step level but cannot be removed there. If a Reusable Object is provided, it MUST link to failure actions defined in the [components/failureActions](#components-object) of the current Arazzo document. The list MUST NOT include duplicate failure actions. |
-| <a name="workflowOutputs"></a>outputs | Map[`string`, {expression}] |  A map between a friendly name and a dynamic output value. The name MUST use keys that match the regular expression: `^[a-zA-Z0-9\.\-_]+$`. |
+| <a name="workflowOutputs"></a>outputs | Map[`string`, {expression} \| [Selector Object](#selector-object) ] | A map between a friendly name and a dynamic output value defined using a [Runtime Expression](#runtime-expressions) or [Selector Object](#selector-object). The name MUST use keys that match the regular expression: `^[a-zA-Z0-9\.\-_]+$`. |
 | <a name="workflowParameters"></a>parameters | [[Parameter Object](#parameter-object) \| [Reusable Object](#reusable-object)] | A list of parameters that are applicable for all steps described under this workflow. These parameters can be overridden at the step level but cannot be removed there. Each parameter MUST be passed to an operation or workflow as referenced by `operationId`, `operationPath`, or `workflowId` as specified within each step. If a Reusable Object is provided, it MUST link to a parameter defined in the [components/parameters](#components-object) of the current Arazzo document. The list MUST NOT include duplicate parameters. |
 
 
@@ -308,7 +308,7 @@ Describes a single workflow step which MAY be a call to an API operation ([OpenA
 | <a name="stepSuccessCriteria"></a>successCriteria | [[Criterion Object](#criterion-object)] | A list of assertions to determine the success of the step. Each assertion is described using a [Criterion Object](#criterion-object). All assertions `MUST` be satisfied for the step to be deemed successful. |
 | <a name="stepOnSuccess"></a>onSuccess | [[Success Action Object](#success-action-object) \| [Reusable Object](#reusable-object)] | An array of success action objects that specify what to do upon step success. If omitted, the next sequential step shall be executed as the default behavior. If multiple success actions have similar `criteria`, the first sequential action matching the criteria SHALL be the action executed. If a success action is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a success action defined in the [components](#components-object) of the current Arazzo document. The list MUST NOT include duplicate success actions. |
 | <a name="stepOnFailure"></a>onFailure | [[Failure Action Object](#failure-action-object) \| [Reusable Object](#reusable-object)] | An array of failure action objects that specify what to do upon step failure. If omitted, the default behavior is to break and return. If multiple failure actions have similar `criteria`, the first sequential action matching the criteria SHALL be the action executed. If a failure action is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a failure action defined in the [components](#components-object) of the current Arazzo document. The list MUST NOT include duplicate failure actions. |
-| <a name="stepOutputs"></a>outputs | Map[`string`, {expression}] |  A map between a friendly name and a dynamic output value defined using a [Runtime Expression](#runtime-expressions). The name MUST use keys that match the regular expression: `^[a-zA-Z0-9\.\-_]+$`. |
+| <a name="stepOutputs"></a>outputs | Map[`string`, {expression} \| [Selector Object](#selector-object) ] |  A map between a friendly name and a dynamic output value defined using a [Runtime Expression](#runtime-expressions) or [Selector Object](#selector-object) . The name MUST use keys that match the regular expression: `^[a-zA-Z0-9\.\-_]+$`. |
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
@@ -392,7 +392,7 @@ Describes a single step parameter. A unique parameter is defined by the combinat
 | --- | :---: | --- |
 | <a name="parameterName"></a> name | `string` | **REQUIRED**. The name of the parameter. Parameter names are _case sensitive_. |
 | <a name="parameterIn"></a> in | `string` | The location of the parameter. Possible values are `"path"`, `"query"`, `"header"`, or `"cookie"`. When the step in context specifies a `workflowId`, then all parameters map to workflow inputs. In all other scenarios (e.g., a step specifies an `operationId`), the `in` field MUST be specified. |
-| <a name="parameterValue"></a> value | Any \| {expression} | **REQUIRED**. The value to pass in the parameter. The value can be a constant or a [Runtime Expression](#runtime-expressions) to be evaluated and passed to the referenced operation or workflow. |
+| <a name="parameterValue"></a> value | Any \| {expression} \| [Selector Object](#selector-object) | **REQUIRED**. The value to pass in the parameter. The value can be a constant, a [Runtime Expression](#runtime-expressions), or a [Selector Object](#selector-object) to be evaluated and passed to the referenced operation or workflow. |
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
@@ -408,6 +408,15 @@ This object MAY be extended with [Specification Extensions](#specification-exten
 - name: X-Api-Key
   in: header
   value: $inputs.x-api-key
+```
+
+```yaml
+- name: customerId
+  in: query
+  value:
+    expression: $inputs.customer
+    selector: $.details[0].id
+    type: jsonpath
 ```
 
 #### Success Action Object
@@ -664,7 +673,7 @@ String comparisons `MUST` be case insensitive.
 | --- | :---: | --- |
 | <a name="criterionContext"></a>context | `{expression}` | A [Runtime Expression](#runtime-expressions) used to set the context for the condition to be applied on. If `type` is specified, then the `context` MUST be provided (e.g. `$response.body` would set the context that a JSONPath query expression could be applied to). |
 | <a name="criterionCondition"></a>condition | `string` | **REQUIRED**. The condition to apply. Conditions can be simple (e.g. `$statusCode == 200` which applies an operator on a value obtained from a runtime expression), or a regex, or a JSONPath expression. For regex or JSONPath, the `type` and `context` MUST be specified. |
-| <a name="criterionType"></a>type | `string` \| [Criterion Expression Type Object](#criterion-expression-type-object) | The type of condition to be applied. If specified, the options allowed are `simple`, `regex`, `jsonpath` or `xpath`. If omitted, then the condition is assumed to be `simple`, which at most combines literals, operators and [Runtime Expressions](#runtime-expressions). If `jsonpath`, then the expression MUST conform to [JSONPath](https://tools.ietf.org/html/rfc9535). If `xpath` the expression MUST conform to [XML Path Language 3.1](https://www.w3.org/TR/xpath-31/#d2e24229). Should other variants of JSONPath or XPath be required, then a [Criterion Expression Type Object](#criterion-expression-type-object) MUST be specified. |
+| <a name="criterionType"></a>type | `string` \| [Expression Type Object](#expression-type-object) | The type of condition to be applied. If specified, the options allowed are `simple`, `regex`, `jsonpath` or `xpath`. If omitted, then the condition is assumed to be `simple`, which at most combines literals, operators and [Runtime Expressions](#runtime-expressions). If `jsonpath`, then the expression MUST conform to [JSONPath](https://tools.ietf.org/html/rfc9535). If `xpath` the expression MUST conform to [XML Path Language 3.1](https://www.w3.org/TR/xpath-31/#d2e24229). Should other variants of JSONPath or XPath be required, then a [Expression Type Object](#expression-type-object) MUST be specified. |
 
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
@@ -693,12 +702,9 @@ A JSONPath Condition example:
   type: jsonpath
 ```
 
-#### Criterion Expression Type Object
+#### Expression Type Object
 
-An object used to describe the type and version of an expression used within a [Criterion Object](#criterion-object). If this object is not defined, then the following defaults apply:
-
-- JSONPath as described by [RFC9535](https://tools.ietf.org/html/rfc9535)
-- XPath as described by [XML Path Language 3.1](https://www.w3.org/TR/xpath-31)
+An object used to describe the type and version of an expression used within a [Criterion Object](#criterion-object) or [Selector Object](#selector-object). 
 
 Defining this object gives the ability to utilize tooling compatible with older versions of either JSONPath or XPath.
 
@@ -706,12 +712,22 @@ Defining this object gives the ability to utilize tooling compatible with older 
 
 | Field Name | Type | Description |
 | --- | :---: | --- |
-| <a name="criterionExpressionType"></a>type | `string` | **REQUIRED**. The type of condition to be applied. The options allowed are `jsonpath` or `xpath`.  |
-| <a name="criterionExpressionVersion"></a>version | `string` | **REQUIRED**. A short hand string representing the version of the expression type being used. The allowed values for JSONPath are `draft-goessner-dispatch-jsonpath-00`. The allowed values for XPath are `xpath-30`, `xpath-20`, or `xpath-10`. |
+| <a name="expressionType"></a>type | `string` | **REQUIRED**. The selector type. The options allowed are `jsonpath`, `xpath`, or `jsonpointer`.  |
+| <a name="expressionVersion"></a>version | `string` | **REQUIRED**. A short hand string representing the version of the expression type being used. The allowed values for JSONPath are `draft-goessner-dispatch-jsonpath-00`. The allowed values for XPath are `xpath-30`, `xpath-20`, or `xpath-10`. |
+
+The supported expression selector types and versions are as follows:
+
+| Type | Allowed Versions | Default |
+| ---- | --- | --- |
+| `jsonpath` | `rfc9535`, `draft-goessner-dispatch-jsonpath-00` | `rfc9535` |
+| `xpath`| `xpath-31`, `xpath-30`, `xpath-20`, `xpath-10` | `xpath-31` |
+| `jsonpointer` | `rfc6901` (added for completeness)| `rfc6901`|
+
+If this object is not defined or the `version` is omitted, the default version for the selector type MUST be used.
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
-##### Criterion Expression Type Examples
+##### Expression Type Examples
 
 A JSONPath example:
 
@@ -727,6 +743,45 @@ An XPath example:
   version: xpath-30
 ```
 
+#### Selector Object
+
+An object which enables fine-grained traversa and precise data selection from structured data such as JSON or XML, using a defined selector syntax such as JSONPath or XPath.
+
+##### Fixed Fields
+
+| Field Name | Type | Description |
+| --- | :---: | --- |
+| <a name="selectorObjExpression"></a>expression | {expression} | A valid [Runtime Expressions](#runtime-expressions) which MUST evaluate to structured data (e.g., `$response.body`). |
+| <a name="selectorObjSelector"></a>selector | `string` | A selector expression (e.g., $.items[0].id, /Envelope/Item) in the form of JSONPath expression, XPath expression, or JSON Pointer expression. |
+| <a name="selectorObjType"></a>type | `string` \| [Expression Type Object](#expression-type-object) | The selector expression type to use (e.g., `jsonpath`, `xpath`, or `jsonpointer`). If `jsonpath`, then the expression MUST conform to [JSONPath](https://tools.ietf.org/html/rfc9535). If `xpath` the expression MUST conform to [XML Path Language 3.1](https://www.w3.org/TR/xpath-31/#d2e24229). Should other variants of JSONPath or XPath be required, then a [Expression Type Object](#expression-type-object) MUST be specified. |
+
+
+##### Selector Object Examples
+
+An output example:
+
+```yaml
+  outputs:
+    userEmail:
+      expression: $response.body
+      selector: $.user.profile.email
+      type: jsonpath
+```
+
+A Step RequestBody example:
+
+```yaml
+  requestBody:
+    contentType: application/json
+    payload:
+      invoiceId:
+        expression: $steps.fetchXml.outputs.invoiceXml
+        selector: /Invoice/Header/InvoiceNumber
+        type:
+          type: xpath
+          version: xpath-30
+```
+
 #### Request Body Object
 
 A single request body describing the `Content-Type` and request body content to be passed by a step to an operation.
@@ -736,7 +791,7 @@ A single request body describing the `Content-Type` and request body content to 
 | Field Name | Type | Description |
 | --- | :---: | --- |
 | <a name="requestBodyContentType"></a>contentType | `string` | The Content-Type for the request content. If omitted then refer to Content-Type specified at the targeted operation to understand serialization requirements. |
-| <a name="requestBodyPayload"></a>payload | Any | A value representing the request body payload. The value can be a literal value or can contain [Runtime Expressions](#runtime-expressions) which MUST be evaluated prior to calling the referenced operation. To represent examples of media types that cannot be naturally represented in JSON or YAML, use a string value to contain the example, escaping where necessary. |
+| <a name="requestBodyPayload"></a>payload | Any | A value representing the request body payload. The value can be a literal value or can contain [Runtime Expressions](#runtime-expressions) or [Selector Objects](#selector-object) which MUST be evaluated prior to calling the referenced operation. To represent examples of media types that cannot be naturally represented in JSON or YAML, use a string value to contain the example, escaping where necessary. |
 | <a name="requestBodyReplacements"></a>replacements | [[Payload Replacement Object](#payload-replacement-object)] | A list of locations and values to set within a payload. |
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
@@ -821,8 +876,9 @@ Describes a location within a payload (e.g., a request body) and a value to set 
 
 | Field Name | Type | Description |
 | --- | :---: | --- |
-| <a name="payloadReplacementTarget"></a>target | `string` | **REQUIRED**. A [JSON Pointer](https://tools.ietf.org/html/rfc6901) or [XPath Expression](https://www.w3.org/TR/xpath-31/#id-expressions) which MUST be resolved against the request body. Used to identify the location to inject the `value`. |
-| <a name="payloadReplacementValue"></a> value | Any \| {expression} | **REQUIRED**. The value set within the target location. The value can be a constant or a [Runtime Expression](#runtime-expressions) to be evaluated and passed to the referenced operation or workflow. |
+| <a name="payloadReplacementTarget"></a>target | `string` | **REQUIRED**. A [JSON Pointer](https://tools.ietf.org/html/rfc6901), or [XPath Expression](https://www.w3.org/TR/xpath-31/#id-expressions), or [JSONPath](https://tools.ietf.org/html/rfc9535) which MUST be resolved against the request body. Used to identify the location to inject the `value`. |
+| <a name="payloadReplacementTargetSelectorType"></a>targetSelectorTyoe | `string` \| [Expression Type Object](#expression-type-object) | The selector expression type to use (e.g., `jsonpath`, `xpath`, or `jsonpointer`). If `jsonpath`, then the `target` expression MUST conform to [JSONPath](https://tools.ietf.org/html/rfc9535). If `xpath` the expression MUST conform to [XML Path Language 3.1](https://www.w3.org/TR/xpath-31/#d2e24229). Should other variants of JSONPath or XPath be required, then a [Expression Type Object](#expression-type-object) MUST be specified. |
+| <a name="payloadReplacementValue"></a> value | Any \| {expression} \| [Selector Object](#selector-object) | **REQUIRED**. The value set within the target location. The value can be a constant, a [Runtime Expression](#runtime-expressions), or [Selector Objects](#selector-object) to be evaluated and passed to the referenced operation or workflow. |
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
@@ -842,6 +898,31 @@ A literal example:
   value: 10
 ```
 
+A JSONPath example using an Expression Type Object:
+
+```yaml
+  target: $.items[?(@.sku=='ABC123')].quantity
+  targetSelectorType: jsonpath
+  value:
+    expression: $steps.getInventory.outputs.payload
+    selector: $.newQuantity
+    type: jsonpath
+```
+
+An XPath example using older XPATH 3.0:
+
+```yaml
+  target: /Envelope/Header/CustomerId
+  targetSelectorType:
+    type: xpath
+    version: xpath-30
+  value:
+    expression: $steps.fetchCustomerData.outputs.xml
+    selector: /CustomerInfo/Id
+    type:
+      type: xpath
+      version: xpath-30
+```
 
 ### Runtime Expressions
 
