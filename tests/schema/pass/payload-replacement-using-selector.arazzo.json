@@ -1,0 +1,41 @@
+{
+  "arazzo": "1.1.0",
+  "info": {
+    "title": "Payload Replacement",
+    "version": "1.2.0"
+  },
+  "sourceDescriptions": [
+    {
+      "name": "ordersAPI",
+      "url": "https://example.com/orders.yaml",
+      "type": "openapi"
+    }
+  ],
+  "workflows": [
+    {
+      "workflowId": "replaceWorkflow",
+      "steps": [
+        {
+          "stepId": "submitOrder",
+          "operationId": "createOrder",
+          "requestBody": {
+            "contentType": "application/json",
+            "replacements": [
+              {
+                "target": "/order/items/0/id",
+                "value": {
+                  "expression": "$steps.previous.outputs",
+                  "selector": "$.itemId",
+                  "type": {
+                    "type": "jsonpath",
+                    "version": "rfc9535"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

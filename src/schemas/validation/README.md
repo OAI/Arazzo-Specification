@@ -1,17 +1,21 @@
-# OpenAPI Arazzo 1.0.x JSON Schema
+# OpenAPI Arazzo 1.X.Y JSON Schema
 
-Here you can find the JSON Schema for validating Arazzo Documents conforming to versions 1.0.x.
+Here you can find the JSON Schema for validating Arazzo Documents conforming to versions 1.X.Y, which are published on [https://spec.openapis.org](https://spec.openapis.org).
+
+Due to limitations of GitHub pages, the schemas on the spec site are served with `Content-Type: application/octet-stream`, but should be interpreted as `application/schema+json`.
+
+The sources in this directory, which have `WORK-IN-PROGRESS` in their `$id`s, are _not intended for direct use_.
+
+The iteration version of the JSON Schema can be found in the `$id` field.
+For example, the value of `$id: https://spec.openapis.org/arazzo/1.0/schema/2024-10-17` means this iteration was created on October 17, 2024.
+
+## Contributing
 
 As a reminder, the JSON Schema is not the source of truth for the Specification.
 In cases of conflicts between the Specification itself and the JSON Schema, the
 Specification wins. Also, some Specification constraints cannot be represented
 with the JSON Schema so it's highly recommended to employ other methods to
 ensure compliance.
-
-The iteration version of the JSON Schema can be found in the `$id` field.
-For example, the value of `$id: https://spec.openapis.org/arazzo/1.0/schema/2024-10-17` means this iteration was created on October 17, 2024.
-
-## Contributing
 
 To submit improvements to the schema, modify the `schema.yaml` and add test cases for your changes.
 
@@ -22,7 +26,7 @@ The TSC will then:
 
 ## Tests
 
-The [test suite](../../tests/v1.0) is part of this package.
+The [test suite](../../tests/schema) is part of this package.
 
 ```bash
 npm install
