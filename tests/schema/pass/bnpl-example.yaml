@@ -1,8 +1,8 @@
-arazzo: 1.0.0
+arazzo: 1.1.0
 info:
   title: BNPL Workflow description
   summary: A buy now, pay later workflow example
-  version: 1.0.0
+  version: 1.1.0
 sourceDescriptions:
   - name: BnplApi
     url: https://raw.githubusercontent.com/OAI/Arazzo-Specification/main/examples/1.0.0/bnpl-openapi.yaml

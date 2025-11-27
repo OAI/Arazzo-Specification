@@ -714,7 +714,7 @@ Defining this object gives the ability to utilize tooling compatible with older 
 | Field Name | Type | Description |
 | --- | :---: | --- |
 | <a name="expressionType"></a>type | `string` | **REQUIRED**. The selector type. The options allowed are `jsonpath`, `xpath`, or `jsonpointer`. |
-| <a name="expressionVersion"></a>version | `string` | **REQUIRED**. A short hand string representing the version of the expression type being used. The allowed values for JSONPath are `draft-goessner-dispatch-jsonpath-00`. The allowed values for XPath are `xpath-30`, `xpath-20`, or `xpath-10`. |
+| <a name="expressionVersion"></a>version | `string` | **REQUIRED**. A short hand string representing the version of the expression type being used. The allowed values for JSONPath are `rfc9535` or `draft-goessner-dispatch-jsonpath-00`. The allowed values for XPath are `xpath-30`, `xpath-20`, or `xpath-10`. The allowed value for JSON Pointer is `rfc6901`. |
 
 The supported expression selector types and versions are as follows:
 
@@ -724,7 +724,7 @@ The supported expression selector types and versions are as follows:
 | `xpath` | `xpath-31`, `xpath-30`, `xpath-20`, `xpath-10` | `xpath-31` |
 | `jsonpointer` | `rfc6901` (added for completeness) | `rfc6901` |
 
-If this object is not defined or the `version` is omitted, the default version for the selector type MUST be used.
+If this object is not defined, the default version for the selector type MUST be used.
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
@@ -746,15 +746,15 @@ An XPath example:
 
 #### Selector Object
 
-An object which enables fine-grained traversa and precise data selection from structured data such as JSON or XML, using a defined selector syntax such as JSONPath or XPath.
+An object which enables fine-grained traversal and precise data selection from structured data such as JSON or XML, using a defined selector syntax such as JSONPath or XPath.
 
 ##### Fixed Fields
 
 | Field Name | Type | Description |
 | --- | :---: | --- |
-| <a name="selectorObjExpression"></a>expression | {expression} | A valid [Runtime Expressions](#runtime-expressions) which MUST evaluate to structured data (e.g., `$response.body`). |
-| <a name="selectorObjSelector"></a>selector | `string` | A selector expression (e.g., $.items[0].id, /Envelope/Item) in the form of JSONPath expression, XPath expression, or JSON Pointer expression. |
-| <a name="selectorObjType"></a>type | `string` \| [Expression Type Object](#expression-type-object) | The selector expression type to use (e.g., `jsonpath`, `xpath`, or `jsonpointer`). If `jsonpath`, then the expression MUST conform to [JSONPath](https://tools.ietf.org/html/rfc9535). If `xpath` the expression MUST conform to [XML Path Language 3.1](https://www.w3.org/TR/xpath-31/#d2e24229). Should other variants of JSONPath or XPath be required, then a [Expression Type Object](#expression-type-object) MUST be specified. |
+| <a name="selectorObjExpression"></a>expression | {expression} | **REQUIRED**. A valid [Runtime Expressions](#runtime-expressions) which MUST evaluate to structured data (e.g., `$response.body`). |
+| <a name="selectorObjSelector"></a>selector | `string` | **REQUIRED**.A selector expression (e.g., $.items[0].id, /Envelope/Item) in the form of JSONPath expression, XPath expression, or JSON Pointer expression. |
+| <a name="selectorObjType"></a>type | `string` \| [Expression Type Object](#expression-type-object) | **REQUIRED**. The selector expression type to use (e.g., `jsonpath`, `xpath`, or `jsonpointer`). If `jsonpath`, then the expression MUST conform to [JSONPath](https://tools.ietf.org/html/rfc9535). If `xpath` the expression MUST conform to [XML Path Language 3.1](https://www.w3.org/TR/xpath-31/#d2e24229). Should other variants of JSONPath or XPath be required, then a [Expression Type Object](#expression-type-object) MUST be specified. |
 
 
 ##### Selector Object Examples
