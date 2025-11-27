@@ -705,7 +705,7 @@ A JSONPath Condition example:
 
 #### Expression Type Object
 
-An object used to describe the type and version of an expression used within a [Criterion Object](#criterion-object) or [Selector Object](#selector-object). 
+An object used to describe the type and version of an expression used within a [Criterion Object](#criterion-object) or [Selector Object](#selector-object).
 
 Defining this object gives the ability to utilize tooling compatible with older versions of either JSONPath or XPath.
 
@@ -884,7 +884,7 @@ Describes a location within a payload (e.g., a request body) and a value to set 
 If `targetSelectorType` is omitted, then:
 
 - `target` MUST be interpreted as [JSON Pointer](https://tools.ietf.org/html/rfc6901)if the payload is `application/json`.
-- `target` MUST be interpreted as [XPath Expression](https://www.w3.org/TR/xpath-31/#id-expressions) if the payload is `application/xml` or another XML-based media type. 
+- `target` MUST be interpreted as [XPath Expression](https://www.w3.org/TR/xpath-31/#id-expressions) if the payload is `application/xml` or another XML-based media type.
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
