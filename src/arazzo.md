@@ -965,11 +965,11 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
 | Request parameter | `$request.path.id` | Request parameters MUST be declared in the `parameters` section of the parent operation or they cannot be evaluated. This includes request headers. |
 | Request body property | `$request.body#/user/uuid` | In operations which accept payloads, references may be made to portions of the `requestBody` or the entire body. |
 | Request URL | `$url` | |
-| Response value | `$response.body#/status` |  In operations which return payloads, references may be made to portions of the response body or the entire body. |
-| Response header | `$response.header.Server` |  Single header values only are available. |
+| Response value | `$response.body#/status` | In operations which return payloads, references may be made to portions of the response body or the entire body. |
+| Response header | `$response.header.Server` | Single header values only are available. |
 | workflow input | `$inputs.username` or `$workflows.foo.inputs.username` |  Single input values only are available. |
-| Step output value | `$steps.someStepId.outputs.pets` |  In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$steps.someStepId.outputs.pets#/0/id`) or the entire body. |
-| Workflow output value | `$outputs.bar` or `$workflows.foo.outputs.bar` |  In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$workflows.foo.outputs.mappedResponse#/name`) or the entire body. |
+| Step output value | `$steps.someStepId.outputs.pets` | In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$steps.someStepId.outputs.pets#/0/id`) or the entire body. |
+| Workflow output value | `$outputs.bar` or `$workflows.foo.outputs.bar` | In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$workflows.foo.outputs.mappedResponse#/name`) or the entire body. |
 | Components parameter | `$components.parameters.foo` | Accesses a foo parameter defined within the Components Object. |
 
 Runtime expressions preserve the type of the referenced value.
@@ -1059,6 +1059,6 @@ The proposed MIME media type for Arazzo documents (e.g. workflows) that require 
 ## Appendix A: Revision History
 
 | Version | Date | Notes |
-| ---  | --- | --- |
-| 1.0.1  | 2025-01-16 | Patch release of the Arazzo Specification 1.0.1 |
-| 1.0.0  | 2024-05-29 | First release of the Arazzo Specification |
+| --- | --- | --- |
+| 1.0.1 | 2025-01-16 | Patch release of the Arazzo Specification 1.0.1 |
+| 1.0.0 | 2024-05-29 | First release of the Arazzo Specification |
