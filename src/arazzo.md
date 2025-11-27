@@ -677,7 +677,6 @@ String comparisons `MUST` be case insensitive.
 | <a name="criterionCondition"></a>condition | `string` | **REQUIRED**. The condition to apply. Conditions can be simple (e.g. `$statusCode == 200` which applies an operator on a value obtained from a runtime expression), or a regex, or a JSONPath expression. For regex or JSONPath, the `type` and `context` MUST be specified. |
 | <a name="criterionType"></a>type | `string` \| [Expression Type Object](#expression-type-object) | The type of condition to be applied. If specified, the options allowed are `simple`, `regex`, `jsonpath` or `xpath`. If omitted, then the condition is assumed to be `simple`, which at most combines literals, operators and [Runtime Expressions](#runtime-expressions). If `jsonpath`, then the expression MUST conform to [JSONPath](https://tools.ietf.org/html/rfc9535). If `xpath` the expression MUST conform to [XML Path Language 3.1](https://www.w3.org/TR/xpath-31/#d2e24229). Should other variants of JSONPath or XPath be required, then a [Expression Type Object](#expression-type-object) MUST be specified. |
 
-
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
 ##### Criterion Object Examples
@@ -879,8 +878,13 @@ Describes a location within a payload (e.g., a request body) and a value to set 
 | Field Name | Type | Description |
 | --- | :---: | --- |
 | <a name="payloadReplacementTarget"></a>target | `string` | **REQUIRED**. A [JSON Pointer](https://tools.ietf.org/html/rfc6901), or [XPath Expression](https://www.w3.org/TR/xpath-31/#id-expressions), or [JSONPath](https://tools.ietf.org/html/rfc9535) which MUST be resolved against the request body. Used to identify the location to inject the `value`. |
-| <a name="payloadReplacementTargetSelectorType"></a>targetSelectorTyoe | `string` \| [Expression Type Object](#expression-type-object) | The selector expression type to use (e.g., `jsonpath`, `xpath`, or `jsonpointer`). If `jsonpath`, then the `target` expression MUST conform to [JSONPath](https://tools.ietf.org/html/rfc9535). If `xpath` the expression MUST conform to [XML Path Language 3.1](https://www.w3.org/TR/xpath-31/#d2e24229). Should other variants of JSONPath or XPath be required, then a [Expression Type Object](#expression-type-object) MUST be specified. |
+| <a name="payloadReplacementTargetSelectorType"></a>targetSelectorType | `string` \| [Expression Type Object](#expression-type-object) | The selector expression type to use (e.g., `jsonpath`, `xpath`, or `jsonpointer`). If `jsonpath`, then the `target` expression MUST conform to [JSONPath](https://tools.ietf.org/html/rfc9535). If `xpath` the expression MUST conform to [XML Path Language 3.1](https://www.w3.org/TR/xpath-31/#d2e24229). Should other variants of JSONPath or XPath be required, then a [Expression Type Object](#expression-type-object) MUST be specified. |
 | <a name="payloadReplacementValue"></a> value | Any \| {expression} \| [Selector Object](#selector-object) | **REQUIRED**. The value set within the target location. The value can be a constant, a [Runtime Expression](#runtime-expressions), or [Selector Objects](#selector-object) to be evaluated and passed to the referenced operation or workflow. |
+
+If `targetSelectorType` is omitted, then:
+
+- `target` MUST be interpreted as [JSON Pointer](https://tools.ietf.org/html/rfc6901)if the payload is `application/json`.
+- `target` MUST be interpreted as [XPath Expression](https://www.w3.org/TR/xpath-31/#id-expressions) if the payload is `application/xml` or another XML-based media type. 
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
