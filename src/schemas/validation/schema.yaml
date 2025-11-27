@@ -132,7 +132,7 @@ $defs:
       outputs:
         description: >
           A map between a friendly name and a dynamic output value defined using a
-          Runtime Expression or Selector Object. Keys must match the regex: ^[a-zA-Z0-9\.\-_]+$.
+          Runtime Expression or Selector Object. Keys must match the regex: ^[a-zA-Z0-9\.\-_]+$
         type: object
         patternProperties:
           '^[a-zA-Z0-9\.\-_]+$':
@@ -208,7 +208,7 @@ $defs:
       outputs:
         description: >
           A map between a friendly name and a dynamic output value defined using a
-          Runtime Expression or Selector Object. Keys must match the regex: ^[a-zA-Z0-9\.\-_]+$.
+          Runtime Expression or Selector Object. Keys must match the regex: ^[a-zA-Z0-9\.\-_]+$
         type: object
         patternProperties:
           '^[a-zA-Z0-9\.\-_]+$':
