@@ -190,7 +190,7 @@ The metadata MAY be used by the clients if needed.
 ##### Fixed Fields
 
 | Field Name | Type | Description |
-| ---|:---:|--- |
+| --- | :---: | --- |
 | <a name="infoTitle"></a>title | `string` | **REQUIRED**. A human readable title of the Arazzo Description. |
 | <a name="infoSummary"></a>summary | `string` | A short summary of the Arazzo Description. |
 | <a name="infoDescription"></a>description | `string` | A description of the purpose of the workflows defined. [CommonMark syntax](https://spec.commonmark.org/) MAY be used for rich text representation. |
@@ -310,7 +310,7 @@ Describes a single workflow step which MAY be a call to an API operation ([OpenA
 | <a name="stepSuccessCriteria"></a>successCriteria | [[Criterion Object](#criterion-object)] | A list of assertions to determine the success of the step. Each assertion is described using a [Criterion Object](#criterion-object). All assertions `MUST` be satisfied for the step to be deemed successful. |
 | <a name="stepOnSuccess"></a>onSuccess | [[Success Action Object](#success-action-object) \| [Reusable Object](#reusable-object)] | An array of success action objects that specify what to do upon step success. If omitted, the next sequential step shall be executed as the default behavior. If multiple success actions have similar `criteria`, the first sequential action matching the criteria SHALL be the action executed. If a success action is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a success action defined in the [components](#components-object) of the current Arazzo document. The list MUST NOT include duplicate success actions. |
 | <a name="stepOnFailure"></a>onFailure | [[Failure Action Object](#failure-action-object) \| [Reusable Object](#reusable-object)] | An array of failure action objects that specify what to do upon step failure. If omitted, the default behavior is to break and return. If multiple failure actions have similar `criteria`, the first sequential action matching the criteria SHALL be the action executed. If a failure action is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a failure action defined in the [components](#components-object) of the current Arazzo document. The list MUST NOT include duplicate failure actions. |
-| <a name="stepOutputs"></a>outputs | Map[`string`, {expression} \| [Selector Object](#selector-object) ] |  A map between a friendly name and a dynamic output value defined using a [Runtime Expression](#runtime-expressions) or [Selector Object](#selector-object) . The name MUST use keys that match the regular expression: `^[a-zA-Z0-9\.\-_]+$`. |
+| <a name="stepOutputs"></a>outputs | Map[`string`, {expression} \| [Selector Object](#selector-object)] | A map between a friendly name and a dynamic output value defined using a [Runtime Expression](#runtime-expressions) or [Selector Object](#selector-object). The name MUST use keys that match the regular expression: `^[a-zA-Z0-9\.\-_]+$`. |
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
@@ -431,7 +431,7 @@ A single success action which describes an action to take upon success of a work
 ##### Fixed Fields
 
 | Field Name | Type | Description |
-| --- | :---: | ---  |
+| --- | :---: | --- |
 | <a name="successActionName"></a> name | `string` | **REQUIRED**. The name of the success action. Names are _case sensitive_. |
 | <a name="successActionType"></a> type | `string` | **REQUIRED**. The type of action to take. Possible values are `"end"` or `"goto"`. |
 | <a name="successWorkflowId"></a> workflowId | `string` | The [workflowId](#fixed-fields-2) referencing an existing workflow within the Arazzo Description to transfer to upon success of the step. This field is only relevant when the `type` field value is `"goto"`. If the referenced workflow is contained within an `arazzo` type `sourceDescription`, then the `workflowId` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g., `$sourceDescriptions.<name>.<workflowId>`) to avoid ambiguity or potential clashes.  This field is mutually exclusive to `stepId`. |
@@ -646,26 +646,26 @@ As part of a condition expression, you can use `boolean`, `null`, `number`, or `
 | Type | Literal value |
 | --- | --- |
 | `boolean` | `true` or `false` |
-| `null` |  `null` |
+| `null` | `null` |
 | `number` | Any number format supported in [Data Types](#data-types). |
 | `string` | Strings MUST use single quotes (') around the string. To use a literal single quote, escape the literal single quote using an additional single quote (''). |
 
 ##### Operators
 
-| Operator | Description  |
+| Operator | Description |
 | --- | --- |
-| `<`| Less than |
-| `<=`| Less than or equal |
-| `>`| Greater than |
-| `>=`| Greater than or equal |
-| `==`| Equal |
-| `!=`| Not equal |
-| `!`| Not |
-| `&&`| And |
-| <code>\|\|</code>| Or |
-| `()`| Logical Grouping |
-| `[]`| Index (0-based) |
-| `.`| Property de-reference |
+| `<` | Less than |
+| `<=` | Less than or equal |
+| `>` | Greater than |
+| `>=` | Greater than or equal |
+| `==` | Equal |
+| `!=` | Not equal |
+| `!` | Not |
+| `&&` | And |
+| <code>\|\|</code> | Or |
+| `()` | Logical Grouping |
+| `[]` | Index (0-based) |
+| `.` | Property de-reference |
 
 String comparisons `MUST` be case insensitive.
 
@@ -713,7 +713,7 @@ Defining this object gives the ability to utilize tooling compatible with older 
 
 | Field Name | Type | Description |
 | --- | :---: | --- |
-| <a name="expressionType"></a>type | `string` | **REQUIRED**. The selector type. The options allowed are `jsonpath`, `xpath`, or `jsonpointer`.  |
+| <a name="expressionType"></a>type | `string` | **REQUIRED**. The selector type. The options allowed are `jsonpath`, `xpath`, or `jsonpointer`. |
 | <a name="expressionVersion"></a>version | `string` | **REQUIRED**. A short hand string representing the version of the expression type being used. The allowed values for JSONPath are `draft-goessner-dispatch-jsonpath-00`. The allowed values for XPath are `xpath-30`, `xpath-20`, or `xpath-10`. |
 
 The supported expression selector types and versions are as follows:
@@ -721,8 +721,8 @@ The supported expression selector types and versions are as follows:
 | Type | Allowed Versions | Default |
 | ---- | --- | --- |
 | `jsonpath` | `rfc9535`, `draft-goessner-dispatch-jsonpath-00` | `rfc9535` |
-| `xpath`| `xpath-31`, `xpath-30`, `xpath-20`, `xpath-10` | `xpath-31` |
-| `jsonpointer` | `rfc6901` (added for completeness)| `rfc6901`|
+| `xpath` | `xpath-31`, `xpath-30`, `xpath-20`, `xpath-10` | `xpath-31` |
+| `jsonpointer` | `rfc6901` (added for completeness) | `rfc6901` |
 
 If this object is not defined or the `version` is omitted, the default version for the selector type MUST be used.
 
@@ -958,17 +958,17 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
 
 #### Examples
 
-| Source Location | example expression  | notes |
+| Source Location | example expression | notes |
 | --- | :--- | :--- |
-| HTTP Method            | `$method`         | The allowable values for the `$method` will be those for the HTTP operation. |
+| HTTP Method | `$method` | The allowable values for the `$method` will be those for the HTTP operation. |
 | Requested media type | `$request.header.accept` | |
-| Request parameter      | `$request.path.id`        | Request parameters MUST be declared in the `parameters` section of the parent operation or they cannot be evaluated. This includes request headers. |
-| Request body property   | `$request.body#/user/uuid`   | In operations which accept payloads, references may be made to portions of the `requestBody` or the entire body. |
-| Request URL            | `$url` | |
-| Response value         | `$response.body#/status`       |  In operations which return payloads, references may be made to portions of the response body or the entire body. |
-| Response header        | `$response.header.Server` |  Single header values only are available. |
-| workflow input        | `$inputs.username` or `$workflows.foo.inputs.username` |  Single input values only are available. |
-| Step output value        | `$steps.someStepId.outputs.pets` |  In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$steps.someStepId.outputs.pets#/0/id`) or the entire body. |
+| Request parameter | `$request.path.id` | Request parameters MUST be declared in the `parameters` section of the parent operation or they cannot be evaluated. This includes request headers. |
+| Request body property | `$request.body#/user/uuid` | In operations which accept payloads, references may be made to portions of the `requestBody` or the entire body. |
+| Request URL | `$url` | |
+| Response value | `$response.body#/status` |  In operations which return payloads, references may be made to portions of the response body or the entire body. |
+| Response header | `$response.header.Server` |  Single header values only are available. |
+| workflow input | `$inputs.username` or `$workflows.foo.inputs.username` |  Single input values only are available. |
+| Step output value | `$steps.someStepId.outputs.pets` |  In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$steps.someStepId.outputs.pets#/0/id`) or the entire body. |
 | Workflow output value | `$outputs.bar` or `$workflows.foo.outputs.bar` |  In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$workflows.foo.outputs.mappedResponse#/name`) or the entire body. |
 | Components parameter | `$components.parameters.foo` | Accesses a foo parameter defined within the Components Object. |
 
@@ -1058,7 +1058,7 @@ The proposed MIME media type for Arazzo documents (e.g. workflows) that require 
 
 ## Appendix A: Revision History
 
-| Version   | Date              | Notes |
-| ---       | ---               | --- |
-| 1.0.1     | 2025-01-16        | Patch release of the Arazzo Specification 1.0.1 |
-| 1.0.0     | 2024-05-29        | First release of the Arazzo Specification |
+| Version | Date | Notes |
+| ---  | --- | --- |
+| 1.0.1  | 2025-01-16 | Patch release of the Arazzo Specification 1.0.1 |
+| 1.0.0  | 2024-05-29 | First release of the Arazzo Specification |
