@@ -77,6 +77,7 @@ $defs:
         enum:
           - arazzo
           - openapi
+          - asyncapi
     required:
       - name
       - url
@@ -156,7 +157,12 @@ $defs:
     $comment: https://spec.openapis.org/arazzo/v1.1#step-object'
     description: |-
       Describes a single workflow step which MAY be a call to an
-      API operation (OpenAPI Operation Object or another Workflow Object)
+      API operation (OpenAPI Operation Object or AsyncAPI Operation Object or another Workflow Object)
+    oneOf:
+      - $ref: '#/$defs/openapi-step-object'
+      - $ref: '#/$defs/asyncapi-step-object'
+      - $ref: '#/$defs/workflow-step-object'
+  step-object-base:
     type: object
     properties:
       stepId:
@@ -169,6 +175,16 @@ $defs:
       operationId:
         description: The name of an existing, resolvable operation, as defined with a unique operationId and existing within one of the sourceDescriptions
         type: string
+      timeout:
+        description: The duration in milliseconds to wait before timing out the step
+        type: integer
+      dependsOn:
+        description: Specifies a list of step identifiers that must complete (or be waited for) before the current step can begin execution
+        type: array
+        uniqueItems: true
+        minItems: 1
+        items:
+          $ref: '#stepId'
       operationPath:
         description: A reference to a Source combined with a JSON Pointer to reference an operation
         type: string
@@ -217,14 +233,21 @@ $defs:
               - $ref: '#/$defs/selector-object'
     required:
       - stepId
-    oneOf:
-      - required:
-          - operationId
-      - required:
-          - operationPath
-      - required:
-          - workflowId
+  openapi-step-object:
     allOf:
+      - $ref: '#/$defs/step-object-base'
+      - type: object
+        properties:
+          operationPath:
+            description: A reference to a Source combined with a JSON Pointer to reference an operation
+            type: string
+          successCriteria:
+            description: A list of assertions to determine the success of the step
+            type: array
+            uniqueItems: true
+            minItems: 1
+            items:
+              $ref: '#/$defs/criterion-object'
       - if:
           oneOf:
             - required:
@@ -236,25 +259,96 @@ $defs:
             parameters:
               items:
                 oneOf:
+                  - $ref: '#/$defs/parameter-object'
+                    required:
+                      - in
+                  - $ref: '#/$defs/reusable-object'
+      - oneOf:
+          - required:
+              - operationId
+          - required:
+              - operationPath
+    $ref: '#/$defs/specification-extensions'
+    unevaluatedProperties: false
+  asyncapi-step-object:
+    allOf:
+      - $ref: '#/$defs/step-object-base'
+      - type: object
+        properties:
+          channelPath:
+            description: A reference to a Source combined with a JSON Pointer to reference an async channel
+            type: string
+          correlationId:
+            description: ID to correlate async responses with their requests, only specified for async receive steps
+            type:
+              - string
+              - number
+              - boolean
+              - object
+              - array
+          action:
+            description: Specifies the intended operation on the async channel, indicating whether the action is sending data to the channel or receiving data from the channel
+            enum:
+              - send
+              - receive
+          successCriteria:
+            description: A list of assertions to determine the success of the step
+            type: array
+            uniqueItems: true
+            minItems: 0
+            items:
+              $ref: '#/$defs/criterion-object'
+        required:
+          - action
+      - if:
+          oneOf:
+            - required:
+                - operationId
+            - required:
+                - channelPath
+        then:
+          properties:
+            parameters:
+              items:
+                oneOf:
                   - $ref: '#/$defs/reusable-object'
                   - $ref: '#/$defs/parameter-object'
                     required:
                       - in
       - if:
           required:
-            - workflowId
+            - correlationId
         then:
           properties:
-            parameters:
-              items:
-                oneOf:
-                  - $ref: '#/$defs/parameter-object'
-                  - $ref: '#/$defs/reusable-object'
+            action:
+              const: receive
+          required:
+            - action
+      - oneOf:
+          - required:
+              - operationId
+          - required:
+              - channelPath
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
+  workflow-step-object:
+    allOf:
+      - $ref: '#/$defs/step-object-base'
+      - type: object
+        properties:
+          workflowId:
+            description: The workflowId referencing an existing workflow within the Arazzo description
+            $ref: '#workflowId'
+          parameters:
+            items:
+              oneOf:
+                - $ref: '#/$defs/parameter-object'
+                - $ref: '#/$defs/reusable-object'
+        required:
+          - workflowId
   request-body-object:
     $comment: https://spec.openapis.org/arazzo/v1.1#request-body-object
-    description: The request body to pass to an operation as referenced by operationId or operationPath
+    description: The request body to pass to an operation as referenced by operationId or operationPath or channelPath
     type: object
     properties:
       contentType:
@@ -287,7 +381,7 @@ $defs:
         description: The type of condition to be applied or a reference to an expression type object
         oneOf:
           - type: string
-            enum: 
+            enum:
               - simple
               - regex
               - jsonpath
@@ -330,10 +424,10 @@ $defs:
         then:
           properties:
             version:
-              enum: 
+              enum:
                 - rfc9535
                 - draft-goessner-dispatch-jsonpath-00
-              
+
       - if:
           required:
             - type
@@ -356,7 +450,7 @@ $defs:
         then:
           properties:
             version:
-              const: rfc6901           
+              const: rfc6901
     $ref: '#/$defs/specification-extensions'
   success-action-object:
     $comment: https://spec.openapis.org/arazzo/v1.1#success-action-object
@@ -435,7 +529,7 @@ $defs:
         description: A list of parameters that MUST be passed to a workflow as referenced by workflowId
         type: array
         uniqueItems: true
-        items: true        
+        items: true
       retryAfter:
         description: A non-negative decimal indicating the seconds to delay after the step failure before another attempt SHALL be made
         type: number
@@ -475,7 +569,7 @@ $defs:
             - parameters
         then:
           required:
-            - workflowId            
+            - workflowId
     required:
       - name
       - type
@@ -516,6 +610,7 @@ $defs:
           - query
           - header
           - cookie
+          - channel
       value:
         description: The value to pass in the parameter
         oneOf:
@@ -525,7 +620,7 @@ $defs:
             - array
             - number
             - 'null'
-         - $ref: '#/$defs/selector-object' 
+         - $ref: '#/$defs/selector-object'
     required:
       - name
       - value
@@ -544,7 +639,7 @@ $defs:
           The selector expression type to use (e.g., `jsonpath`, `xpath`, or `jsonpointer`).
           Should an alternate version be required, the Expression Type Object may be used instead.
           If omitted, defaults to JSON Pointer for `application/json` or XPath for XML-based media types.
-        $ref: '#/$defs/selector-type'        
+        $ref: '#/$defs/selector-type'
       value:
         description: >
           The value to set at the location defined by the target. May be a literal,
