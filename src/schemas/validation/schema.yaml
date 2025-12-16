@@ -179,18 +179,13 @@ $defs:
         description: The duration in milliseconds to wait before timing out the step
         type: integer
       dependsOn:
-        description: Specifies a list of step identifiers that must complete (or be waited for) before the current step can begin execution
+        description: Specifies a list of step identifiers that must complete (or be waited for) before the current step can begin execution. If you depend on a step from another workflow, you MUST use the full reference format with the workflow id.
         type: array
         uniqueItems: true
         minItems: 1
         items:
-          $ref: '#stepId'
-      operationPath:
-        description: A reference to a Source combined with a JSON Pointer to reference an operation
-        type: string
-      workflowId:
-        description: The workflowId referencing an existing workflow within the Arazzo description
-        $ref: '#workflowId'
+          type: string
+          pattern: ^\\$(?:workflows\\.[^.]+\\.)?steps\\.[^.]+$
       parameters:
         description: A list of parameters that MUST be passed to an operation or workflow as referenced by operationId, operationPath, or workflowId
         type: array
