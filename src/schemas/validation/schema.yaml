@@ -77,6 +77,7 @@ $defs:
         enum:
           - arazzo
           - openapi
+          - asyncapi
     required:
       - name
       - url
@@ -152,7 +153,12 @@ $defs:
     $comment: https://spec.openapis.org/arazzo/v1.0#step-object'
     description: |-
       Describes a single workflow step which MAY be a call to an
-      API operation (OpenAPI Operation Object or another Workflow Object)
+      API operation (OpenAPI Operation Object or AsyncAPI Operation Object or another Workflow Object)
+    oneOf:
+      - $ref: '#/$defs/openapi-step-object'
+      - $ref: '#/$defs/asyncapi-step-object'
+      - $ref: '#/$defs/workflow-step-object'
+  step-object-base:
     type: object
     properties:
       stepId:
@@ -165,12 +171,17 @@ $defs:
       operationId:
         description: The name of an existing, resolvable operation, as defined with a unique operationId and existing within one of the sourceDescriptions
         type: string
-      operationPath:
-        description: A reference to a Source combined with a JSON Pointer to reference an operation
-        type: string
-      workflowId:
-        description: The workflowId referencing an existing workflow within the Arazzo description
-        $ref: '#workflowId'
+      timeout:
+        description: The duration in milliseconds to wait before timing out the step
+        type: integer
+      dependsOn:
+        description: Specifies a list of step identifiers that must complete (or be waited for) before the current step can begin execution. If you depend on a step from another workflow, you MUST use the full reference format with the workflow id.
+        type: array
+        uniqueItems: true
+        minItems: 1
+        items:
+          type: string
+          pattern: ^\\$(?:workflows\\.[^.]+\\.)?steps\\.[^.]+$
       parameters:
         description: A list of parameters that MUST be passed to an operation or workflow as referenced by operationId, operationPath, or workflowId
         type: array
@@ -209,14 +220,21 @@ $defs:
             type: string
     required:
       - stepId
-    oneOf:
-      - required:
-          - operationId
-      - required:
-          - operationPath
-      - required:
-          - workflowId
+  openapi-step-object:
     allOf:
+      - $ref: '#/$defs/step-object-base'
+      - type: object
+        properties:
+          operationPath:
+            description: A reference to a Source combined with a JSON Pointer to reference an operation
+            type: string
+          successCriteria:
+            description: A list of assertions to determine the success of the step
+            type: array
+            uniqueItems: true
+            minItems: 1
+            items:
+              $ref: '#/$defs/criterion-object'
       - if:
           oneOf:
             - required:
@@ -228,25 +246,96 @@ $defs:
             parameters:
               items:
                 oneOf:
-                  - $ref: '#/$defs/reusable-object'
                   - $ref: '#/$defs/parameter-object'
                     required:
                       - in
+                  - $ref: '#/$defs/reusable-object'
+      - oneOf:
+          - required:
+              - operationId
+          - required:
+              - operationPath
+    $ref: '#/$defs/specification-extensions'
+    unevaluatedProperties: false
+  asyncapi-step-object:
+    allOf:
+      - $ref: '#/$defs/step-object-base'
+      - type: object
+        properties:
+          channelPath:
+            description: A reference to a Source combined with a JSON Pointer to reference an async channel
+            type: string
+          correlationId:
+            description: ID to correlate async responses with their requests, only specified for async receive steps
+            type:
+              - string
+              - number
+              - boolean
+              - object
+              - array
+          action:
+            description: Specifies the intended operation on the async channel, indicating whether the action is sending data to the channel or receiving data from the channel
+            enum:
+              - send
+              - receive
+          successCriteria:
+            description: A list of assertions to determine the success of the step
+            type: array
+            uniqueItems: true
+            minItems: 0
+            items:
+              $ref: '#/$defs/criterion-object'
+        required:
+          - action
       - if:
-          required:
-            - workflowId
+          oneOf:
+            - required:
+                - operationId
+            - required:
+                - channelPath
         then:
           properties:
             parameters:
               items:
                 oneOf:
                   - $ref: '#/$defs/parameter-object'
+                    required:
+                      - in
                   - $ref: '#/$defs/reusable-object'
+      - if:
+          required:
+            - correlationId
+        then:
+          properties:
+            action:
+              const: receive
+          required:
+            - action
+      - oneOf:
+          - required:
+              - operationId
+          - required:
+              - channelPath
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
+  workflow-step-object:
+    allOf:
+      - $ref: '#/$defs/step-object-base'
+      - type: object
+        properties:
+          workflowId:
+            description: The workflowId referencing an existing workflow within the Arazzo description
+            $ref: '#workflowId'
+          parameters:
+            items:
+              oneOf:
+                - $ref: '#/$defs/parameter-object'
+                - $ref: '#/$defs/reusable-object'
+        required:
+          - workflowId
   request-body-object:
     $comment: https://spec.openapis.org/arazzo/v1.0#request-body-object
-    description: The request body to pass to an operation as referenced by operationId or operationPath
+    description: The request body to pass to an operation as referenced by operationId or operationPath or channelPath
     type: object
     properties:
       contentType:
@@ -471,6 +560,7 @@ $defs:
           - query
           - header
           - cookie
+          - channel
       value:
         description: The value to pass in the parameter
         type:
