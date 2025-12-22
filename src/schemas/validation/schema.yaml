@@ -354,6 +354,11 @@ $defs:
       stepId:
         description: The stepId to transfer to upon success of the step
         $ref: '#stepId'
+      parameters:
+        description: A list of parameters that MUST be passed to a workflow as referenced by workflowId
+        type: array
+        uniqueItems: true
+        items: true
       criteria:
         description: A list of assertions to determine if this action SHALL be executed
         type: array
@@ -372,6 +377,12 @@ $defs:
                 - workflowId
             - required:
                 - stepId
+      - if:
+          required:
+            - parameters
+        then:
+          required:
+            - workflowId
     required:
       - name
       - type
@@ -397,6 +408,11 @@ $defs:
       stepId:
         description: The stepId to transfer to upon failure of the step
         $ref: '#stepId'
+      parameters:
+        description: A list of parameters that MUST be passed to a workflow as referenced by workflowId
+        type: array
+        uniqueItems: true
+        items: true        
       retryAfter:
         description: A non-negative decimal indicating the seconds to delay after the step failure before another attempt SHALL be made
         type: number
@@ -431,6 +447,12 @@ $defs:
         then:
           required:
             - retryAfter
+      - if:
+          required:
+            - parameters
+        then:
+          required:
+            - workflowId            
     required:
       - name
       - type
