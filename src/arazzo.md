@@ -752,8 +752,8 @@ An object which enables fine-grained traversal and precise data selection from s
 
 | Field Name | Type | Description |
 | --- | :---: | --- |
-| <a name="selectorObjExpression"></a>expression | {expression} | **REQUIRED**. A valid [Runtime Expressions](#runtime-expressions) which MUST evaluate to structured data (e.g., `$response.body`). |
-| <a name="selectorObjSelector"></a>selector | `string` | **REQUIRED**.A selector expression (e.g., $.items[0].id, /Envelope/Item) in the form of JSONPath expression, XPath expression, or JSON Pointer expression. |
+| <a name="selectorObjContext"></a>context | {expression} | **REQUIRED**. A [Runtime Expression](#runtime-expressions) which MUST evaluate to structured data (e.g., `$response.body`) and set the context for the selector to be applied on. |
+| <a name="selectorObjSelector"></a>selector | `string` | **REQUIRED**.A selector expression (e.g., `$.items[0].id`, `/Envelope/Item`) in the form of JSONPath expression, XPath expression, or JSON Pointer expression. |
 | <a name="selectorObjType"></a>type | `string` \| [Expression Type Object](#expression-type-object) | **REQUIRED**. The selector expression type to use (e.g., `jsonpath`, `xpath`, or `jsonpointer`). If `jsonpath`, then the expression MUST conform to [JSONPath](https://tools.ietf.org/html/rfc9535). If `xpath` the expression MUST conform to [XML Path Language 3.1](https://www.w3.org/TR/xpath-31/#d2e24229). Should other variants of JSONPath or XPath be required, then a [Expression Type Object](#expression-type-object) MUST be specified. |
 
 
@@ -764,7 +764,7 @@ An output example:
 ```yaml
   outputs:
     userEmail:
-      expression: $response.body
+      context: $response.body
       selector: $.user.profile.email
       type: jsonpath
 ```
@@ -776,7 +776,7 @@ A Step RequestBody example:
     contentType: application/json
     payload:
       invoiceId:
-        expression: $steps.fetchXml.outputs.invoiceXml
+        context: $steps.fetchXml.outputs.invoiceXml
         selector: /Invoice/Header/InvoiceNumber
         type:
           type: xpath

@@ -522,13 +522,7 @@ $defs:
           The selector expression type to use (e.g., `jsonpath`, `xpath`, or `jsonpointer`).
           Should an alternate version be required, the Expression Type Object may be used instead.
           If omitted, defaults to JSON Pointer for `application/json` or XPath for XML-based media types.
-        oneOf:
-          - type: string
-            enum:
-              - jsonpointer
-              - jsonpath
-              - xpath
-          - $ref: "#/$defs/expression-type-object"        
+        $ref: '#/$defs/selector-type'        
       value:
         description: >
           The value to set at the location defined by the target. May be a literal,
@@ -541,28 +535,31 @@ $defs:
       - value
     unevaluatedProperties: false
     $ref: '#/$defs/specification-extensions'
-  selector-object: 
+  selector-type:
+    description: A selector expression type that may be a simple string enum or an Expression Type Object for version-specific support
+    oneOf:
+      - type: string
+        enum:
+          - jsonpointer
+          - jsonpath
+          - xpath
+      - $ref: '#/$defs/expression-type-object'
+  selector-object:
     $comment: https://spec.openapis.org/arazzo/v1.1#selector-object
     description: An object which enables fine-grained traversal and precise data selection from structured data
     type: object
     properties:
-      expression:
-        description: A valid Runtime Expressions which MUST evaluate to structured data (e.g., `$response.body`)
+      context:
+        description: A valid Runtime Expression which MUST evaluate to structured data (e.g., `$response.body`), and sets the context for the selector to be applied on
         type: string
       selector:
-        description: A selector expression (e.g., $.items[0].id, /Envelope/Item) in the form of JSONPath expression, XPath expression, or JSON Pointer expression
+        description: A selector expression (e.g., `$.items[0].id`, `/Envelope/Item`) in the form of JSONPath expression, XPath expression, or JSON Pointer expression
         type: string
       type:
         description: The selector expression type to use (e.g., `jsonpath`, `xpath`, or `jsonpointer`) or an Expression Type Object for older version support
-        oneOf:
-          - type: string
-            enum: 
-              - jsonpointer
-              - jsonpath
-              - xpath
-          - $ref: '#/$defs/expression-type-object'
-    required: 
-      - expression
+        $ref: '#/$defs/selector-type'
+    required:
+      - context
       - selector
       - type
     unevaluatedProperties: false
