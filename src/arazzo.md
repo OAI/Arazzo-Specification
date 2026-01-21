@@ -416,7 +416,7 @@ This object MAY be extended with [Specification Extensions](#specification-exten
 - name: customerId
   in: query
   value:
-    expression: $inputs.customer
+    context: $inputs.customer
     selector: $.details[0].id
     type: jsonpath
 ```
@@ -910,7 +910,7 @@ A JSONPath example using an Expression Type Object:
   target: $.items[?(@.sku=='ABC123')].quantity
   targetSelectorType: jsonpath
   value:
-    expression: $steps.getInventory.outputs.payload
+    context: $steps.getInventory.outputs.payload
     selector: $.newQuantity
     type: jsonpath
 ```
@@ -923,7 +923,7 @@ An XPath example using older XPATH 3.0:
     type: xpath
     version: xpath-30
   value:
-    expression: $steps.fetchCustomerData.outputs.xml
+    context: $steps.fetchCustomerData.outputs.xml
     selector: /CustomerInfo/Id
     type:
       type: xpath
