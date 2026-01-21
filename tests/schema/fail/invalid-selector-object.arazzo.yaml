@@ -1,0 +1,17 @@
+arazzo: 1.1.0
+info:
+  title: Invalid Selector Object (Missing Type)
+  version: 1.1.0
+sourceDescriptions:
+  - name: example
+    url: 'https://example.com/openapi.yaml'
+    type: openapi
+workflows:
+  - workflowId: wf1
+    steps:
+      - stepId: step1
+        operationId: getStuff
+        outputs:
+          brokenOutput:
+            expression: $response.body
+            selector: $.data.id
