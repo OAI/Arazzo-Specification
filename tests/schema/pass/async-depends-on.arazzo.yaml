@@ -27,7 +27,7 @@ workflows:
         parameters:
           - name: userId
             in: header
-            value: "$steps.fetchUserId.outputs.userId"
+            value: "$steps.step2.outputs.userId"
       - stepId: step4
         operationId: deleteUser
         action: send
@@ -36,4 +36,4 @@ workflows:
         parameters:
           - name: userId
             in: header
-            value: "$steps.fetchUserId.outputs.userId"
+            value: "$steps.step2.outputs.userId"
