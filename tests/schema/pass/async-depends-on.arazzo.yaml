@@ -1,0 +1,39 @@
+arazzo: 1.1.0
+info:
+  title: Minimal Arazzo Example for AsyncAPI with Depends On
+  version: 1.0.0
+sourceDescriptions:
+  - name: exampleAPI
+    url: https://example.com/asyncapi.yaml
+    type: asyncapi
+workflows:
+  - workflowId: dependsOnWorkflow
+    steps:
+      - stepId: step1
+        operationId: createUser
+        action: send
+      - stepId: step2
+        operationId: fetchUserId
+        action: receive
+        correlationId: id123
+        timeout: 6000
+        outputs:
+          userId: "$message.payload.userId"
+      - stepId: step3
+        operationId: updateUser
+        action: send
+        dependsOn:
+          - "$steps.step2"
+        parameters:
+          - name: userId
+            in: header
+            value: "$steps.fetchUserId.outputs.userId"
+      - stepId: step4
+        operationId: deleteUser
+        action: send
+        dependsOn:
+          - "$workflows.dependsOnWorkflow.steps.step2"
+        parameters:
+          - name: userId
+            in: header
+            value: "$steps.fetchUserId.outputs.userId"
