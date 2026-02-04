@@ -1,0 +1,129 @@
+arazzo: "1.1.0"
+info:
+  title: "Arazzo Workflow"
+  version: "1.1.0"
+sourceDescriptions:
+- name: "LocationApi"
+  url: "./workflow/openapi/location.yaml"
+  type: "openapi"
+- name: "ProductApi"
+  url: "./workflow/openapi/product.yaml"
+  type: "openapi"
+- name: "AsyncOrderApi"
+  url: "./workflow/asyncapi/order.yaml"
+  type: "asyncapi"
+- name: "WarehouseApi"
+  url: "./workflow/openapi/warehouse.yaml"
+  type: "openapi"
+- name: "OrderApi"
+  url: "./workflow/openapi/order.yaml"
+  type: "openapi"
+workflows:
+- workflowId: "OrderId"
+  inputs:
+    required:
+    - "createOrderSend"
+    - "getUserLocation"
+    type: "object"
+    properties:
+      createOrderSend:
+        required:
+        - "requestId"
+        type: "object"
+        properties:
+          requestId:
+            type: "string"
+      getUserLocation:
+        required:
+        - "userEmail"
+        type: "object"
+        properties:
+          userEmail:
+            type: "string"
+            format: "email"
+  steps:
+  - stepId: "getUserLocation"
+    operationId: "$sourceDescriptions.LocationApi.getUserLocation"
+    parameters:
+    - name: "userEmail"
+      in: "query"
+      value: "$inputs.getUserLocation.userEmail"
+    successCriteria:
+    - condition: "$statusCode == 200"
+    outputs:
+      userId: "$response.body#/userId"
+      locationCode: "$response.body#/locationCode"
+  - stepId: "getProducts"
+    operationId: "$sourceDescriptions.ProductApi.getProducts"
+    parameters:
+    - name: "locationCode"
+      in: "query"
+      value: "$steps.getUserLocation.outputs.locationCode"
+    successCriteria:
+    - condition: "$statusCode == 200"
+    onSuccess:
+    - name: "IsArrayEmpty"
+      type: "end"
+      criteria:
+      - condition: "$response.body#/0 == null"
+    outputs:
+      productId: "$response.body#/0/productId"
+      inventory: "$response.body#/0/inventory"
+  - stepId: "createOrderSend"
+    operationId: "$sourceDescriptions.AsyncOrderApi.createOrder"
+    action: "send"
+    parameters:
+    - name: "requestId"
+      in: "header"
+      value: "$inputs.createOrderSend.requestId"
+    requestBody:
+      payload:
+        userId: "$steps.getUserLocation.outputs.userId"
+        productId: "$steps.getProducts.outputs.productId"
+        inventory: "$steps.getProducts.outputs.inventory"
+    outputs:
+      requestId: "$message.header.requestId"
+  - stepId: "createOrderReceive"
+    operationId: "$sourceDescriptions.AsyncOrderApi.createOrder"
+    action: "receive"
+    correlationId: "$steps.createOrderSend.outputs.requestId"
+    timeout: 6000
+    outputs:
+      orderId: "$message.payload.orderId"
+  - stepId: "reserveInventory"
+    operationId: "$sourceDescriptions.WarehouseApi.reserveInventory"
+    dependsOn:
+    - "$steps.createOrderReceive"
+    parameters:
+    - name: "orderId"
+      in: "query"
+      value: "$steps.createOrderReceive.outputs.orderId"
+    successCriteria:
+    - condition: "$statusCode == 200"
+  - stepId: "orderAccepted"
+    operationId: "$sourceDescriptions.AsyncOrderApi.orderAccepted"
+    action: "receive"
+    correlationId: "$steps.createOrderSend.outputs.requestId"
+    timeout: 6000
+  - stepId: "outForDelivery"
+    operationId: "$sourceDescriptions.AsyncOrderApi.outForDelivery"
+    action: "send"
+    dependsOn:
+    - "$steps.createOrderReceive"
+    parameters:
+    - name: "requestId"
+      in: "header"
+      value: "$steps.createOrderSend.outputs.requestId"
+    requestBody:
+      payload:
+        orderId: "$steps.createOrderReceive.outputs.orderId"
+  - stepId: "getOrderDetails"
+    operationId: "$sourceDescriptions.OrderApi.getOrderDetails"
+    dependsOn:
+    - "$steps.createOrderReceive"
+    parameters:
+    - name: "orderId"
+      in: "path"
+      value: "$steps.createOrderReceive.outputs.orderId"
+    successCriteria:
+    - condition: "$statusCode == 200"

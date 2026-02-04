@@ -1,0 +1,81 @@
+asyncapi: 3.0.0
+
+info:
+  title: Simple Pet Purchase API
+  version: "1.0.0"
+
+servers:
+  localKafka:
+    host: localhost:9092
+    protocol: kafka
+
+channels:
+  place-order:
+    address: place-order
+    messages:
+      placeOrder.message:
+        $ref: "#/components/messages/OrderRequest"
+
+  confirm-order:
+    address: confirm-order
+    messages:
+      confirmOrder.message:
+        $ref: "#/components/messages/OrderResponse"
+
+operations:
+  placeOrder:
+    description: Place an order
+    action: receive
+    channel:
+      $ref: "#/channels/place-order"
+    messages:
+      - $ref: "#/channels/place-order/messages/placeOrder.message"
+    reply:
+      channel:
+        $ref: "#/channels/confirm-order"
+      messages:
+        - $ref: "#/channels/confirm-order/messages/confirmOrder.message"
+
+components:
+  messages:
+    OrderRequest:
+      contentType: application/json
+      correlationId:
+        description: Identifier that correlates this request with a response
+        location: "$message.header#/orderRequestId"
+      headers:
+        type: object
+        required:
+        - orderRequestId
+        properties:
+          orderRequestId:
+            type: string
+            description: Unique ID for tracking the order flow
+      payload:
+        type: object
+        required:
+          - petId
+        properties:
+          petId:
+            type: integer
+
+    OrderResponse:
+      contentType: application/json
+      correlationId:
+        description: Identifier that correlates this response with a request
+        location: "$message.header#/orderRequestId"
+      headers:
+        type: object
+        required:
+        - orderRequestId
+        properties:
+          orderRequestId:
+            type: string
+            description: Unique ID for tracking the order flow
+      payload:
+        type: object
+        required:
+          - orderId
+        properties:
+          orderId:
+            type: integer
