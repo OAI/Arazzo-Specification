@@ -47,6 +47,6 @@
         "yaml": "2.8.2",
         "@hyperjump/json-schema": "^1.17.4",
         "c8": "^11.0.0",
-        "vitest": "^4.0.18"
+        "vitest": "^4.1.0"
     }
 }
