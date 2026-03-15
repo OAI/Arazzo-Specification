@@ -93,7 +93,7 @@ workflows:
   - stepId: "reserveInventory"
     operationId: "$sourceDescriptions.WarehouseApi.reserveInventory"
     dependsOn:
-    - "$steps.createOrderReceive"
+    - "createOrderReceive"
     parameters:
     - name: "orderId"
       in: "query"
@@ -109,7 +109,7 @@ workflows:
     operationId: "$sourceDescriptions.AsyncOrderApi.outForDelivery"
     action: "send"
     dependsOn:
-    - "$steps.createOrderReceive"
+    - "createOrderReceive"
     parameters:
     - name: "requestId"
       in: "header"
@@ -120,7 +120,7 @@ workflows:
   - stepId: "getOrderDetails"
     operationId: "$sourceDescriptions.OrderApi.getOrderDetails"
     dependsOn:
-    - "$steps.createOrderReceive"
+    - "createOrderReceive"
     parameters:
     - name: "orderId"
       in: "path"
