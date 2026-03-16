@@ -18,22 +18,22 @@ workflows:
         correlationId: id123
         timeout: 6000
         outputs:
-          userId: "$message.payload.userId"
+          userId: $message.payload.userId
       - stepId: step3
         operationId: updateUser
         action: send
         dependsOn:
-          - "step2"
+          - step2
         parameters:
           - name: userId
             in: header
-            value: "$steps.step2.outputs.userId"
+            value: $steps.step2.outputs.userId
       - stepId: step4
         operationId: deleteUser
         action: send
         dependsOn:
-          - "$workflows.dependsOnWorkflow.steps.step2"
+          - $workflows.dependsOnWorkflow.steps.step2
         parameters:
           - name: userId
             in: header
-            value: "$steps.step2.outputs.userId"
+            value: $steps.step2.outputs.userId

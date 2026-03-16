@@ -43,87 +43,87 @@ workflows:
             format: "email"
   steps:
   - stepId: "getUserLocation"
-    operationId: "$sourceDescriptions.LocationApi.getUserLocation"
+    operationId: $sourceDescriptions.LocationApi.getUserLocation
     parameters:
     - name: "userEmail"
       in: "query"
-      value: "$inputs.getUserLocation.userEmail"
+      value: $inputs.getUserLocation.userEmail
     successCriteria:
-    - condition: "$statusCode == 200"
+    - condition: $statusCode == 200
     outputs:
-      userId: "$response.body#/userId"
-      locationCode: "$response.body#/locationCode"
+      userId: $response.body#/userId
+      locationCode: $response.body#/locationCode
   - stepId: "getProducts"
-    operationId: "$sourceDescriptions.ProductApi.getProducts"
+    operationId: $sourceDescriptions.ProductApi.getProducts
     parameters:
     - name: "locationCode"
       in: "query"
-      value: "$steps.getUserLocation.outputs.locationCode"
+      value: $steps.getUserLocation.outputs.locationCode
     successCriteria:
-    - condition: "$statusCode == 200"
+    - condition: $statusCode == 200
     onSuccess:
     - name: "IsArrayEmpty"
       type: "end"
       criteria:
-      - condition: "$response.body#/0 == null"
+      - condition: $response.body#/0 == null
     outputs:
-      productId: "$response.body#/0/productId"
-      inventory: "$response.body#/0/inventory"
+      productId: $response.body#/0/productId
+      inventory: $response.body#/0/inventory
   - stepId: "createOrderSend"
-    operationId: "$sourceDescriptions.AsyncOrderApi.createOrder"
+    operationId: $sourceDescriptions.AsyncOrderApi.createOrder
     action: "send"
     parameters:
     - name: "requestId"
       in: "header"
-      value: "$inputs.createOrderSend.requestId"
+      value: $inputs.createOrderSend.requestId
     requestBody:
       payload:
-        userId: "$steps.getUserLocation.outputs.userId"
-        productId: "$steps.getProducts.outputs.productId"
-        inventory: "$steps.getProducts.outputs.inventory"
+        userId: $steps.getUserLocation.outputs.userId
+        productId: $steps.getProducts.outputs.productId
+        inventory: $steps.getProducts.outputs.inventory
     outputs:
-      requestId: "$message.header.requestId"
+      requestId: $message.header.requestId
   - stepId: "createOrderReceive"
-    operationId: "$sourceDescriptions.AsyncOrderApi.createOrder"
+    operationId: $sourceDescriptions.AsyncOrderApi.createOrder
     action: "receive"
-    correlationId: "$steps.createOrderSend.outputs.requestId"
+    correlationId: $steps.createOrderSend.outputs.requestId
     timeout: 6000
     outputs:
-      orderId: "$message.payload.orderId"
+      orderId: $message.payload.orderId
   - stepId: "reserveInventory"
-    operationId: "$sourceDescriptions.WarehouseApi.reserveInventory"
+    operationId: $sourceDescriptions.WarehouseApi.reserveInventory
     dependsOn:
-    - "createOrderReceive"
+    - createOrderReceive
     parameters:
     - name: "orderId"
       in: "query"
-      value: "$steps.createOrderReceive.outputs.orderId"
+      value: $steps.createOrderReceive.outputs.orderId
     successCriteria:
-    - condition: "$statusCode == 200"
+    - condition: $statusCode == 200
   - stepId: "orderAccepted"
-    operationId: "$sourceDescriptions.AsyncOrderApi.orderAccepted"
+    operationId: $sourceDescriptions.AsyncOrderApi.orderAccepted
     action: "receive"
-    correlationId: "$steps.createOrderSend.outputs.requestId"
+    correlationId: $steps.createOrderSend.outputs.requestId
     timeout: 6000
   - stepId: "outForDelivery"
-    operationId: "$sourceDescriptions.AsyncOrderApi.outForDelivery"
+    operationId: $sourceDescriptions.AsyncOrderApi.outForDelivery
     action: "send"
     dependsOn:
-    - "createOrderReceive"
+    - createOrderReceive
     parameters:
     - name: "requestId"
       in: "header"
-      value: "$steps.createOrderSend.outputs.requestId"
+      value: $steps.createOrderSend.outputs.requestId
     requestBody:
       payload:
-        orderId: "$steps.createOrderReceive.outputs.orderId"
+        orderId: $steps.createOrderReceive.outputs.orderId
   - stepId: "getOrderDetails"
-    operationId: "$sourceDescriptions.OrderApi.getOrderDetails"
+    operationId: $sourceDescriptions.OrderApi.getOrderDetails
     dependsOn:
-    - "createOrderReceive"
+    - createOrderReceive
     parameters:
     - name: "orderId"
       in: "path"
-      value: "$steps.createOrderReceive.outputs.orderId"
+      value: $steps.createOrderReceive.outputs.orderId
     successCriteria:
-    - condition: "$statusCode == 200"
+    - condition: $statusCode == 200

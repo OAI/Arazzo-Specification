@@ -42,7 +42,7 @@ components:
       contentType: application/json
       correlationId:
         description: Identifier that correlates this request with a response
-        location: "$message.header#/orderRequestId"
+        location: $message.header#/orderRequestId
       headers:
         type: object
         required:
@@ -63,7 +63,7 @@ components:
       contentType: application/json
       correlationId:
         description: Identifier that correlates this response with a request
-        location: "$message.header#/orderRequestId"
+        location: $message.header#/orderRequestId
       headers:
         type: object
         required:

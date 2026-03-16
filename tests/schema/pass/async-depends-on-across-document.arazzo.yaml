@@ -26,4 +26,4 @@ workflows:
         operationId: localSend
         action: send
         dependsOn:
-          - "$sourceDescriptions.otherWorkflowDoc.remoteWorkflow.steps.remoteReceive"
+          - $sourceDescriptions.otherWorkflowDoc.remoteWorkflow.steps.remoteReceive
