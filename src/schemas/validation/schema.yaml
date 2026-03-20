@@ -8,6 +8,11 @@ properties:
     description: The version number of the Arazzo Specification
     type: string
     pattern: '^1\.1\.\d+(-.+)?$'
+  $self:
+    type: string
+    format: uri-reference
+    $comment: MUST NOT contain a fragment
+    pattern: '^[^#]*$'
   info:
     $ref: '#/$defs/info'
   sourceDescriptions:

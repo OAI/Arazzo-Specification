@@ -15,50 +15,50 @@ The Arazzo Specification can articulate these workflows in a human-readable and 
 <!-- TOC depthFrom:1 depthTo:3 withLinks:1 updateOnSave:1 orderedList:0 -->
 ## Table of Contents
 
-- [Definitions](#definitions)
-  - [Arazzo Description](#arazzo-description)
-- [Specification](#specification)
-  - [Versions](#versions)
-  - [Format](#format)
-  - [Arazzo Description Structure](#arazzo-description-structure)
-  - [Data Types](#data-types)
-  - [Relative References in URLs](#relative-references-in-urls)
-  - [Schema](#schema)
-    - [Arazzo Specification Object](#arazzo-specification-object)
-    - [Info Object](#info-object)
-    - [Source Description Object](#source-description-object)
-    - [Workflow Object](#workflow-object)
-    - [Step Object](#step-object)
-    - [Parameter Object](#parameter-object)
-    - [Success Action Object](#success-action-object)
-    - [Failure Action Object](#failure-action-object)
-    - [Components Object](#components-object)
-    - [Reusable Object](#reusable-object)
-    - [Criterion Object](#criterion-object)
-    - [Expression Type Object](#expression-type-object)
-    - [Selector Object](#selector-object)
-    - [Request Body Object](#request-body-object)
-    - [Payload Replacement Object](#payload-replacement-object)
-  - [Runtime Expressions](#runtime-expressions)
-  - [Specification Extensions](#specification-extensions)
-  - [Security Considerations](#security-considerations)
-  - [IANA Considerations](#iana-considerations)
+- [Versions](#versions)
+- [Format](#format)
+- [Data Types](#data-types)
+  - [Data Type Format](#data-type-format)
+- [Objects and Fields](#objects-and-fields)
+  - [Arazzo Object](#arazzo-object)
+    - [Arazzo Description Structure](#arazzo-description-structure)
+      - [Parsing Documents](#parsing-documents)
+      - [Relative References in Arazzo Description URIs](#relative-references-in-arazzo-description-uris)
+        - [Establishing the Base URI](#establishing-the-base-uri)
+        - [Resolving URI fragments](#resolving-uri-fragments)
+        - [Relative URI References in CommonMark Fields](#relative-uri-references-in-commonmark-fields)
+        - [Relative References in API URLs](#relative-references-in-api-urls)
+  - [Info Object](#info-object)
+  - [Source Description Object](#source-description-object)
+  - [Workflow Object](#workflow-object)
+  - [Step Object](#step-object)
+  - [Parameter Object](#parameter-object)
+  - [Success Action Object](#success-action-object)
+  - [Failure Action Object](#failure-action-object)
+  - [Components Object](#components-object)
+  - [Reusable Object](#reusable-object)
+  - [Criterion Object](#criterion-object)
+  - [Expression Type Object](#expression-type-object)
+  - [Selector Object](#selector-object)
+  - [Request Body Object](#request-body-object)
+  - [Payload Replacement Object](#payload-replacement-object)
+- [Runtime Expressions](#runtime-expressions)
+  - [Examples](#examples)
+- [Specification Extensions](#specification-extensions)
+- [Security Considerations](#security-considerations)
+- [IANA Considerations](#iana-considerations)
+  - [application/vnd.oai.workflows](#applicationvndoaiworkflows)
+  - [application/vnd.oai.workflows+json](#applicationvndoaiworkflowsjson)
+  - [application/vnd.oai.workflows+yaml](#applicationvndoaiworkflowsyaml)
 - [Appendix A: Revision History](#appendix-a-revision-history)
+- [Appendix B: Examples of Base URI Determination and Reference Resolution](#appendix-b-examples-of-base-uri-determination-and-reference-resolution)
 <!-- /TOC -->
-
-## Definitions
-
-### Arazzo Description
-
-A self-contained document (or set of documents) which defines or describes API workflows (specific sequence of calls to achieve a particular goal in the context of an API definition). An Arazzo Description uses and conforms to the Arazzo Specification, and `MUST` contain a valid Arazzo Specification version field (`arazzo`), an [info](#info-object) field, a `sourceDescriptions` field with at least one defined [Source Description](#source-description-object), and there `MUST` be at least one [Workflow](#workflow-object) defined in the `workflows` fixed field.
-
-## Specification
 
 ### Versions
 
 The Arazzo Specification is versioned using a `major`.`minor`.`patch` versioning scheme. The `major`.`minor` portion of the version string (for example 1.0) SHALL designate the Arazzo feature set. `.patch` versions address errors in, or provide clarifications to, this document, not the feature set. The patch version SHOULD NOT be considered by tooling, making no distinction between 1.0.0 and 1.0.1 for example.
 
-### Format
+## Format
 
 An Arazzo Description that conforms to the Arazzo Specification is itself a JSON object, which may be represented either in JSON or YAML format.
 
@@ -70,15 +70,13 @@ In order to preserve the ability to round-trip between YAML and JSON formats, YA
 - Tags MUST be limited to those allowed by the [JSON Schema ruleset](https://yaml.org/spec/1.2/spec.html#id2803231).
 - Keys used in YAML maps MUST be limited to a scalar string, as defined by the [YAML Failsafe schema ruleset](https://yaml.org/spec/1.2/spec.html#id2802346).
 
-### Arazzo Description Structure
+## Data Types
 
-It is RECOMMENDED that the entry Arazzo document be named: `arazzo.json` or `arazzo.yaml`.
+Data types in the Arazzo Specification are based on the types supported by the [JSON Schema Specification Draft 2020-12](https://tools.ietf.org/html/draft-bhutton-json-schema-00#section-4.2.1): "null", "boolean", "object", "array", "number", "string", or "integer".
 
-An Arazzo Description MAY be made up of a single document or be divided into multiple, connected parts at the discretion of the author. If workflows from other documents are being referenced, they MUST be included as a [Source Description Object](#source-description-object). In a multi-document description, the document containing the [Arazzo Specification Object](#arazzo-specification-object) is known as the **entry Arazzo document**.
+Note that the `type` keyword allows `"integer"` as a value for convenience, but keyword and format applicability does not recognize integers as being of a distinct JSON type from other numbers because [[RFC8259|JSON]] itself does not make that distinction. Since there is no distinct JSON integer type, JSON Schema defines integers mathematically. This means that both `1` and `1.0` are [equivalent](https://www.ietf.org/archive/id/draft-bhutton-json-schema-01.html#section-4.2.2), and are both considered to be integers.
 
-### Data Types
-
-Data types in the Arazzo Specification are based on the types supported by the [JSON Schema Specification Draft 2020-12](https://tools.ietf.org/html/draft-bhutton-json-schema-00#section-4.2.1). Note that integer as a type is also supported and is defined as a JSON number without a fraction or exponent part.
+### Data Type Format
 
 As defined by the [JSON Schema Validation vocabulary](https://tools.ietf.org/html/draft-bhutton-json-schema-validation-00#section-7), data types can have an optional modifier property: `format`. Arazzo additionally supports the formats (similar to the OpenAPI specification) to provide fine detail for primitive data types.
 
@@ -92,24 +90,27 @@ The formats defined are:
 | `double` | number | |
 | `password` | string | A hint to obscure the value. |
 
-### Relative References in URLs
+As noted under [Data Type](#data-types), both `type: number` and `type: integer` are considered to be numbers in the data model.
 
-Unless specified otherwise, all properties that are URLs MAY be relative references as defined by [RFC3986](https://tools.ietf.org/html/rfc3986#section-4.2).
-Unless specified otherwise, relative references are resolved using the URL of the referring document.
+## Objects and Fields
 
-### Schema
+This section describes the structure of the Arazzo Description format.
+This text is the only normative description of the format.
+A JSON Schema is hosted on [spec.openapis.org](https://spec.openapis.org) for informational purposes.
+If the JSON Schema differs from this section, then this section MUST be considered authoritative.
 
 In the following description, if a field is not explicitly **REQUIRED** or described with a MUST or SHALL, it can be considered OPTIONAL.
 
-#### Arazzo Specification Object
+### Arazzo Object
 
-This is the root object of the [Arazzo Description](#arazzo-description).
+This is the root object of the [Arazzo Description](#arazzo-description-structure).
 
-##### Fixed Fields
+#### Fixed Fields
 
 | Field Name | Type | Description |
 | ---- | :----: | ---- |
 | <a name="arazzoVersion"></a>arazzo | `string` | **REQUIRED**. This string MUST be the [version number](#versions) of the Arazzo Specification that the Arazzo Description uses. The `arazzo` field MUST be used by tooling to interpret the Arazzo Description. |
+| <a name="arazzoSelf"></a>$self | `string` | A URI-reference for the Arazzo Description. This string MUST be in the form of a URI-reference as defined by [RFC3986 Section 4.1](https://tools.ietf.org/html/rfc3986#section-4.1). When present, this field provides the self-assigned URI of this Arazzo Description, which also serves as its base URI in accordance with [RFC3986 Section 5.1.1](https://tools.ietf.org/html/rfc3986#section-5.1.1) for resolving relative references within this document. The `$self` URI MUST NOT contain a fragment identifier. |
 | <a name="arazzoInfo"></a>info | [Info Object](#info-object) | **REQUIRED**. Provides metadata about the workflows contain within the Arazzo Description. The metadata MAY be used by tooling as required. |
 | <a name="arazzoSources"></a>sourceDescriptions | [[Source Description Object](#source-description-object)] | **REQUIRED**. A list of source descriptions (such as an OpenAPI description) this Arazzo Description SHALL apply to. The list MUST have at least one entry. |
 | <a name="workflows"></a>workflows | [[Workflow Object](#workflow-object)] | **REQUIRED**. A list of workflows. The list MUST have at least one entry. |
@@ -117,10 +118,14 @@ This is the root object of the [Arazzo Description](#arazzo-description).
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
-##### Arazzo Specification Object Example
+To ensure interoperability, references MUST use the target document's `$self` URI if the `$self` field is present.
+Implementations MAY choose to support referencing by other URIs such as the retrieval URI even when `$self` is present, however this behavior is not interoperable and relying on it is NOT RECOMMENDED.
+
+#### Arazzo Object Example
 
 ```yaml
 arazzo: 1.0.1
+$self: https://api.example.com/workflows/pet-purchase.arazzo.yaml
 info:
   title: A pet purchasing workflow
   summary: This Arazzo Description showcases the workflow for how to purchase a pet through a sequence of API calls
@@ -182,12 +187,82 @@ workflows:
       available: $steps.getPetStep.outputs.availablePets
 ```
 
-#### Info Object
+#### Arazzo Description Structure
+
+A self-contained document (or set of documents) which defines or describes API workflows (specific sequence of calls to achieve a particular goal in the context of an API definition). An Arazzo Description uses and conforms to the Arazzo Specification, and `MUST` contain a valid Arazzo Specification version field (`arazzo`), an [info](#info-object) field, a `sourceDescriptions` field with at least one defined [Source Description](#source-description-object), and there `MUST` be at least one [Workflow](#workflow-object) defined in the `workflows` fixed field.
+
+It is RECOMMENDED that the entry Arazzo document be named: `arazzo.json` or `arazzo.yaml`.
+
+An Arazzo Description MAY be made up of a single document or be divided into multiple, connected parts at the discretion of the author. If workflows from other documents are being referenced, they MUST be included as a [Source Description Object](#source-description-object). In a multi-document description, the document containing the [Arazzo Object](#arazzo-object) is known as the **entry Arazzo document**.
+
+##### Parsing Documents
+
+Each document in an Arazzo Description MUST be fully parsed in order to locate possible reference targets before attempting to resolve references.
+This includes the parsing requirements of [JSON Schema Specification Draft 2020-12](https://www.ietf.org/archive/id/draft-bhutton-json-schema-01.html#section-9), with appropriate modifications regarding base URIs as specified in [Relative References In URIs](#relative-references-in-arazzo-description-uris).
+Reference targets include the Arazzo Object's [`$self`](#arazzoSelf) field (when present).
+
+Implementations MUST NOT treat a reference as unresolvable before completely parsing all documents provided to the implementation as possible parts of the Arazzo Description.
+
+If only the referenced part of a document is parsed when resolving a reference, implementations may miss the `$self` field or Source Description URIs, causing references to resolve to unintended locations. The resulting behavior of fragmentary parsing is _undefined_ and NOT RECOMMENDED.
+
+##### Relative References in Arazzo Description URIs
+
+URIs used as references within an Arazzo Description, including Source Description `url`, are resolved as _identifiers_, and described by this specification as **URIs**.
+
+Unless specified otherwise, all fields that are URIs MAY be relative references as defined by [RFC3986 Section 4.2](https://tools.ietf.org/html/rfc3986#section-4.2).
+
+###### Establishing the Base URI
+
+Relative URI references are resolved using the appropriate base URI, which MUST be determined in accordance with [RFC3986 Section 5.1.1 – 5.1.4](https://tools.ietf.org/html/rfc3986#section-5.1.1).
+
+The base URI for resolving relative references within an Arazzo Description is determined as follows:
+
+- If the [`$self`](#arazzoSelf) field is present and is an absolute URI, the base URI is the `$self` URI.
+- If the [`$self`](#arazzoSelf) field is present and is a relative URI-reference, the base URI is the result of resolving `$self` against the retrieval URI (or other applicable base URI per RFC3986 Section 5.1).
+- If the [`$self`](#arazzoSelf) field is not present, the base URI is the retrieval URI of the Arazzo Description document.
+
+For examples demonstrating base URI determination and reference resolution, see [Appendix B: Examples of Base URI Determination and Reference Resolution](#appendix-b-examples-of-base-uri-determination-and-reference-resolution).
+
+###### Resolving URI fragments
+
+If a URI contains a fragment identifier, then the fragment MUST be resolved per the fragment resolution mechanism of the referenced document.
+
+For JSON or YAML documents (including OpenAPI or AsyncAPI descriptions referenced via Source Descriptions), the fragment identifier SHOULD be interpreted as a JSON Pointer as per [RFC6901](https://tools.ietf.org/html/rfc6901).
+
+**Example:**
+
+```yaml
+sourceDescriptions:
+  - name: petstore
+    url: https://api.example.com/petstore.yaml
+    type: openapi
+
+workflows:
+  - workflowId: example
+    steps:
+      - stepId: getPet
+        # Fragment '#/paths/~1pets/get' resolves via JSON Pointer
+        operationPath: '{$sourceDescriptions.petstore.url}#/paths/~1pets/get'
+```
+
+###### Relative URI References in CommonMark Fields
+
+Relative references in CommonMark hyperlinks (such as those in `description` or `summary` fields) are resolved in their rendered context, which might differ from the context of the Arazzo Description.
+
+###### Relative References in API URLs
+
+API endpoints accessed during workflow execution are described by this specification as **URLs** (locations, not identifiers).
+
+When [Step Objects](#step-object) reference API operations via `operationId` or `operationPath`, the actual API endpoint URL is determined by the OpenAPI description's Server Object, not by the Arazzo Description's base URI.
+
+Runtime expressions may reference API URLs via `$url` during workflow execution, but these are evaluated at execution time, not during document parsing.
+
+### Info Object
 
 The object provides metadata about API workflows defined in this Arazzo document.
 The metadata MAY be used by the clients if needed.
 
-##### Fixed Fields
+#### Fixed Fields
 
 | Field Name | Type | Description |
 | --- | :---: | --- |
@@ -196,10 +271,9 @@ The metadata MAY be used by the clients if needed.
 | <a name="infoDescription"></a>description | `string` | A description of the purpose of the workflows defined. [CommonMark syntax](https://spec.commonmark.org/) MAY be used for rich text representation. |
 | <a name="infoVersion"></a>version | `string` | **REQUIRED**. The version identifier of the Arazzo document (which is distinct from the [Arazzo Specification version](#versions)). |
 
-
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
-##### Info Object Example
+#### Info Object Example
 
 ```yaml
 title: A pet purchasing workflow
@@ -209,13 +283,13 @@ description: |
 version: 1.0.1
 ```
 
-#### Source Description Object
+### Source Description Object
 
 Describes a source description (such as an OpenAPI description) that will be referenced by one or more workflows described within an Arazzo Description.
 
 An object storing a map between named description keys and location URLs to the source descriptions (such as an OpenAPI description) this Arazzo Description SHALL apply to. Each source location `string` MUST be in the form of a URI-reference as defined by [RFC3986](https://tools.ietf.org/html/rfc3986#section-4.1).
 
-##### Fixed Fields
+#### Fixed Fields
 
 | Field Name | Type | Description |
 | --- | :---: | --- |
@@ -223,10 +297,9 @@ An object storing a map between named description keys and location URLs to the 
 | <a name="sourceURL"></a>url | `string` | **REQUIRED**. A URL to a source description to be used by a workflow. If a relative reference is used, it MUST be in the form of a URI-reference as defined by [RFC3986](https://tools.ietf.org/html/rfc3986#section-4.2). |
 | <a name="sourceType"></a>type | `string` | The type of source description. Possible values are `"openapi"` or `"arazzo"`. |
 
-
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
-##### Source Description Object Example
+#### Source Description Object Example
 
 ```yaml
 name: petStoreDescription
@@ -234,11 +307,11 @@ url: https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resour
 type: openapi
 ```
 
-#### Workflow Object
+### Workflow Object
 
 Describes the steps to be taken across one or more APIs to achieve an objective. The workflow object MAY define inputs needed in order to execute workflow steps, where the defined steps represent a call to an API operation or another workflow, and a set of outputs.
 
-##### Fixed Fields
+#### Fixed Fields
 
 | Field Name | Type | Description |
 | --- | :---: | --- |
@@ -253,10 +326,9 @@ Describes the steps to be taken across one or more APIs to achieve an objective.
 | <a name="workflowOutputs"></a>outputs | Map[`string`, {expression} \| [Selector Object](#selector-object) ] | A map between a friendly name and a dynamic output value defined using a [Runtime Expression](#runtime-expressions) or [Selector Object](#selector-object). The name MUST use keys that match the regular expression: `^[a-zA-Z0-9\.\-_]+$`. |
 | <a name="workflowParameters"></a>parameters | [[Parameter Object](#parameter-object) \| [Reusable Object](#reusable-object)] | A list of parameters that are applicable for all steps described under this workflow. These parameters can be overridden at the step level but cannot be removed there. Each parameter MUST be passed to an operation or workflow as referenced by `operationId`, `operationPath`, or `workflowId` as specified within each step. If a Reusable Object is provided, it MUST link to a parameter defined in the [components/parameters](#components-object) of the current Arazzo document. The list MUST NOT include duplicate parameters. |
 
-
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
-##### Workflow Object Example
+#### Workflow Object Example
 
 ```yaml
 workflowId: loginUser
@@ -292,11 +364,11 @@ outputs:
     tokenExpires: $steps.loginStep.outputs.tokenExpires
 ```
 
-#### Step Object
+### Step Object
 
 Describes a single workflow step which MAY be a call to an API operation ([OpenAPI Operation Object](https://spec.openapis.org/oas/latest.html#operation-object)) or another [Workflow Object](#workflow-object).
 
-##### Fixed Fields
+#### Fixed Fields
 
 | Field Name | Type | Description |
 | --- | :---: | --- |
@@ -314,7 +386,7 @@ Describes a single workflow step which MAY be a call to an API operation ([OpenA
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
-##### Step Object Examples
+#### Step Object Examples
 
 A single step example:
 
@@ -379,7 +451,7 @@ steps:
         availablePets: $response.body
 ```
 
-#### Parameter Object
+### Parameter Object
 
 Describes a single step parameter. A unique parameter is defined by the combination of a `name` and `in` fields. There are four possible locations specified by the `in` field:
 
@@ -388,7 +460,7 @@ Describes a single step parameter. A unique parameter is defined by the combinat
 - header - Custom headers that are expected as part of the request. Note that [RFC9110](https://tools.ietf.org/html/rfc9110#name-field-names) states field names (which includes header) are case-insensitive.
 - cookie - Used to pass a specific cookie value to the source API.
 
-##### Fixed Fields
+#### Fixed Fields
 
 | Field Name | Type | Description |
 | --- | :---: | --- |
@@ -398,7 +470,7 @@ Describes a single step parameter. A unique parameter is defined by the combinat
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
-##### Parameter Object Examples
+#### Parameter Object Examples
 
 ```yaml
 - name: username
@@ -421,14 +493,14 @@ This object MAY be extended with [Specification Extensions](#specification-exten
     type: jsonpath
 ```
 
-#### Success Action Object
+### Success Action Object
 
 A single success action which describes an action to take upon success of a workflow step. There are two possible values for the `type` field:
 
 - end - The workflow ends, and context returns to the caller with applicable outputs
 - goto - A one-way transfer of workflow control to the specified label (either a `workflowId` or `stepId`)
 
-##### Fixed Fields
+#### Fixed Fields
 
 | Field Name | Type | Description |
 | --- | :---: | --- |
@@ -441,7 +513,7 @@ A single success action which describes an action to take upon success of a work
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
-##### Success Action Object Example
+#### Success Action Object Example
 
 ```yaml
 name: JoinWaitingList
@@ -454,7 +526,7 @@ criteria:
       type: jsonpath
 ```
 
-#### Failure Action Object
+### Failure Action Object
 
 A single failure action which describes an action to take upon failure of a workflow step. There are three possible values for the `type` field:
 
@@ -462,7 +534,7 @@ A single failure action which describes an action to take upon failure of a work
 - retry - The current step will be retried. The retry will be constrained by the `retryAfter` and `retryLimit` fields. If a `stepId` or `workflowId` are specified, then the reference is executed and the context is returned, after which the current step is retried.
 - goto - A one-way transfer of workflow control to the specified label (either a `workflowId` or `stepId`)
 
-##### Fixed Fields
+#### Fixed Fields
 
 | Field Name | Type | Description |
 | --- | :---: | --- |
@@ -478,7 +550,7 @@ A single failure action which describes an action to take upon failure of a work
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
-##### Failure Action Object Example
+#### Failure Action Object Example
 
 ```yaml
 name: retryStep
@@ -490,13 +562,13 @@ criteria:
     - condition: $statusCode == 503
 ```
 
-#### Components Object
+### Components Object
 
 Holds a set of reusable objects for different aspects of the Arazzo Specification. All objects defined within the components object will have no effect on the Arazzo Description unless they are explicitly referenced from properties outside the components object.
 
 Components are scoped to the Arazzo document they are defined in. For example, if a step defined in Arazzo document "A" references a workflow defined in Arazzo document "B", the components in "A" are not considered when evaluating the workflow referenced in "B".
 
-##### Fixed Fields
+#### Fixed Fields
 
 | Field Name | Type | Description |
 | --- | :--- | --- |
@@ -506,7 +578,6 @@ Components are scoped to the Arazzo document they are defined in. For example, i
 | <a name="componentFailureActions"></a>failureActions | Map[`string`, [Failure Action Object](#failure-action-object)] | An object to hold reusable Failure Actions Objects. |
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
-
 
 All the fixed fields declared above are objects that MUST use keys that match the regular expression: `^[a-zA-Z0-9\.\-_]+$`. The key is used to refer to the input or parameter in other parts of the Workflow Description.
 
@@ -520,7 +591,7 @@ user-name
 my.org.User
 ```
 
-##### Components Object Example
+#### Components Object Example
 
 ```yaml
 components:
@@ -592,12 +663,11 @@ components:
 }
 ```
 
-#### Reusable Object
+### Reusable Object
 
 A simple object to allow referencing of objects contained within the [Components Object](#components-object). It can be used from locations within steps or workflows in the Arazzo Description. **Note** - Input Objects MUST use standard JSON Schema referencing via the `$ref` keyword while all non JSON Schema objects use this object and its expression based referencing mechanism.
 
-
-##### Fixed Fields
+#### Fixed Fields
 
 | Field Name | Type | Description |
 | --- | :---: | --- |
@@ -606,7 +676,7 @@ A simple object to allow referencing of objects contained within the [Components
 
 This object cannot be extended with additional properties and any properties added MUST be ignored.
 
-##### Reusable Object Example
+#### Reusable Object Example
 
 ```yaml
   reference: $components.successActions.notify
@@ -630,7 +700,7 @@ This object cannot be extended with additional properties and any properties add
   }
 ```
 
-#### Criterion Object
+### Criterion Object
 
 An object used to specify the context, conditions, and condition types that can be used to prove or satisfy assertions specified in [Step Object](#step-object) `successCriteria`, [Success Action Object](#success-action-object) `criteria`, and [Failure Action Object](#failure-action-object) `criteria`.
 
@@ -641,7 +711,7 @@ There are four flavors of conditions supported:
 - jsonpath - where a JSONPath expression is applied. The root node context is defined by a [Runtime Expression](#runtime-expressions).
 - xpath - where an XPath expression is applied. The root node context is defined by a [Runtime Expression](#runtime-expressions).
 
-##### Literals
+#### Literals
 
 As part of a condition expression, you can use `boolean`, `null`, `number`, or `string` data types.
 
@@ -652,7 +722,7 @@ As part of a condition expression, you can use `boolean`, `null`, `number`, or `
 | `number` | Any number format supported in [Data Types](#data-types). |
 | `string` | Strings MUST use single quotes (') around the string. To use a literal single quote, escape the literal single quote using an additional single quote (''). |
 
-##### Operators
+#### Operators
 
 | Operator | Description |
 | --- | --- |
@@ -671,7 +741,7 @@ As part of a condition expression, you can use `boolean`, `null`, `number`, or `
 
 String comparisons `MUST` be case insensitive.
 
-##### Fixed Fields
+#### Fixed Fields
 
 | Field Name | Type | Description |
 | --- | :---: | --- |
@@ -681,7 +751,7 @@ String comparisons `MUST` be case insensitive.
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
-##### Criterion Object Examples
+#### Criterion Object Examples
 
 A simple Condition example:
 
@@ -705,13 +775,13 @@ A JSONPath Condition example:
   type: jsonpath
 ```
 
-#### Expression Type Object
+### Expression Type Object
 
 An object used to describe the type and version of an expression used within a [Criterion Object](#criterion-object) or [Selector Object](#selector-object).
 
 Defining this object gives the ability to utilize tooling compatible with older versions of either JSONPath or XPath.
 
-##### Fixed Fields
+#### Fixed Fields
 
 | Field Name | Type | Description |
 | --- | :---: | --- |
@@ -730,7 +800,7 @@ If this object is not defined, the default version for the selector type MUST be
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
-##### Expression Type Examples
+#### Expression Type Examples
 
 A JSONPath example:
 
@@ -746,11 +816,11 @@ An XPath example:
   version: xpath-30
 ```
 
-#### Selector Object
+### Selector Object
 
 An object which enables fine-grained traversal and precise data selection from structured data such as JSON or XML, using a defined selector syntax such as JSONPath or XPath.
 
-##### Fixed Fields
+#### Fixed Fields
 
 | Field Name | Type | Description |
 | --- | :---: | --- |
@@ -759,7 +829,7 @@ An object which enables fine-grained traversal and precise data selection from s
 | <a name="selectorObjType"></a>type | `string` \| [Expression Type Object](#expression-type-object) | **REQUIRED**. The selector expression type to use (e.g., `jsonpath`, `xpath`, or `jsonpointer`). If `jsonpath`, then the expression MUST conform to [JSONPath](https://tools.ietf.org/html/rfc9535). If `xpath` the expression MUST conform to [XML Path Language 3.1](https://www.w3.org/TR/xpath-31/#d2e24229). Should other variants of JSONPath or XPath be required, then a [Expression Type Object](#expression-type-object) MUST be specified. |
 
 
-##### Selector Object Examples
+#### Selector Object Examples
 
 An output example:
 
@@ -785,11 +855,11 @@ A Step RequestBody example:
           version: xpath-30
 ```
 
-#### Request Body Object
+### Request Body Object
 
 A single request body describing the `Content-Type` and request body content to be passed by a step to an operation.
 
-##### Fixed Fields
+#### Fixed Fields
 
 | Field Name | Type | Description |
 | --- | :---: | --- |
@@ -799,7 +869,7 @@ A single request body describing the `Content-Type` and request body content to 
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
-##### RequestBody Object Examples
+#### RequestBody Object Examples
 
 A JSON templated example:
 
@@ -871,11 +941,11 @@ A Form Data String example:
   payload: "client_id={$inputs.clientId}&grant_type={$inputs.grantType}&redirect_uri={$inputs.redirectUri}&client_secret={$inputs.clientSecret}&code{$steps.browser-authorize.outputs.code}&scope=$inputs.scope}"
 ```
 
-#### Payload Replacement Object
+### Payload Replacement Object
 
 Describes a location within a payload (e.g., a request body) and a value to set within the location.
 
-##### Fixed Fields
+#### Fixed Fields
 
 | Field Name | Type | Description |
 | --- | :---: | --- |
@@ -890,7 +960,7 @@ If `targetSelectorType` is omitted, then:
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
-##### Payload Replacement Object Examples
+#### Payload Replacement Object Examples
 
 A Runtime Expression example:
 
@@ -932,7 +1002,7 @@ An XPath example using older XPATH 3.0:
       version: xpath-30
 ```
 
-### Runtime Expressions
+## Runtime Expressions
 
 A runtime expression allows values to be defined based on information that will be available within the HTTP message in an actual API call, or within objects serialized from the Arazzo document such as [workflows](#workflow-object) or [steps](#step-object).
 
@@ -958,7 +1028,7 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
         "^" / "_" / "`" / "|" / "~" / DIGIT / ALPHA
 ```
 
-#### Examples
+### Examples
 
 | Source Location | example expression | notes |
 | --- | :--- | :--- |
@@ -978,7 +1048,7 @@ Runtime expressions preserve the type of the referenced value.
 Expressions can be embedded into string values by surrounding the expression with `{}` curly braces.
 
 
-### Specification Extensions
+## Specification Extensions
 
 While the Arazzo Specification tries to accommodate most use cases, additional data can be added to extend the specification at certain points.
 
@@ -1064,3 +1134,44 @@ The proposed MIME media type for Arazzo documents (e.g. workflows) that require 
 | --- | --- | --- |
 | 1.0.1 | 2025-01-16 | Patch release of the Arazzo Specification 1.0.1 |
 | 1.0.0 | 2024-05-29 | First release of the Arazzo Specification |
+
+
+## Appendix B: Examples of Base URI Determination and Reference Resolution
+
+This appendix provides concrete examples demonstrating how the [`$self`](#arazzoSelf) field, Source Description URLs, and relative references work together across different deployment scenarios.
+
+### Base URI Within Content (Using `$self`)
+
+Assume the following Arazzo document is retrieved from `file:///Users/dev/projects/workflows/purchase.arazzo.yaml`:
+
+```yaml
+arazzo: 1.1.0
+$self: https://api.example.com/workflows/purchase.arazzo.yaml
+info:
+  title: Pet Purchase Workflow
+  version: 1.0.0
+sourceDescriptions:
+  - name: petstore
+    url: ../specs/petstore.yaml  # Resolves to https://api.example.com/specs/petstore.yaml
+    type: openapi
+```
+
+The relative URL `../specs/petstore.yaml` resolves against the `$self` base URI (`https://api.example.com/workflows/`), producing `https://api.example.com/specs/petstore.yaml`, regardless of the retrieval URI.
+
+### Base URI From the Retrieval URI (No `$self`)
+
+If the same document does not define `$self`:
+
+```yaml
+arazzo: 1.1.0
+# No $self field
+info:
+  title: Pet Purchase Workflow
+  version: 1.0.0
+sourceDescriptions:
+  - name: petstore
+    url: ../specs/petstore.yaml
+    type: openapi
+```
+
+Retrieved from `file:///Users/dev/projects/workflows/purchase.arazzo.yaml`, the relative URL resolves to `file:///Users/dev/projects/specs/petstore.yaml`.

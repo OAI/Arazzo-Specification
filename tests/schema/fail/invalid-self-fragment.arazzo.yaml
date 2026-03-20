@@ -1,0 +1,14 @@
+arazzo: 1.1.0
+$self: https://example.com/workflows/minimal-with-self.arazzo.yaml#/workflows/basicWorkflow
+info:
+  title: Minimal Arazzo Example
+  version: 1.0.0
+sourceDescriptions:
+  - name: exampleAPI
+    url: https://example.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: basicWorkflow
+    steps:
+      - stepId: step1
+        operationId: getUsers
