@@ -381,11 +381,11 @@ steps:
 
 #### Parameter Object
 
-Describes a single step parameter. A unique parameter is defined by the combination of a `name` and `in` fields. There are five possible locations specified by the `in` field:
+Describes a single step parameter. A unique parameter is defined by the combination of a `name` and `in` fields. There are several possible locations specified by the `in` field:
 
 - path - Used together with OpenAPI style [Path Templating](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#path-templating), where the parameter value is actually part of the operation's URL. This does not include the host or base path of the API. For example, in `/items/{itemId}`, the path parameter is `itemId`.
 - query - Parameters that are appended to the URL as individual key-value pairs. For example, in `/items?id=###`, the query parameter is `id`.
-- querystring - A parameter that treats the entire URL query string as a single value. This parameter location was introduced in [OpenAPI 3.2.0](https://spec.openapis.org/oas/v3.2.0.html) to support scenarios where the complete query string must be passed as a pre-formatted string rather than individual parameters (OpenAPI operations typically specify `application/x-www-form-urlencoded`). When a step references an operation that defines a `querystring` parameter, the value supplied MUST be a properly formatted query string (e.g., `"filter=active&sort=desc&limit=50"`). The `querystring` location cannot coexist with `query` parameters in the same operation per OpenAPI 3.2.0 constraints.
+- querystring - A parameter that treats the entire URL query string as a single value. This parameter location was introduced in [OpenAPI 3.2.0](https://spec.openapis.org/oas/v3.2.0.html) to support scenarios where the complete query string must be passed as a pre-formatted string rather than individual parameters. When a step references an operation that defines a querystring parameter, the value MUST match the media type format as expressed by the parameter's `content` field (e.g., `application/x-www-form-urlencoded`). The `querystring` location cannot coexist with `query` parameters in the same operation per OpenAPI constraints.
 - header - Custom headers that are expected as part of the request. Note that [RFC9110](https://tools.ietf.org/html/rfc9110#name-field-names) states field names (which includes header) are case-insensitive.
 - cookie - Used to pass a specific cookie value to the source API.
 
@@ -407,16 +407,21 @@ This object MAY be extended with [Specification Extensions](#specification-exten
   in: query
   value: $inputs.username
 
-# Querystring Example
+# Querystring Example (application/x-www-form-urlencoded)
 - name: searchParams
   in: querystring
-  value: "filter=active&sort=desc&limit=50" # URL-encoded format
+  value: "filter=active&sort=desc&limit=50"
 
-# Querystring with Runtime Expressions
+# Querystring with Runtime Expressions (application/x-www-form-urlencoded)
 - name: fullQuery
   in: querystring
-  value: "category={$inputs.category}&minPrice={$inputs.minPrice}&inStock=true" # URL-encoded format
+  value: "category={$inputs.category}&minPrice={$inputs.minPrice}&inStock=true"
 
+# Querystring Example (application/json)
+- name: filterParams
+  in: querystring
+  value: '{"filter":"active","sort":"desc","limit":50}'
+  
 # Header Example
 - name: X-Api-Key
   in: header
