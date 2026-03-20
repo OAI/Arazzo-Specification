@@ -381,10 +381,11 @@ steps:
 
 #### Parameter Object
 
-Describes a single step parameter. A unique parameter is defined by the combination of a `name` and `in` fields. There are four possible locations specified by the `in` field:
+Describes a single step parameter. A unique parameter is defined by the combination of a `name` and `in` fields. There are several possible locations specified by the `in` field:
 
 - path - Used together with OpenAPI style [Path Templating](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#path-templating), where the parameter value is actually part of the operation's URL. This does not include the host or base path of the API. For example, in `/items/{itemId}`, the path parameter is `itemId`.
-- query - Parameters that are appended to the URL. For example, in `/items?id=###`, the query parameter is `id`.
+- query - Parameters that are appended to the URL as individual key-value pairs. For example, in `/items?id=###`, the query parameter is `id`.
+- querystring - A parameter that treats the entire URL query string as a single value. This parameter location was introduced in [OpenAPI 3.2.0](https://spec.openapis.org/oas/v3.2.0.html) to support scenarios where the complete query string must be passed as a pre-formatted string rather than individual parameters. When a step references an operation that defines a querystring parameter, the value MUST match the media type format as expressed by the parameter's `content` field (e.g., `application/x-www-form-urlencoded`). The `querystring` location cannot coexist with `query` parameters in the same operation per OpenAPI constraints.
 - header - Custom headers that are expected as part of the request. Note that [RFC9110](https://tools.ietf.org/html/rfc9110#name-field-names) states field names (which includes header) are case-insensitive.
 - cookie - Used to pass a specific cookie value to the source API.
 
@@ -393,32 +394,38 @@ Describes a single step parameter. A unique parameter is defined by the combinat
 | Field Name | Type | Description |
 | --- | :---: | --- |
 | <a name="parameterName"></a> name | `string` | **REQUIRED**. The name of the parameter. Parameter names are _case sensitive_. |
-| <a name="parameterIn"></a> in | `string` | The location of the parameter. Possible values are `"path"`, `"query"`, `"header"`, or `"cookie"`. When the step, success action, or failure action in context specifies a `workflowId`, then all parameters map to workflow inputs. In all other scenarios (e.g., a step specifies an `operationId`), the `in` field MUST be specified. |
-| <a name="parameterValue"></a> value | Any \| {expression} \| [Selector Object](#selector-object) | **REQUIRED**. The value to pass in the parameter. The value can be a constant, a [Runtime Expression](#runtime-expressions), or a [Selector Object](#selector-object) to be evaluated and passed to the referenced operation or workflow. |
+| <a name="parameterIn"></a> in | `string` | The location of the parameter. Possible values are `"path"`, `"query"`, `"querystring"`, `"header"`, or `"cookie"`. When the step, success action, or failure action in context specifies a `workflowId`, then all parameters map to workflow inputs. In all other scenarios (e.g., a step specifies an `operationId`), the `in` field MUST be specified. |
+| <a name="parameterValue"></a> value | Any \| {expression} \| [Selector Object](#selector-object) | **REQUIRED**. The value to pass in the parameter. The value can be a constant, a [Runtime Expression](#runtime-expressions), or a [Selector Object](#selector-object) to be evaluated and passed to the referenced operation or workflow. For `querystring` parameters, the value MUST resolve to a string representing the complete query string (e.g., `"key1=value1&key2=value2"`). Runtime expressions can be embedded within the string value using `{}` notation. |
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
 ##### Parameter Object Examples
 
 ```yaml
+# Query Example
 - name: username
   in: query
   value: $inputs.username
-```
 
-```yaml
+# Querystring Example (application/x-www-form-urlencoded)
+- name: searchParams
+  in: querystring
+  value: "filter=active&sort=desc&limit=50"
+
+# Querystring with Runtime Expressions (application/x-www-form-urlencoded)
+- name: fullQuery
+  in: querystring
+  value: "category={$inputs.category}&minPrice={$inputs.minPrice}&inStock=true"
+
+# Querystring Example (application/json)
+- name: filterParams
+  in: querystring
+  value: '{"filter":"active","sort":"desc","limit":50}'
+  
+# Header Example
 - name: X-Api-Key
   in: header
   value: $inputs.x-api-key
-```
-
-```yaml
-- name: customerId
-  in: query
-  value:
-    context: $inputs.customer
-    selector: $.details[0].id
-    type: jsonpath
 ```
 
 #### Success Action Object
