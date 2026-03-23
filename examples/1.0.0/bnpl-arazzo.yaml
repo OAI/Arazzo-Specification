@@ -167,10 +167,10 @@ workflows:
       contentType: application/json
       payload: |
         {
-          "firstName": "{$inputs.customer.firstName}",
-          "lastName": "{$inputs.customer.lastName}",
-          "dateOfBirth": "{$inputs.customer.dateOfBirth}",
-          "postalCode": "{$inputs.customer.postalCode}"
+          "firstName": "{$inputs.customer#/firstName}",
+          "lastName": "{$inputs.customer#/lastName}",
+          "dateOfBirth": "{$inputs.customer#/dateOfBirth}",
+          "postalCode": "{$inputs.customer#/postalCode}"
           "termsAndConditionsAccepted": true
         }
     successCriteria:
@@ -194,7 +194,7 @@ workflows:
       contentType: application/json
       payload: | 
         {
-          "enrolledCustomer": "{$inputs.customer.uri}",
+          "enrolledCustomer": "{$inputs.customer#/uri}",
           "newCustomer": "{$steps.createCustomer.outputs.customer}",
           "products": "{$steps.checkLoanCanBeProvided.outputs.eligibleProducts}"
         }
