@@ -433,7 +433,8 @@ An async step example:
   operationId: $sourceDescriptions.asyncOrderApi.confirmOrder
   correlationId: $inputs.correlationId
   action: receive
-  dependsOn: placeOrder
+  dependsOn:
+    - placeOrder
   timeout: 6000
   outputs:
       orderId: $message.payload.orderId
