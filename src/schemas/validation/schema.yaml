@@ -179,7 +179,7 @@ $defs:
         description: The duration in milliseconds to wait before timing out the step
         type: integer
       dependsOn:
-        description: Specifies a list of step identifiers that must complete (or be waited for) before the current step can begin execution. Steps referred by dependsOn SHOULD be non-blocking/async steps. Steps in the current workflow MUST be referenced directly by stepId. Steps in another workflow in the same Arazzo document MUST use $workflows.<workflowId>.steps.<stepId>. Steps in another Arazzo document MUST use $sourceDescriptions.<name>.<workflowId>.steps.<stepId>.
+        description: Specifies a list of step identifiers that must complete (or be waited for) before the current step can begin execution. `dependsOn` only establishes a prerequisite relationship for the current step and does not trigger execution of the referenced steps. Steps referred by dependsOn SHOULD be non-blocking/async steps. Steps in the current workflow MUST be referenced directly by stepId. Steps in another workflow in the same Arazzo document MUST use $workflows.<workflowId>.steps.<stepId>. Steps in another Arazzo document MUST use $sourceDescriptions.<name>.<workflowId>.steps.<stepId>.
         type: array
         uniqueItems: true
         minItems: 1
