@@ -198,6 +198,13 @@ $defs:
         items: true
       requestBody:
         $ref: '#/$defs/request-body-object'
+      successCriteria:
+        description: A list of assertions to determine the success of the step
+        type: array
+        uniqueItems: true
+        minItems: 1
+        items:
+          $ref: '#/$defs/criterion-object'
       onSuccess:
         description: An array of success action objects that specify what to do upon step success
         type: array
@@ -234,13 +241,6 @@ $defs:
           operationPath:
             description: A reference to a Source combined with a JSON Pointer to reference an operation
             type: string
-          successCriteria:
-            description: A list of assertions to determine the success of the step
-            type: array
-            uniqueItems: true
-            minItems: 1
-            items:
-              $ref: '#/$defs/criterion-object'
       - if:
           oneOf:
             - required:
@@ -284,13 +284,6 @@ $defs:
             enum:
               - send
               - receive
-          successCriteria:
-            description: A list of assertions to determine the success of the step
-            type: array
-            uniqueItems: true
-            minItems: 0
-            items:
-              $ref: '#/$defs/criterion-object'
         required:
           - action
       - if:
@@ -332,13 +325,6 @@ $defs:
           workflowId:
             description: The workflowId referencing an existing workflow within the Arazzo description
             $ref: '#workflowId'
-          successCriteria:
-            description: A list of assertions to determine the success of the step
-            type: array
-            uniqueItems: true
-            minItems: 1
-            items:
-              $ref: '#/$defs/criterion-object'
           parameters:
             items:
               oneOf:
