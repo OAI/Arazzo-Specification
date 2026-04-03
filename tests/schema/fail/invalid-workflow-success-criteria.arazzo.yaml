@@ -1,0 +1,16 @@
+arazzo: 1.1.0
+info:
+  title: Invalid workflow step success criteria
+  version: 1.0.0
+workflows:
+  - workflowId: parentWorkflow
+    steps:
+      - stepId: nestedWorkflow
+        workflowId: childWorkflow
+        successCriteria: []
+  - workflowId: childWorkflow
+    steps:
+      - stepId: childStep
+        operationId: getUsers
+        successCriteria:
+          - condition: $statusCode == 200
