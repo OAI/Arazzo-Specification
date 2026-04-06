@@ -22,8 +22,14 @@ The Arazzo Specification can articulate these workflows in a human-readable and 
   - [Format](#format)
   - [Arazzo Description Structure](#arazzo-description-structure)
   - [Data Types](#data-types)
-  - [Parsing Documents](#parsing-documents)  
+  - [Parsing Documents](#parsing-documents)
+    - [Fragmentary Parsing](#fragmentary-parsing)
+    - [Identity-Based Referencing](#identity-based-referencing)
   - [Relative References in Arazzo Description URIs](#relative-references-in-arazzo-description-uris)
+    - [Establishing the Base URI](#establishing-the-base-uri)
+    - [Resolving URI Fragments](#resolving-uri-fragments)
+    - [Relative URI References in CommonMark Fields](#relative-uri-references-in-commonmark-fields)
+    - [Relative References in API URLs](#relative-references-in-api-urls)
   - [Schema](#schema)
     - [Arazzo Specification Object](#arazzo-specification-object)
     - [Info Object](#info-object)
@@ -97,12 +103,32 @@ The formats defined are:
 ### Parsing Documents
 
 Each document in an Arazzo Description MUST be fully parsed in order to locate possible reference targets before attempting to resolve references.
-This includes the parsing requirements of [JSON Schema Specification Draft 2020-12](https://www.ietf.org/archive/id/draft-bhutton-json-schema-01.html#section-9), with appropriate modifications regarding base URIs as specified in [Relative References In URIs](#relative-references-in-arazzo-description-uris).
-Reference targets include the Arazzo Object's [`$self`](#arazzoSelf) field (when present).
+This includes the parsing requirements of [JSON Schema Specification Draft 2020-12](https://www.ietf.org/archive/id/draft-bhutton-json-schema-01.html#section-9), with appropriate modifications regarding base URIs as specified in [Relative References in Arazzo Description URIs](#relative-references-in-arazzo-description-uris).
+Reference targets include the Arazzo Object's [`$self`](#arazzoSelf) field (when present) and Source Description `url` fields.
 
 Implementations MUST NOT treat a reference as unresolvable before completely parsing all documents provided to the implementation as possible parts of the Arazzo Description.
 
-If only the referenced part of a document is parsed when resolving a reference, implementations may miss the `$self` field or Source Description URIs, causing references to resolve to unintended locations. The resulting behavior of fragmentary parsing is _undefined_ and NOT RECOMMENDED.
+#### Fragmentary Parsing
+
+**Fragmentary parsing** occurs when an implementation parses only the specific part of a document being referenced, rather than parsing the complete document first. This practice is **strongly discouraged** and produces undefined behavior.
+
+If only the referenced part of a document is parsed when resolving a reference, implementations may miss critical fields such as:
+
+- The [`$self`](#arazzoSelf) field, causing identity-based references to fail
+- Source Description `url` fields, preventing proper resolution of referenced API descriptions
+- Other workflow or step definitions needed to validate cross-references
+
+When fragmentary parsing causes references to resolve to unintended locations or fail to resolve entirely, the resulting behavior is _undefined_ and _implementation-defined_. Different implementations may handle such cases inconsistently, breaking interoperability.
+
+Implementations MUST parse entire documents before resolving references to ensure consistent, predictable behavior across different tools and environments.
+
+#### Identity-Based Referencing
+
+To ensure interoperability, when referencing an Arazzo Description by URI, references MUST use the target document's [`$self`](#arazzoSelf) URI if the `$self` field is present in that document.
+
+This means implementations MUST examine potential target Arazzo Descriptions (including those referenced via Source Description `url` fields or Workflow `workflowId` references) to check for matching `$self` values. When a Source Description Object's `url` field is an absolute URI, the implementation MUST resolve it to an Arazzo Description by identity (matching the `$self` value) rather than by location alone.
+
+Implementations MAY support referencing by other identifiers (such as retrieval URIs), but this behavior is not interoperable and relying on it is NOT RECOMMENDED.
 
 ### Relative References in Arazzo Description URIs
 
@@ -116,9 +142,9 @@ Relative URI references are resolved using the appropriate base URI, which MUST 
 
 The base URI for resolving relative references within an Arazzo Description is determined as follows:
 
-- If the [`$self`](#arazzoSelf) field is present and is an absolute URI, the base URI is the `$self` URI.
-- If the [`$self`](#arazzoSelf) field is present and is a relative URI-reference, the base URI is the result of resolving `$self` against the retrieval URI (or other applicable base URI per RFC3986 Section 5.1).
-- If the [`$self`](#arazzoSelf) field is not present, the base URI is the retrieval URI of the Arazzo Description document.
+- If the [`$self`](#arazzoSelf) field is present and is an absolute URI, the base URI is the `$self` URI (per [RFC3986 Section 5.1.1](https://tools.ietf.org/html/rfc3986#section-5.1.1): Base URI Embedded in Content).
+- If the [`$self`](#arazzoSelf) field is present and is a relative URI-reference, it MUST first be resolved against the next possible base URI source per [RFC3986 Section 5.1.2 – 5.1.4](https://tools.ietf.org/html/rfc3986#section-5.1.2) before being used as the base URI for resolving other relative references.
+- If the [`$self`](#arazzoSelf) field is not present, the base URI MUST be determined from the next possible base URI source per [RFC3986 Section 5.1.2 – 5.1.4](https://tools.ietf.org/html/rfc3986#section-5.1.2). The most common base URI source in this case is the retrieval URI of the Arazzo Description document (per [RFC3986 Section 5.1.3](https://tools.ietf.org/html/rfc3986#section-5.1.3)), though other sources such as encapsulating entities ([RFC3986 Section 5.1.2](https://tools.ietf.org/html/rfc3986#section-5.1.2)) or application-specific defaults ([RFC3986 Section 5.1.4](https://tools.ietf.org/html/rfc3986#section-5.1.4)) MAY apply.
 
 For examples demonstrating base URI determination and reference resolution, see [Appendix B: Examples of Base URI Determination and Reference Resolution](#appendix-b-examples-of-base-uri-determination-and-reference-resolution).
 
@@ -126,7 +152,9 @@ For examples demonstrating base URI determination and reference resolution, see 
 
 If a URI contains a fragment identifier, then the fragment MUST be resolved per the fragment resolution mechanism of the referenced document.
 
-For JSON or YAML documents (including OpenAPI or AsyncAPI descriptions referenced via Source Descriptions), the fragment identifier SHOULD be interpreted as a JSON Pointer as per [RFC6901](https://tools.ietf.org/html/rfc6901).
+For JSON or YAML documents, the fragment identifier SHOULD be interpreted as a JSON Pointer as per [RFC6901](https://tools.ietf.org/html/rfc6901).
+
+When an Arazzo Description references an OpenAPI or AsyncAPI description via a Source Description `url` field, any fragments in runtime expressions (such as in `operationPath`) use JSON Pointer syntax to identify specific operations or components within that description. The resolution of further references within the referenced OpenAPI or AsyncAPI description (including Schema Object `$ref` and `$anchor` keywords) MUST follow the rules and guidance laid out by the OpenAPI Specification and AsyncAPI Specification respectively.
 
 **Example:**
 
@@ -169,7 +197,7 @@ This is the root object of the [Arazzo Description](#arazzo-description).
 | Field Name | Type | Description |
 | ---- | :----: | ---- |
 | <a name="arazzoVersion"></a>arazzo | `string` | **REQUIRED**. This string MUST be the [version number](#versions) of the Arazzo Specification that the Arazzo Description uses. The `arazzo` field MUST be used by tooling to interpret the Arazzo Description. |
-| <a name="arazzoSelf"></a>$self | `string` | A URI-reference for the Arazzo Description. This string MUST be in the form of a URI-reference as defined by [RFC3986 Section 4.1](https://tools.ietf.org/html/rfc3986#section-4.1). When present, this field provides the self-assigned URI of this Arazzo Description, which also serves as its base URI in accordance with [RFC3986 Section 5.1.1](https://tools.ietf.org/html/rfc3986#section-5.1.1) for resolving relative references within this document. The `$self` URI MUST NOT contain a fragment identifier. |
+| <a name="arazzoSelf"></a>$self | `string` | A URI-reference for the Arazzo Description. This string MUST be in the form of a URI-reference as defined by [RFC3986 Section 4.1](https://tools.ietf.org/html/rfc3986#section-4.1). When present, this field provides the self-assigned URI of this Arazzo Description, which also serves as its base URI in accordance with [RFC3986 Section 5.1.1](https://tools.ietf.org/html/rfc3986#section-5.1.1) for resolving relative references within this document. The `$self` URI MUST NOT contain a fragment identifier. Arazzo Description documents SHOULD include a `$self` field to ensure portable, unambiguous reference resolution. |
 | <a name="arazzoInfo"></a>info | [Info Object](#info-object) | **REQUIRED**. Provides metadata about the workflows contain within the Arazzo Description. The metadata MAY be used by tooling as required. |
 | <a name="arazzoSources"></a>sourceDescriptions | [[Source Description Object](#source-description-object)] | **REQUIRED**. A list of source descriptions (such as an OpenAPI description) this Arazzo Description SHALL apply to. The list MUST have at least one entry. |
 | <a name="workflows"></a>workflows | [[Workflow Object](#workflow-object)] | **REQUIRED**. A list of workflows. The list MUST have at least one entry. |
@@ -1165,3 +1193,87 @@ sourceDescriptions:
 ```
 
 Retrieved from `file:///Users/dev/projects/workflows/purchase.arazzo.yaml`, the relative URL resolves to `file:///Users/dev/projects/specs/petstore.yaml`.
+
+### Base URI From Encapsulating Entity
+
+Per [RFC3986 Section 5.1.2](https://tools.ietf.org/html/rfc3986#section-5.1.2), the base URI can be provided by an encapsulating entity. For example, in a `multipart/related` response where an Arazzo Description is embedded:
+
+```http
+Content-Type: multipart/related; boundary=example; type=application/vnd.oai.arazzo+json
+
+--example
+Content-Type: application/vnd.oai.arazzo+json
+Content-Location: https://api.example.com/workflows/purchase.arazzo.json
+
+{
+  "arazzo": "1.1.0",
+  "info": {...},
+  "sourceDescriptions": [
+    {
+      "name": "petstore",
+      "url": "../specs/petstore.json"
+    }
+  ]
+}
+--example--
+```
+
+The `Content-Location` header provides the base URI (`https://api.example.com/workflows/purchase.arazzo.json`), so `../specs/petstore.json` resolves to `https://api.example.com/specs/petstore.json` even without a `$self` field.
+
+### Application-Specific Default Base URI
+
+Per [RFC3986 Section 5.1.4](https://tools.ietf.org/html/rfc3986#section-5.1.4), applications may define default base URIs. For example, a workflow orchestration platform might establish `https://workflows.example.com/` as the default base for all Arazzo Descriptions loaded without explicit retrieval URIs.
+
+```yaml
+arazzo: 1.1.0
+# No $self field
+# Retrieved without a retrieval URI (e.g., loaded from database)
+info:
+  title: Pet Purchase Workflow
+  version: 1.0.0
+sourceDescriptions:
+  - name: petstore
+    url: specs/petstore.yaml  # Resolves using application default
+```
+
+If the application default base is `https://workflows.example.com/`, then `specs/petstore.yaml` resolves to `https://workflows.example.com/specs/petstore.yaml`.
+
+### Resolving Relative `$self`
+
+When `$self` is itself a relative URI-reference, it must be resolved before being used as a base URI:
+
+```yaml
+arazzo: 1.1.0
+$self: workflows/purchase.arazzo.yaml
+info:
+  title: Pet Purchase Workflow
+  version: 1.0.0
+sourceDescriptions:
+  - name: petstore
+    url: ../specs/petstore.yaml
+```
+
+Retrieved from `https://api.example.com/v2/api-description.yaml`:
+
+- First, resolve `$self` relative reference: `workflows/purchase.arazzo.yaml` against base `https://api.example.com/v2/`, which then resolves to `https://api.example.com/v2/workflows/purchase.arazzo.yaml`
+- Then resolve Source Description `url`: `../specs/petstore.yaml` against resolved `$self` base `https://api.example.com/v2/workflows/`, which then resolves to `https://api.example.com/v2/specs/petstore.yaml`
+
+### Identity vs Location: Why `$self` Matters
+
+An Arazzo Description may be retrieved from multiple locations but have a single canonical identity. Consider:
+
+```yaml
+arazzo: 1.1.0
+$self: https://workflows.example.com/canonical/purchase.arazzo.yaml
+info:
+  title: Pet Purchase Workflow
+  version: 1.0.0
+```
+
+This document might be:
+
+- Retrieved from `https://cdn.example.com/cache/abc123.yaml`
+- Retrieved from `file:///local/dev/purchase.arazzo.yaml`
+- Embedded in a `multipart/related` response
+
+In all cases, references to this Arazzo Description MUST use `https://workflows.example.com/canonical/purchase.arazzo.yaml` (the `$self` value), not the retrieval location. This ensures that references remain stable even when the document is mirrored, cached, or moved.
