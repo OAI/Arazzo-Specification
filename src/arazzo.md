@@ -154,6 +154,8 @@ If a URI contains a fragment identifier, then the fragment MUST be resolved per 
 
 For JSON or YAML documents, the fragment identifier SHOULD be interpreted as a JSON Pointer as per [RFC6901](https://tools.ietf.org/html/rfc6901).
 
+For JSON Schema objects used in workflow `inputs` and `components.inputs`, references via `$ref` MUST support both JSON Pointer fragments and plain-name fragments (defined by `$anchor`) as specified by [JSON Schema Specification Draft 2020-12](https://tools.ietf.org/html/draft-bhutton-json-schema-01.html).
+
 When an Arazzo Description references an OpenAPI or AsyncAPI description via a Source Description `url` field, any fragments in runtime expressions (such as in `operationPath`) use JSON Pointer syntax to identify specific operations or components within that description. The resolution of further references within the referenced OpenAPI or AsyncAPI description (including Schema Object `$ref` and `$anchor` keywords) MUST follow the rules and guidance laid out by the OpenAPI Specification and AsyncAPI Specification respectively.
 
 **Example:**
