@@ -1005,7 +1005,7 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
   ; JSON Pointer (RFC 6901)
   json-pointer = *( "/" reference-token )
   reference-token = *( unescaped / escaped )
-  unescaped = %x00-2E / %x30-7A / %x7C / %x7E-10FFFF
+  unescaped = %x00-2E / %x30-7A / %x7C / %x7F-10FFFF
       ; Excludes / (%x2F), { (%x7B), } (%x7D), and ~ (%x7E)
   escaped = "~" ( "0" / "1" )
       ; representing '~' and '/', respectively

@@ -170,7 +170,7 @@ workflows:
           "firstName": "{$inputs.customer#/firstName}",
           "lastName": "{$inputs.customer#/lastName}",
           "dateOfBirth": "{$inputs.customer#/dateOfBirth}",
-          "postalCode": "{$inputs.customer#/postalCode}"
+          "postalCode": "{$inputs.customer#/postalCode}",
           "termsAndConditionsAccepted": true
         }
     successCriteria:
