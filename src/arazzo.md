@@ -946,8 +946,8 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
       "$statusCode" /
       "$request." source /
       "$response." source /
-      "$inputs." input-reference /
-      "$outputs." output-reference /
+      "$inputs." inputs-reference /
+      "$outputs." outputs-reference /
       "$steps." steps-reference /
       "$workflows." workflows-reference /
       "$sourceDescriptions." source-reference /
@@ -963,25 +963,26 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
   body-reference = "body" ["#" json-pointer ]
 
   ; Input/Output references
-  input-reference = input-name [ "#" json-pointer ]
-  output-reference = output-name [ "#" json-pointer ]
-  input-name = identifier
-  output-name = identifier
+  inputs-reference = input-name [ "#" json-pointer ]
+  outputs-reference = output-name [ "#" json-pointer ]
+  input-name = name
+  output-name = name
 
   ; Steps expressions
   steps-reference = step-id ".outputs." output-name [ "#" json-pointer ]
-  step-id = identifier
+  step-id = identifier-strict
 
   ; Workflows expressions
   workflows-reference = workflow-id "." workflow-field "." field-name [ "#" json-pointer ]
-  workflow-id = identifier
+  workflow-id = identifier-strict
   workflow-field = "inputs" / "outputs"
-  field-name = identifier
+  field-name = name
 
   ; Source descriptions expressions
   source-reference = source-name "." reference-id
-  source-name = identifier
-  reference-id = identifier
+  source-name = identifier-strict
+  reference-id = 1*CHAR
+      ; operationIds have no character restrictions in OpenAPI/AsyncAPI
       ; Resolution priority defined in spec text: (1) operationId/workflowId, (2) field names
 
   ; Components expressions
@@ -989,19 +990,23 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
   component-type = "parameters" / "successActions" / "failureActions"
   component-name = identifier
 
-  ; Identifier rule
-  identifier = 1*( ALPHA / DIGIT / "." / "-" / "_" )
-      ; Alphanumeric with dots, hyphens, underscores
-      ; Matches recommended pattern [A-Za-z0-9_\-]+ from spec
+  ; Identifier rules
+  identifier-strict = 1*( ALPHA / DIGIT / "-" / "_" )
+      ; For step IDs, workflow IDs, and sourceDescription names (no dots)
+      ; Matches [A-Za-z0-9_\-]+
 
-  ; Legacy 'name' rule (retained for query/path references)
+  identifier = 1*( ALPHA / DIGIT / "." / "-" / "_" )
+      ; For component keys (dots allowed)
+      ; Matches [a-zA-Z0-9\.\-_]+
+
   name = *( CHAR )
+      ; Allows unrestricted characters for query/path parameter names and field references
 
   ; JSON Pointer (RFC 6901)
   json-pointer = *( "/" reference-token )
   reference-token = *( unescaped / escaped )
-  unescaped = %x00-2E / %x30-7D / %x7F-10FFFF
-      ; %x2F ('/') and %x7E ('~') excluded from 'unescaped'
+  unescaped = %x00-2E / %x30-7A / %x7C / %x7E-10FFFF
+      ; Excludes / (%x2F), { (%x7B), } (%x7D), and ~ (%x7E)
   escaped = "~" ( "0" / "1" )
       ; representing '~' and '/', respectively
 
@@ -1036,13 +1041,17 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
 | Request body property | `$request.body#/user/uuid` | In operations which accept payloads, references may be made to portions of the `requestBody` or the entire body. |
 | Request URL | `$url` | |
 | Response value | `$response.body#/status` | In operations which return payloads, references may be made to portions of the response body or the entire body. |
+| Response array element | `$response.body#/items/0/id` | Array elements can be accessed using numeric indices in JSON Pointer syntax. |
 | Response header | `$response.header.Server` | Single header values only are available. |
-| Self URI | `$self` | **NEW in 1.1.0.** References the canonical URI of the current Arazzo Description as defined by the `$self` field. |
+| Self URI | `$self` | References the canonical URI of the current Arazzo Description as defined by the `$self` field. |
 | Workflow input | `$inputs.username` | Single input values only are available. |
 | Workflow input property | `$inputs.customer#/firstName` | To access nested properties within an input object, use JSON Pointer syntax. The input name is `customer`, and `#/firstName` is the JSON Pointer to the nested property. |
 | Step output value | `$steps.someStepId.outputs.pets` | In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$steps.someStepId.outputs.pets#/0/id`) or the entire body. |
+| Step output deep nested | `$steps.fetchUser.outputs.data#/profile/address/postalCode` | JSON Pointers can traverse multiple levels to access deeply nested properties. |
 | Workflow output value | `$outputs.bar` or `$workflows.foo.outputs.bar` | In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$workflows.foo.outputs.mappedResponse#/name`) or the entire body. |
+| Embedded expressions | `https://{$inputs.host}/api/{$steps.create.outputs.id}/status` | Multiple runtime expressions can be embedded within a single string value by wrapping each in curly braces. |
 | Source description reference | `$sourceDescriptions.petstore.getPetById` | References an operationId or workflowId from the named source description. Resolution priority: (1) operationId/workflowId, (2) field names. |
+| Source description field | `$sourceDescriptions.petstore.url` | References a field from the Source Description Object. Resolved when no matching operationId/workflowId is found. |
 | Components parameter | `$components.parameters.foo` | Accesses a foo parameter defined within the Components Object. |
 | Components action | `$components.successActions.bar` or `$components.failureActions.baz` | Accesses a success or failure action defined within the Components Object. |
 
