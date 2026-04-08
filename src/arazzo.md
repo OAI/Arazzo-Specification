@@ -965,18 +965,18 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
   ; Input/Output references
   inputs-reference = input-name [ "#" json-pointer ]
   outputs-reference = output-name [ "#" json-pointer ]
-  input-name = name
-  output-name = name
+  input-name = identifier
+  output-name = identifier
 
   ; Steps expressions
   steps-reference = step-id ".outputs." output-name [ "#" json-pointer ]
   step-id = identifier-strict
 
   ; Workflows expressions
-  workflows-reference = workflow-id "." workflow-field "." field-name [ "#" json-pointer ]
+  workflows-reference = workflow-id "." workflow-field "." workflow-field-name [ "#" json-pointer ]
   workflow-id = identifier-strict
   workflow-field = "inputs" / "outputs"
-  field-name = name
+  workflow-field-name = identifier
 
   ; Source descriptions expressions
   source-reference = source-name "." reference-id
@@ -1015,20 +1015,31 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
   tchar = "!" / "#" / "$" / "%" / "&" / "'" / "*" / "+" / "-" / "." /
           "^" / "_" / "`" / "|" / "~" / DIGIT / ALPHA
 
-  ; CHAR definition
-  CHAR = %x00-7A / %x7C / %x7E-10FFFF
-      ; Excludes left brace { (%x7B) and right brace } (%x7D)
-      ; for unambiguous embedded expression parsing
+  ; CHAR definition (RFC 7159, adapted to exclude { and })
+  CHAR = unescape / escape (
+      %x22 /          ; "    quotation mark  U+0022
+      %x5C /          ; \    reverse solidus U+005C
+      %x2F /          ; /    solidus         U+002F
+      %x62 /          ; b    backspace       U+0008
+      %x66 /          ; f    form feed       U+000C
+      %x6E /          ; n    line feed       U+000A
+      %x72 /          ; r    carriage return U+000D
+      %x74 /          ; t    tab             U+0009
+      %x75 4HEXDIG )  ; uXXXX                U+XXXX
+  escape = %x5C       ; \
+  unescape = %x20-21 / %x23-5B / %x5D-7A / %x7C / %x7E-10FFFF
+      ; Excludes { (%x7B) and } (%x7D) for unambiguous embedded expression parsing
 
   ; Expression strings
   expression-string = *( literal-char / embedded-expression )
   embedded-expression = "{" expression "}"
   literal-char = %x00-7A / %x7C / %x7E-10FFFF
-      ; Same as CHAR - excludes { and }
+      ; Excludes { and } - simpler than CHAR for literal text
 
   ; Core ABNF rules (RFC 5234)
   ALPHA = %x41-5A / %x61-7A   ; A-Z / a-z
-  DIGIT = %x30-39             ; 0-9 
+  DIGIT = %x30-39             ; 0-9
+  HEXDIG = DIGIT / "A" / "B" / "C" / "D" / "E" / "F" 
 ```
 
 #### Examples
