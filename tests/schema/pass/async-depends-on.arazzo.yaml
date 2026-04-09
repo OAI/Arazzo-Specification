@@ -28,12 +28,3 @@ workflows:
           - name: userId
             in: header
             value: $steps.step2.outputs.userId
-      - stepId: step4
-        operationId: deleteUser
-        action: send
-        dependsOn:
-          - $workflows.dependsOnWorkflow.steps.step2
-        parameters:
-          - name: userId
-            in: header
-            value: $steps.step2.outputs.userId
