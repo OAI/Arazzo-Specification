@@ -979,9 +979,9 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
   workflow-field-name = identifier
 
   ; Source descriptions expressions
-  source-reference = source-name "." reference-id
+  source-reference = source-name "." source-reference-id
   source-name = identifier-strict
-  reference-id = 1*CHAR
+  source-reference-id = 1*CHAR
       ; operationIds have no character restrictions in OpenAPI/AsyncAPI
       ; Resolution priority defined in spec text: (1) operationId/workflowId, (2) field names
 
