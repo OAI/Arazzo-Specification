@@ -29,7 +29,7 @@ The Arazzo Specification can articulate these workflows in a human-readable and 
     - [Establishing the Base URI](#establishing-the-base-uri)
     - [Resolving URI Fragments](#resolving-uri-fragments)
     - [Relative URI References in CommonMark Fields](#relative-uri-references-in-commonmark-fields)
-    - [Relative References in API URLs](#relative-references-in-api-urls)
+  - [Relative References in API URLs](#relative-references-in-api-urls)
   - [Schema](#schema)
     - [Arazzo Specification Object](#arazzo-specification-object)
     - [Info Object](#info-object)
@@ -178,7 +178,7 @@ workflows:
 
 Relative references in CommonMark hyperlinks (such as those in `description` or `summary` fields) are resolved in their rendered context, which might differ from the context of the Arazzo Description.
 
-#### Relative References in API URLs
+### Relative References in API URLs
 
 API endpoints accessed during workflow execution are described by this specification as **URLs** (locations, not identifiers).
 
@@ -1176,7 +1176,7 @@ sourceDescriptions:
     type: openapi
 ```
 
-The relative URL `../specs/petstore.yaml` resolves against the `$self` base URI (`https://api.example.com/workflows/`), producing `https://api.example.com/specs/petstore.yaml`, regardless of the retrieval URI.
+The relative URL `../specs/petstore.yaml` resolves against the `$self` base URI `https://api.example.com/workflows/purchase.arazzo.yaml`. The resolution algorithm per [RFC3986 Section 5.2](https://tools.ietf.org/html/rfc3986#section-5.2) removes the final path segment during resolution, producing `https://api.example.com/specs/petstore.yaml`, regardless of the retrieval URI.
 
 ### Base URI From the Retrieval URI (No `$self`)
 
@@ -1224,12 +1224,14 @@ The `Content-Location` header provides the base URI (`https://api.example.com/wo
 
 ### Application-Specific Default Base URI
 
-Per [RFC3986 Section 5.1.4](https://tools.ietf.org/html/rfc3986#section-5.1.4), applications may define default base URIs. For example, a workflow orchestration platform might establish `https://workflows.example.com/` as the default base for all Arazzo Descriptions loaded without explicit retrieval URIs.
+Per [RFC3986 Section 5.1.4](https://tools.ietf.org/html/rfc3986#section-5.1.4), applications may define default base URIs. For documents loaded without explicit retrieval URIs (e.g., from a database), implementations typically generate a unique base URI per document using a fixed prefix plus a unique identifier.
+
+For example, a workflow orchestration platform might construct base URIs as `https://workflows.example.com/{uuid}` for each document:
 
 ```yaml
 arazzo: 1.1.0
 # No $self field
-# Retrieved without a retrieval URI (e.g., loaded from database)
+# Loaded from database, assigned base URI: https://workflows.example.com/a7b3c4d5
 info:
   title: Pet Purchase Workflow
   version: 1.0.0
@@ -1238,7 +1240,9 @@ sourceDescriptions:
     url: specs/petstore.yaml  # Resolves using application default
 ```
 
-If the application default base is `https://workflows.example.com/`, then `specs/petstore.yaml` resolves to `https://workflows.example.com/specs/petstore.yaml`.
+If the application assigns base URI `https://workflows.example.com/a7b3c4d5` to this document, then `specs/petstore.yaml` resolves to `https://workflows.example.com/specs/petstore.yaml`.
+
+**Note:** While a base URI of `https://workflows.example.com/` (with trailing slash) is technically valid per RFC3986, the final path component is an empty string. In practice, implementations typically assign unique identifiers as the final component to distinguish documents.
 
 ### Resolving Relative `$self`
 
@@ -1257,8 +1261,8 @@ sourceDescriptions:
 
 Retrieved from `https://api.example.com/v2/api-description.yaml`:
 
-- First, resolve `$self` relative reference: `workflows/purchase.arazzo.yaml` against base `https://api.example.com/v2/`, which then resolves to `https://api.example.com/v2/workflows/purchase.arazzo.yaml`
-- Then resolve Source Description `url`: `../specs/petstore.yaml` against resolved `$self` base `https://api.example.com/v2/workflows/`, which then resolves to `https://api.example.com/v2/specs/petstore.yaml`
+1. First, resolve the `$self` relative reference `workflows/purchase.arazzo.yaml` against the base URI `https://api.example.com/v2/api-description.yaml`, which resolves to `https://api.example.com/v2/workflows/purchase.arazzo.yaml` per [RFC3986 Section 5.2](https://tools.ietf.org/html/rfc3986#section-5.2).
+2. Then resolve the Source Description `url` relative reference `../specs/petstore.yaml` against the resolved `$self` base URI `https://api.example.com/v2/workflows/purchase.arazzo.yaml`, which resolves to `https://api.example.com/v2/specs/petstore.yaml`.
 
 ### Identity vs Location: Why `$self` Matters
 
@@ -1279,3 +1283,5 @@ This document might be:
 - Embedded in a `multipart/related` response
 
 In all cases, references to this Arazzo Description MUST use `https://workflows.example.com/canonical/purchase.arazzo.yaml` (the `$self` value), not the retrieval location. This ensures that references remain stable even when the document is mirrored, cached, or moved.
+
+Identity-based referencing via `$self` is particularly valuable in security-restricted environments. When deploying document sets behind firewalls or on air-gapped networks, implementations can scan for `$self` values to locate documents from a provided collection without making network requests that security policies might prevent. This enables reference resolution in environments where external network access is restricted or prohibited.
