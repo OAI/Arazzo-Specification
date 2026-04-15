@@ -172,7 +172,7 @@ workflows:
         value: 'available'
       - name: Authorization
         in: header
-        value: $steps.loginUser.outputs.sessionToken
+        value: $steps.loginStep.outputs.sessionToken
     successCriteria:
       - condition: $statusCode == 200
     outputs:
@@ -371,7 +371,7 @@ steps:
         value: 'available'
       - name: Authorization
         in: header
-        value: $steps.loginUser.outputs.sessionToken
+        value: $steps.loginStep.outputs.sessionToken
     successCriteria:
       - condition: $statusCode == 200
     outputs:
@@ -584,7 +584,7 @@ components:
       "workflowId": "refreshTokenWorkflowId",
       "criteria": [
         {
-          "condition": "{$statusCode == 401}"
+          "condition": "$statusCode == 401"
         }
       ]
     }
@@ -957,6 +957,10 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
       tchar = "!" / "#" / "$" / "%" / "&" / "'" / "*" / "+" / "-" / "." /
         "^" / "_" / "`" / "|" / "~" / DIGIT / ALPHA
 ```
+
+Here, `json-pointer` is taken from [RFC6901](https://tools.ietf.org/html/rfc6901), `CHAR` from [RFC7159](https://tools.ietf.org/html/rfc7159#section-7) and `token` from [RFC7230](https://tools.ietf.org/html/rfc7230#section-3.2.6).
+
+The `name` identifier is case-sensitive, whereas `token` is not.
 
 #### Examples
 

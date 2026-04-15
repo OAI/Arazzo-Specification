@@ -456,20 +456,12 @@ $defs:
             type:
               enum:
                 - goto
-                - retry
         then:
           oneOf:
             - required:
                 - workflowId
             - required:
                 - stepId
-      - if:
-          properties:
-            type:
-              const: retry
-        then:
-          required:
-            - retryAfter
       - if:
           required:
             - parameters
