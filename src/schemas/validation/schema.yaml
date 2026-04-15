@@ -8,6 +8,11 @@ properties:
     description: The version number of the Arazzo Specification
     type: string
     pattern: '^1\.1\.\d+(-.+)?$'
+  $self:
+    type: string
+    format: uri-reference
+    $comment: MUST NOT contain a fragment
+    pattern: '^[^#]*$'    
   info:
     $ref: '#/$defs/info'
   sourceDescriptions:
@@ -524,20 +529,12 @@ $defs:
             type:
               enum:
                 - goto
-                - retry
         then:
           oneOf:
             - required:
                 - workflowId
             - required:
                 - stepId
-      - if:
-          properties:
-            type:
-              const: retry
-        then:
-          required:
-            - retryAfter
       - if:
           required:
             - parameters
@@ -582,6 +579,7 @@ $defs:
         enum:
           - path
           - query
+          - querystring
           - header
           - cookie
           - channel

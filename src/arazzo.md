@@ -22,7 +22,14 @@ The Arazzo Specification can articulate these workflows in a human-readable and 
   - [Format](#format)
   - [Arazzo Description Structure](#arazzo-description-structure)
   - [Data Types](#data-types)
-  - [Relative References in URLs](#relative-references-in-urls)
+  - [Parsing Documents](#parsing-documents)
+    - [Fragmentary Parsing](#fragmentary-parsing)
+    - [Identity-Based Referencing](#identity-based-referencing)
+  - [Relative References in Arazzo Description URIs](#relative-references-in-arazzo-description-uris)
+    - [Establishing the Base URI](#establishing-the-base-uri)
+    - [Resolving URI Fragments](#resolving-uri-fragments)
+    - [Relative URI References in CommonMark Fields](#relative-uri-references-in-commonmark-fields)
+  - [Relative References in API URLs](#relative-references-in-api-urls)
   - [Schema](#schema)
     - [Arazzo Specification Object](#arazzo-specification-object)
     - [Info Object](#info-object)
@@ -44,6 +51,7 @@ The Arazzo Specification can articulate these workflows in a human-readable and 
   - [Security Considerations](#security-considerations)
   - [IANA Considerations](#iana-considerations)
 - [Appendix A: Revision History](#appendix-a-revision-history)
+- [Appendix B: Examples of Base URI Determination and Reference Resolution](#appendix-b-examples-of-base-uri-determination-and-reference-resolution)
 <!-- /TOC -->
 
 ## Definitions
@@ -85,17 +93,98 @@ As defined by the [JSON Schema Validation vocabulary](https://tools.ietf.org/htm
 The formats defined are:
 
 | `format`   | JSON Data Type | Comments                     |
-| ---------- | -------------- | ---------------------------- |
+|------------|----------------|------------------------------|
 | `int32`    | number         | signed 32 bits               |
 | `int64`    | number         | signed 64 bits (a.k.a long)  |
 | `float`    | number         |                              |
 | `double`   | number         |                              |
 | `password` | string         | A hint to obscure the value. |
 
-### Relative References in URLs
+### Parsing Documents
 
-Unless specified otherwise, all properties that are URLs MAY be relative references as defined by [RFC3986](https://tools.ietf.org/html/rfc3986#section-4.2).
-Unless specified otherwise, relative references are resolved using the URL of the referring document.
+Each document in an Arazzo Description MUST be fully parsed in order to locate possible reference targets before attempting to resolve references.
+This includes the parsing requirements of [JSON Schema Specification Draft 2020-12](https://www.ietf.org/archive/id/draft-bhutton-json-schema-01.html#section-9), with appropriate modifications regarding base URIs as specified in [Relative References in Arazzo Description URIs](#relative-references-in-arazzo-description-uris).
+Reference targets include the Arazzo Object's [`$self`](#arazzoSelf) field (when present) and Source Description `url` fields.
+
+Implementations MUST NOT treat a reference as unresolvable before completely parsing all documents provided to the implementation as possible parts of the Arazzo Description.
+
+#### Fragmentary Parsing
+
+**Fragmentary parsing** occurs when an implementation parses only the specific part of a document being referenced, rather than parsing the complete document first. This practice is **strongly discouraged** and produces undefined behavior.
+
+If only the referenced part of a document is parsed when resolving a reference, implementations may miss critical fields such as:
+
+- The [`$self`](#arazzoSelf) field, causing identity-based references to fail
+- Source Description `url` fields, preventing proper resolution of referenced API descriptions
+- Other workflow or step definitions needed to validate cross-references
+
+When fragmentary parsing causes references to resolve to unintended locations or fail to resolve entirely, the resulting behavior is _undefined_ and _implementation-defined_. Different implementations may handle such cases inconsistently, breaking interoperability.
+
+Implementations MUST parse entire documents before resolving references to ensure consistent, predictable behavior across different tools and environments.
+
+#### Identity-Based Referencing
+
+To ensure interoperability, when referencing an Arazzo Description by URI, references MUST use the target document's [`$self`](#arazzoSelf) URI if the `$self` field is present in that document.
+
+This means implementations MUST examine potential target Arazzo Descriptions (including those referenced via Source Description `url` fields or Workflow `workflowId` references) to check for matching `$self` values. When a Source Description Object's `url` field is an absolute URI, the implementation MUST resolve it to an Arazzo Description by identity (matching the `$self` value) rather than by location alone.
+
+Implementations MAY support referencing by other identifiers (such as retrieval URIs), but this behavior is not interoperable and relying on it is NOT RECOMMENDED.
+
+### Relative References in Arazzo Description URIs
+
+URIs used as references within an Arazzo Description, including Source Description `url`, are resolved as _identifiers_, and described by this specification as **URIs**.
+
+Unless specified otherwise, all fields that are URIs MAY be relative references as defined by [RFC3986 Section 4.2](https://tools.ietf.org/html/rfc3986#section-4.2).
+
+#### Establishing the Base URI
+
+Relative URI references are resolved using the appropriate base URI, which MUST be determined in accordance with [RFC3986 Section 5.1.1 – 5.1.4](https://tools.ietf.org/html/rfc3986#section-5.1.1).
+
+The base URI for resolving relative references within an Arazzo Description is determined as follows:
+
+- If the [`$self`](#arazzoSelf) field is present and is an absolute URI, the base URI is the `$self` URI (per [RFC3986 Section 5.1.1](https://tools.ietf.org/html/rfc3986#section-5.1.1): Base URI Embedded in Content).
+- If the [`$self`](#arazzoSelf) field is present and is a relative URI-reference, it MUST first be resolved against the next possible base URI source per [RFC3986 Section 5.1.2 – 5.1.4](https://tools.ietf.org/html/rfc3986#section-5.1.2) before being used as the base URI for resolving other relative references.
+- If the [`$self`](#arazzoSelf) field is not present, the base URI MUST be determined from the next possible base URI source per [RFC3986 Section 5.1.2 – 5.1.4](https://tools.ietf.org/html/rfc3986#section-5.1.2). The most common base URI source in this case is the retrieval URI of the Arazzo Description document (per [RFC3986 Section 5.1.3](https://tools.ietf.org/html/rfc3986#section-5.1.3)), though other sources such as encapsulating entities ([RFC3986 Section 5.1.2](https://tools.ietf.org/html/rfc3986#section-5.1.2)) or application-specific defaults ([RFC3986 Section 5.1.4](https://tools.ietf.org/html/rfc3986#section-5.1.4)) MAY apply.
+
+For examples demonstrating base URI determination and reference resolution, see [Appendix B: Examples of Base URI Determination and Reference Resolution](#appendix-b-examples-of-base-uri-determination-and-reference-resolution).
+
+#### Resolving URI Fragments
+
+If a URI contains a fragment identifier, then the fragment MUST be resolved per the fragment resolution mechanism of the referenced document.
+
+For JSON or YAML documents, the fragment identifier SHOULD be interpreted as a JSON Pointer as per [RFC6901](https://tools.ietf.org/html/rfc6901).
+
+For JSON Schema objects used in workflow `inputs` and `components.inputs`, references via `$ref` MUST support both JSON Pointer fragments and plain-name fragments (defined by `$anchor`) as specified by [JSON Schema Specification Draft 2020-12](https://tools.ietf.org/html/draft-bhutton-json-schema-01.html).
+
+When an Arazzo Description references an OpenAPI or AsyncAPI description via a Source Description `url` field, any fragments in runtime expressions (such as in `operationPath`) use JSON Pointer syntax to identify specific operations or components within that description. The resolution of further references within the referenced OpenAPI or AsyncAPI description (including Schema Object `$ref` and `$anchor` keywords) MUST follow the rules and guidance laid out by the OpenAPI Specification and AsyncAPI Specification respectively.
+
+**Example:**
+
+```yaml
+sourceDescriptions:
+  - name: petstore
+    url: https://api.example.com/petstore.yaml
+    type: openapi
+
+workflows:
+  - workflowId: example
+    steps:
+      - stepId: getPet
+        # Fragment '#/paths/~1pets/get' resolves via JSON Pointer
+        operationPath: '{$sourceDescriptions.petstore.url}#/paths/~1pets/get'
+```
+
+#### Relative URI References in CommonMark Fields
+
+Relative references in CommonMark hyperlinks (such as those in `description` or `summary` fields) are resolved in their rendered context, which might differ from the context of the Arazzo Description.
+
+### Relative References in API URLs
+
+API endpoints accessed during workflow execution are described by this specification as **URLs** (locations, not identifiers).
+
+When [Step Objects](#step-object) reference API operations via `operationId` or `operationPath`, the actual API endpoint URL is determined by the OpenAPI description's Server Object, not by the Arazzo Description's base URI.
+
+Runtime expressions may reference API URLs via `$url` during workflow execution, but these are evaluated at execution time, not during document parsing.
 
 ### Schema
 
@@ -107,13 +196,14 @@ This is the root object of the [Arazzo Description](#arazzo-description).
 
 ##### Fixed Fields
 
-| Field Name                                     |                           Type                            | Description                                                                                                                                                                                                     |
-| ---------------------------------------------- | :-------------------------------------------------------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <a name="arazzoVersion"></a>arazzo             |                         `string`                          | **REQUIRED**. This string MUST be the [version number](#versions) of the Arazzo Specification that the Arazzo Description uses. The `arazzo` field MUST be used by tooling to interpret the Arazzo Description. |
-| <a name="arazzoInfo"></a>info                  |                [Info Object](#info-object)                | **REQUIRED**. Provides metadata about the workflows contain within the Arazzo Description. The metadata MAY be used by tooling as required.                                                                     |
-| <a name="arazzoSources"></a>sourceDescriptions | [[Source Description Object](#source-description-object)] | **REQUIRED**. A list of source descriptions (such as an OpenAPI description) this Arazzo Description SHALL apply to. The list MUST have at least one entry.                                                     |
-| <a name="workflows"></a>workflows              |           [[Workflow Object](#workflow-object)]           | **REQUIRED**. A list of workflows. The list MUST have at least one entry.                                                                                                                                       |
-| <a name="components"></a>components            |          [Components Object](#components-object)          | An element to hold various schemas for the Arazzo Description.                                                                                                                                                  |
+| Field Name                                     |                           Type                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+|------------------------------------------------|:---------------------------------------------------------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <a name="arazzoVersion"></a>arazzo             |                         `string`                          | **REQUIRED**. This string MUST be the [version number](#versions) of the Arazzo Specification that the Arazzo Description uses. The `arazzo` field MUST be used by tooling to interpret the Arazzo Description.                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| <a name="arazzoSelf"></a>$self                 |                         `string`                          | A URI-reference for the Arazzo Description. This string MUST be in the form of a URI-reference as defined by [RFC3986 Section 4.1](https://tools.ietf.org/html/rfc3986#section-4.1). When present, this field provides the self-assigned URI of this Arazzo Description, which also serves as its base URI in accordance with [RFC3986 Section 5.1.1](https://tools.ietf.org/html/rfc3986#section-5.1.1) for resolving relative references within this document. The `$self` URI MUST NOT contain a fragment identifier. Arazzo Description documents can include a `$self` field to ensure portable, unambiguous reference resolution. |
+| <a name="arazzoInfo"></a>info                  |                [Info Object](#info-object)                | **REQUIRED**. Provides metadata about the workflows contain within the Arazzo Description. The metadata MAY be used by tooling as required.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| <a name="arazzoSources"></a>sourceDescriptions | [[Source Description Object](#source-description-object)] | **REQUIRED**. A list of source descriptions (such as an OpenAPI description) this Arazzo Description SHALL apply to. The list MUST have at least one entry.                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| <a name="workflows"></a>workflows              |           [[Workflow Object](#workflow-object)]           | **REQUIRED**. A list of workflows. The list MUST have at least one entry.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| <a name="components"></a>components            |          [Components Object](#components-object)          | An element to hold various schemas for the Arazzo Description.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
@@ -121,6 +211,7 @@ This object MAY be extended with [Specification Extensions](#specification-exten
 
 ```yaml
 arazzo: 1.1.0
+$self: https://api.example.com/workflows/pet-purchase.arazzo.yaml
 info:
   title: A pet purchasing workflow
   summary: This Arazzo Description showcases the workflow for how to purchase a pet through a sequence of API calls
@@ -177,7 +268,7 @@ workflows:
         value: 'available'
       - name: Authorization
         in: header
-        value: $steps.loginUser.outputs.sessionToken
+        value: $steps.loginStep.outputs.sessionToken
     successCriteria:
       - condition: $statusCode == 200
     onSuccess:
@@ -219,7 +310,7 @@ The metadata MAY be used by the clients if needed.
 ##### Fixed Fields
 
 | Field Name                                |   Type   | Description                                                                                                                                        |
-| ----------------------------------------- | :------: | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+|-------------------------------------------|:--------:|----------------------------------------------------------------------------------------------------------------------------------------------------|
 | <a name="infoTitle"></a>title             | `string` | **REQUIRED**. A human readable title of the Arazzo Description.                                                                                    |
 | <a name="infoSummary"></a>summary         | `string` | A short summary of the Arazzo Description.                                                                                                         |
 | <a name="infoDescription"></a>description | `string` | A description of the purpose of the workflows defined. [CommonMark syntax](https://spec.commonmark.org/) MAY be used for rich text representation. |
@@ -247,7 +338,7 @@ An object storing a map between named description keys and location URLs to the 
 ##### Fixed Fields
 
 | Field Name                    |   Type   | Description                                                                                                                                                                                                                                                                         |
-| ----------------------------- | :------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|-------------------------------|:--------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <a name="sourceName"></a>name | `string` | **REQUIRED**. A unique name for the source description. Tools and libraries MAY use the `name` to uniquely identify a source description, therefore, it is RECOMMENDED to follow common programming naming conventions. SHOULD conform to the regular expression `[A-Za-z0-9_\-]+`. |
 | <a name="sourceURL"></a>url   | `string` | **REQUIRED**. A URL to a source description to be used by a workflow. If a relative reference is used, it MUST be in the form of a URI-reference as defined by [RFC3986](https://tools.ietf.org/html/rfc3986#section-4.2).                                                          |
 | <a name="sourceType"></a>type | `string` | The type of source description. Possible values are `"openapi"` or `"asyncapi"` or `"arazzo"`.                                                                                                                                                                                      |
@@ -270,7 +361,7 @@ Describes the steps to be taken across one or more APIs to achieve an objective.
 ##### Fixed Fields
 
 | Field Name                                          |                                           Type                                           | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| --------------------------------------------------- | :--------------------------------------------------------------------------------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+|-----------------------------------------------------|:----------------------------------------------------------------------------------------:|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <a name="workflowId"></a>workflowId                 |                                         `string`                                         | **REQUIRED**. Unique string to represent the workflow. The id MUST be unique amongst all workflows described in the Arazzo Description. The `workflowId` value is **case-sensitive**. Tools and libraries MAY use the `workflowId` to uniquely identify a workflow, therefore, it is RECOMMENDED to follow common programming naming conventions. SHOULD conform to the regular expression `[A-Za-z0-9_\-]+`.                                                                                                                                                                        |
 | <a name="workflowSummary"></a>summary               |                                         `string`                                         | A summary of the purpose or objective of the workflow.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | <a name="workflowDescription"></a>description       |                                         `string`                                         | A description of the workflow. [CommonMark syntax](https://spec.commonmark.org/) MAY be used for rich text representation.                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -405,7 +496,7 @@ steps:
         value: 'available'
       - name: Authorization
         in: header
-        value: $steps.loginUser.outputs.sessionToken
+        value: $steps.loginStep.outputs.sessionToken
     successCriteria:
       - condition: $statusCode == 200
     outputs:
@@ -442,44 +533,51 @@ An async step example:
 
 #### Parameter Object
 
-Describes a single step parameter. A unique parameter is defined by the combination of a `name` and `in` fields. There are four possible locations specified by the `in` field:
+Describes a single step parameter. A unique parameter is defined by the combination of a `name` and `in` fields. There are several possible locations specified by the `in` field:
 
 - path - Used together with OpenAPI style [Path Templating](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#path-templating), where the parameter value is actually part of the operation's URL. This does not include the host or base path of the API. For example, in `/items/{itemId}`, the path parameter is `itemId`.
-- query - Parameters that are appended to the URL. For example, in `/items?id=###`, the query parameter is `id`.
+- query - Parameters that are appended to the URL as individual key-value pairs. For example, in `/items?id=###`, the query parameter is `id`.
+- querystring - A parameter that treats the entire URL query string as a single value. This parameter location was introduced in [OpenAPI 3.2.0](https://spec.openapis.org/oas/v3.2.0.html) to support scenarios where the complete query string must be passed as a pre-formatted string rather than individual parameters. When a step references an operation that defines a querystring parameter, the value MUST match the media type format as expressed by the parameter's `content` field (e.g., `application/x-www-form-urlencoded`). The `querystring` location cannot coexist with `query` parameters in the same operation per OpenAPI constraints.
 - header - Custom headers that are expected as part of the request. Note that [RFC9110](https://tools.ietf.org/html/rfc9110#name-field-names) states field names (which includes header) are case-insensitive.
 - cookie - Used to pass a specific cookie value to the source API.
 
 ##### Fixed Fields
 
-| Field Name                          |                            Type                            | Description                                                                                                                                                                                                                                                                                                                              |
-| ----------------------------------- | :--------------------------------------------------------: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <a name="parameterName"></a> name   |                          `string`                          | **REQUIRED**. The name of the parameter. Parameter names are _case sensitive_.                                                                                                                                                                                                                                                           |
-| <a name="parameterIn"></a> in       |                          `string`                          | The location of the parameter. Possible values are `"path"`, `"query"`, `"header"`, or `"cookie"`. When the step, success action, or failure action in context specifies a `workflowId`, then all parameters map to workflow inputs. In all other scenarios (e.g., a step specifies an `operationId`), the `in` field MUST be specified. |
-| <a name="parameterValue"></a> value | Any \| {expression} \| [Selector Object](#selector-object) | **REQUIRED**. The value to pass in the parameter. The value can be a constant, a [Runtime Expression](#runtime-expressions), or a [Selector Object](#selector-object) to be evaluated and passed to the referenced operation or workflow.                                                                                                |
+| Field Name                          |                            Type                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+|-------------------------------------|:----------------------------------------------------------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <a name="parameterName"></a> name   |                          `string`                          | **REQUIRED**. The name of the parameter. Parameter names are _case sensitive_.                                                                                                                                                                                                                                                                                                                                                                                          |
+| <a name="parameterIn"></a> in       |                          `string`                          | The location of the parameter. Possible values are `"path"`, `"query"`, `"querystring"`, `"header"`, or `"cookie"`. When the step, success action, or failure action in context specifies a `workflowId`, then all parameters map to workflow inputs. In all other scenarios (e.g., a step specifies an `operationId`), the `in` field MUST be specified.                                                                                                               |
+| <a name="parameterValue"></a> value | Any \| {expression} \| [Selector Object](#selector-object) | **REQUIRED**. The value to pass in the parameter. The value can be a constant, a [Runtime Expression](#runtime-expressions), or a [Selector Object](#selector-object) to be evaluated and passed to the referenced operation or workflow. For `querystring` parameters, the value MUST resolve to a string representing the complete query string (e.g., `"key1=value1&key2=value2"`). Runtime expressions can be embedded within the string value using `{}` notation. |
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
 ##### Parameter Object Examples
 
 ```yaml
+# Query Example
 - name: username
   in: query
   value: $inputs.username
-```
 
-```yaml
+# Querystring Example (application/x-www-form-urlencoded)
+- name: searchParams
+  in: querystring
+  value: "filter=active&sort=desc&limit=50"
+
+# Querystring with Runtime Expressions (application/x-www-form-urlencoded)
+- name: fullQuery
+  in: querystring
+  value: "category={$inputs.category}&minPrice={$inputs.minPrice}&inStock=true"
+
+# Querystring Example (application/json)
+- name: filterParams
+  in: querystring
+  value: '{"filter":"active","sort":"desc","limit":50}'
+  
+# Header Example
 - name: X-Api-Key
   in: header
   value: $inputs.x-api-key
-```
-
-```yaml
-- name: customerId
-  in: query
-  value:
-    context: $inputs.customer
-    selector: $.details[0].id
-    type: jsonpath
 ```
 
 #### Success Action Object
@@ -492,7 +590,7 @@ A single success action which describes an action to take upon success of a work
 ##### Fixed Fields
 
 | Field Name                                  |                                      Type                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| ------------------------------------------- | :----------------------------------------------------------------------------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|---------------------------------------------|:------------------------------------------------------------------------------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <a name="successActionName"></a> name       |                                    `string`                                    | **REQUIRED**. The name of the success action. Names are _case sensitive_.                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | <a name="successActionType"></a> type       |                                    `string`                                    | **REQUIRED**. The type of action to take. Possible values are `"end"` or `"goto"`.                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | <a name="successWorkflowId"></a> workflowId |                                    `string`                                    | The [workflowId](#fixed-fields-2) referencing an existing workflow within the Arazzo Description to transfer to upon success of the step. This field is only relevant when the `type` field value is `"goto"`. If the referenced workflow is contained within an `arazzo` type `sourceDescription`, then the `workflowId` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g., `$sourceDescriptions.<name>.<workflowId>`) to avoid ambiguity or potential clashes. This field is mutually exclusive to `stepId`. |
@@ -526,7 +624,7 @@ A single failure action which describes an action to take upon failure of a work
 ##### Fixed Fields
 
 | Field Name                                  |                                      Type                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| ------------------------------------------- | :----------------------------------------------------------------------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+|---------------------------------------------|:------------------------------------------------------------------------------:|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <a name="failureActionName"></a> name       |                                    `string`                                    | **REQUIRED**. The name of the failure action. Names are _case sensitive_.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | <a name="failureActionType"></a> type       |                                    `string`                                    | **REQUIRED**. The type of action to take. Possible values are `"end"`, `"retry"`, or `"goto"`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | <a name="failureWorkflowId"></a> workflowId |                                    `string`                                    | The [workflowId](#fixed-fields-2) referencing an existing workflow within the Arazzo Description to transfer to upon failure of the step. This field is only relevant when the `type` field value is `"goto"` or `"retry"`. If the referenced workflow is contained within an `arazzo` type `sourceDescription`, then the `workflowId` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g., `$sourceDescriptions.<name>.<workflowId>`) to avoid ambiguity or potential clashes. This field is mutually exclusive to `stepId`. When used with `"retry"`, context transfers back upon completion of the specified workflow. |
@@ -559,7 +657,7 @@ Components are scoped to the Arazzo document they are defined in. For example, i
 ##### Fixed Fields
 
 | Field Name                                           | Type                                                           | Description                                                                           |
-| ---------------------------------------------------- | :------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+|------------------------------------------------------|:---------------------------------------------------------------|---------------------------------------------------------------------------------------|
 | <a name="componentInputs"></a> inputs                | Map[`string`, `JSON Schema`]                                   | An object to hold reusable JSON Schema objects to be referenced from workflow inputs. |
 | <a name="componentParameters"></a>parameters         | Map[`string`, [Parameter Object](#parameter-object)]           | An object to hold reusable Parameter Objects                                          |
 | <a name="componentSuccessActions"></a>successActions | Map[`string`, [Success Action Object](#success-action-object)] | An object to hold reusable Success Actions Objects.                                   |
@@ -644,7 +742,7 @@ components:
       "workflowId": "refreshTokenWorkflowId",
       "criteria": [
         {
-          "condition": "{$statusCode == 401}"
+          "condition": "$statusCode == 401"
         }
       ]
     }
@@ -660,7 +758,7 @@ A simple object to allow referencing of objects contained within the [Components
 ##### Fixed Fields
 
 | Field Name                                      |      Type      | Description                                                                                        |
-| ----------------------------------------------- | :------------: | -------------------------------------------------------------------------------------------------- |
+|-------------------------------------------------|:--------------:|----------------------------------------------------------------------------------------------------|
 | <a name="reusableObjectReference"></a>reference | `{expression}` | **REQUIRED**. A [Runtime Expression](#runtime-expressions) used to reference the desired object.   |
 | <a name="reusableObjectValue"></a>value         |    `string`    | Sets a value of the referenced parameter. This is only applicable for parameter object references. |
 
@@ -706,7 +804,7 @@ There are four flavors of conditions supported:
 As part of a condition expression, you can use `boolean`, `null`, `number`, or `string` data types.
 
 | Type      | Literal value                                                                                                                                               |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `boolean` | `true` or `false`                                                                                                                                           |
 | `null`    | `null`                                                                                                                                                      |
 | `number`  | Any number format supported in [Data Types](#data-types).                                                                                                   |
@@ -715,7 +813,7 @@ As part of a condition expression, you can use `boolean`, `null`, `number`, or `
 ##### Operators
 
 | Operator          | Description           |
-| ----------------- | --------------------- |
+|-------------------|-----------------------|
 | `<`               | Less than             |
 | `<=`              | Less than or equal    |
 | `>`               | Greater than          |
@@ -734,7 +832,7 @@ String comparisons `MUST` be case insensitive.
 ##### Fixed Fields
 
 | Field Name                                 |                             Type                              | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| ------------------------------------------ | :-----------------------------------------------------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|--------------------------------------------|:-------------------------------------------------------------:|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <a name="criterionContext"></a>context     |                        `{expression}`                         | A [Runtime Expression](#runtime-expressions) used to set the context for the condition to be applied on. If `type` is specified, then the `context` MUST be provided (e.g. `$response.body` would set the context that a JSONPath query expression could be applied to).                                                                                                                                                                                                                                                                                                                                                        |
 | <a name="criterionCondition"></a>condition |                           `string`                            | **REQUIRED**. The condition to apply. Conditions can be simple (e.g. `$statusCode == 200` which applies an operator on a value obtained from a runtime expression), or a regex, or a JSONPath expression. For regex or JSONPath, the `type` and `context` MUST be specified.                                                                                                                                                                                                                                                                                                                                                    |
 | <a name="criterionType"></a>type           | `string` \| [Expression Type Object](#expression-type-object) | The type of condition to be applied. If specified, the options allowed are `simple`, `regex`, `jsonpath` or `xpath`. If omitted, then the condition is assumed to be `simple`, which at most combines literals, operators and [Runtime Expressions](#runtime-expressions). If `jsonpath`, then the expression MUST conform to [JSONPath](https://tools.ietf.org/html/rfc9535). If `xpath` the expression MUST conform to [XML Path Language 3.1](https://www.w3.org/TR/xpath-31/#d2e24229). Should other variants of JSONPath or XPath be required, then a [Expression Type Object](#expression-type-object) MUST be specified. |
@@ -774,14 +872,14 @@ Defining this object gives the ability to utilize tooling compatible with older 
 ##### Fixed Fields
 
 | Field Name                              |   Type   | Description                                                                                                                                                                                                                                                                                                    |
-| --------------------------------------- | :------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|-----------------------------------------|:--------:|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <a name="expressionType"></a>type       | `string` | **REQUIRED**. The selector type. The options allowed are `jsonpath`, `xpath`, or `jsonpointer`.                                                                                                                                                                                                                |
 | <a name="expressionVersion"></a>version | `string` | **REQUIRED**. A short hand string representing the version of the expression type being used. The allowed values for JSONPath are `rfc9535` or `draft-goessner-dispatch-jsonpath-00`. The allowed values for XPath are `xpath-30`, `xpath-20`, or `xpath-10`. The allowed value for JSON Pointer is `rfc6901`. |
 
 The supported expression selector types and versions are as follows:
 
 | Type          | Allowed Versions                                 | Default    |
-| ------------- | ------------------------------------------------ | ---------- |
+|---------------|--------------------------------------------------|------------|
 | `jsonpath`    | `rfc9535`, `draft-goessner-dispatch-jsonpath-00` | `rfc9535`  |
 | `xpath`       | `xpath-31`, `xpath-30`, `xpath-20`, `xpath-10`   | `xpath-31` |
 | `jsonpointer` | `rfc6901` (added for completeness)               | `rfc6901`  |
@@ -812,11 +910,11 @@ An object which enables fine-grained traversal and precise data selection from s
 
 ##### Fixed Fields
 
-| Field Name | Type | Description |
-| --- | :---: | --- |
-| <a name="selectorObjContext"></a>context | {expression} | **REQUIRED**. A [Runtime Expression](#runtime-expressions) which MUST evaluate to structured data (e.g., `$response.body`) and set the context for the selector to be applied on. |
-| <a name="selectorObjSelector"></a>selector | `string` | **REQUIRED**.A selector expression (e.g., `$.items[0].id`, `/Envelope/Item`) in the form of JSONPath expression, XPath expression, or JSON Pointer expression. |
-| <a name="selectorObjType"></a>type | `string` \| [Expression Type Object](#expression-type-object) | **REQUIRED**. The selector expression type to use (e.g., `jsonpath`, `xpath`, or `jsonpointer`). If `jsonpath`, then the expression MUST conform to [JSONPath](https://tools.ietf.org/html/rfc9535). If `xpath` the expression MUST conform to [XML Path Language 3.1](https://www.w3.org/TR/xpath-31/#d2e24229). Should other variants of JSONPath or XPath be required, then a [Expression Type Object](#expression-type-object) MUST be specified. |
+| Field Name                                 |                             Type                              | Description                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+|--------------------------------------------|:-------------------------------------------------------------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <a name="selectorObjContext"></a>context   |                         {expression}                          | **REQUIRED**. A [Runtime Expression](#runtime-expressions) which MUST evaluate to structured data (e.g., `$response.body`) and set the context for the selector to be applied on.                                                                                                                                                                                                                                                                     |
+| <a name="selectorObjSelector"></a>selector |                           `string`                            | **REQUIRED**.A selector expression (e.g., `$.items[0].id`, `/Envelope/Item`) in the form of JSONPath expression, XPath expression, or JSON Pointer expression.                                                                                                                                                                                                                                                                                        |
+| <a name="selectorObjType"></a>type         | `string` \| [Expression Type Object](#expression-type-object) | **REQUIRED**. The selector expression type to use (e.g., `jsonpath`, `xpath`, or `jsonpointer`). If `jsonpath`, then the expression MUST conform to [JSONPath](https://tools.ietf.org/html/rfc9535). If `xpath` the expression MUST conform to [XML Path Language 3.1](https://www.w3.org/TR/xpath-31/#d2e24229). Should other variants of JSONPath or XPath be required, then a [Expression Type Object](#expression-type-object) MUST be specified. |
 
 
 ##### Selector Object Examples
@@ -852,7 +950,7 @@ A single request body describing the `Content-Type` and request body content to 
 ##### Fixed Fields
 
 | Field Name                                         |                            Type                             | Description                                                                                                                                                                                                                                                                                                                                                                                                           |
-| -------------------------------------------------- | :---------------------------------------------------------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|----------------------------------------------------|:-----------------------------------------------------------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <a name="requestBodyContentType"></a>contentType   |                          `string`                           | The Content-Type for the request content. If omitted then refer to Content-Type specified at the targeted operation to understand serialization requirements.                                                                                                                                                                                                                                                         |
 | <a name="requestBodyPayload"></a>payload           |                             Any                             | A value representing the request body payload. The value can be a literal value or can contain [Runtime Expressions](#runtime-expressions) or [Selector Objects](#selector-object) which MUST be evaluated prior to calling the referenced operation. To represent examples of media types that cannot be naturally represented in JSON or YAML, use a string value to contain the example, escaping where necessary. |
 | <a name="requestBodyReplacements"></a>replacements | [[Payload Replacement Object](#payload-replacement-object)] | A list of locations and values to set within a payload.                                                                                                                                                                                                                                                                                                                                                               |
@@ -938,7 +1036,7 @@ Describes a location within a payload (e.g., a request body) and a value to set 
 ##### Fixed Fields
 
 | Field Name                                                            |                             Type                              | Description                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| --------------------------------------------------------------------- | :-----------------------------------------------------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+|-----------------------------------------------------------------------|:-------------------------------------------------------------:|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <a name="payloadReplacementTarget"></a>target                         |                           `string`                            | **REQUIRED**. A [JSON Pointer](https://tools.ietf.org/html/rfc6901), or [XPath Expression](https://www.w3.org/TR/xpath-31/#id-expressions), or [JSONPath](https://tools.ietf.org/html/rfc9535) which MUST be resolved against the request body. Used to identify the location to inject the `value`.                                                                                                                                             |
 | <a name="payloadReplacementTargetSelectorType"></a>targetSelectorType | `string` \| [Expression Type Object](#expression-type-object) | The selector expression type to use (e.g., `jsonpath`, `xpath`, or `jsonpointer`). If `jsonpath`, then the `target` expression MUST conform to [JSONPath](https://tools.ietf.org/html/rfc9535). If `xpath` the expression MUST conform to [XML Path Language 3.1](https://www.w3.org/TR/xpath-31/#d2e24229). Should other variants of JSONPath or XPath be required, then a [Expression Type Object](#expression-type-object) MUST be specified. |
 | <a name="payloadReplacementValue"></a> value                          |  Any \| {expression} \| [Selector Object](#selector-object)   | **REQUIRED**. The value set within the target location. The value can be a constant, a [Runtime Expression](#runtime-expressions), or [Selector Objects](#selector-object) to be evaluated and passed to the referenced operation or workflow.                                                                                                                                                                                                   |
@@ -999,47 +1097,175 @@ A runtime expression allows values to be defined based on information that will 
 The runtime expression is defined by the following [ABNF](https://tools.ietf.org/html/rfc5234) syntax:
 
 ```abnf
-      expression = ( "$url" / "$method" / "$statusCode" / "$request." source / "$response." source / "$message." source / "$inputs." name / "$outputs." name / "$steps." name / "$workflows." name / "$sourceDescriptions." name / "$components." name / "$components.parameters." parameter-name)
-      parameter-name = name ; Reuses 'name' rule for parameter names
-      source = ( header-reference / query-reference / path-reference / body-reference / payload-reference )
-      header-reference = "header." token
-      query-reference = "query." name
-      path-reference = "path." name
-      body-reference = "body" ["#" json-pointer ]
-      payload-reference = "payload" ["#" json-pointer ]
-      json-pointer    = *( "/" reference-token )
-      reference-token = *( unescaped / escaped )
-      unescaped       = %x00-2E / %x30-7D / %x7F-10FFFF
-         ; %x2F ('/') and %x7E ('~') are excluded from 'unescaped'
-      escaped         = "~" ( "0" / "1" )
-        ; representing '~' and '/', respectively
-      name = *( CHAR )
-      token = 1*tchar
-      tchar = "!" / "#" / "$" / "%" / "&" / "'" / "*" / "+" / "-" / "." /
-        "^" / "_" / "`" / "|" / "~" / DIGIT / ALPHA
+  ; Top-level expression
+  expression = (
+      "$url" /
+      "$method" /
+      "$statusCode" /
+      "$request." source /
+      "$response." source /
+      "$message." source / 
+      "$inputs." inputs-reference /
+      "$outputs." outputs-reference /
+      "$steps." steps-reference /
+      "$workflows." workflows-reference /
+      "$sourceDescriptions." source-reference /
+      "$components." components-reference /
+      "$self"
+  )
+
+  ; Request/Response sources
+  source = ( header-reference / query-reference / path-reference / body-reference / payload-reference )
+  header-reference = "header." token
+  query-reference = "query." name
+  path-reference = "path." name
+  body-reference = "body" ["#" json-pointer ]
+  payload-reference = "payload" ["#" json-pointer ]
+
+  ; Input/Output references
+  inputs-reference = input-name [ "#" json-pointer ]
+  outputs-reference = output-name [ "#" json-pointer ]
+  input-name = identifier
+  output-name = identifier
+
+  ; Steps expressions
+  steps-reference = step-id ".outputs." output-name [ "#" json-pointer ]
+  step-id = identifier-strict
+
+  ; Workflows expressions
+  workflows-reference = workflow-id "." workflow-field "." workflow-field-name [ "#" json-pointer ]
+  workflow-id = identifier-strict
+  workflow-field = "inputs" / "outputs"
+  workflow-field-name = identifier
+
+  ; Source descriptions expressions
+  source-reference = source-name "." source-reference-id
+  source-name = identifier-strict
+  source-reference-id = 1*CHAR
+      ; operationIds have no character restrictions in OpenAPI/AsyncAPI
+      ; Resolution priority defined in spec text: (1) operationId/workflowId, (2) field names
+
+  ; Components expressions
+  components-reference = component-type "." component-name
+  component-type = "parameters" / "successActions" / "failureActions"
+  component-name = identifier
+
+  ; Identifier rules
+  identifier-strict = 1*( ALPHA / DIGIT / "-" / "_" )
+      ; For step IDs, workflow IDs, and sourceDescription names (no dots)
+      ; Matches [A-Za-z0-9_\-]+
+
+  identifier = 1*( ALPHA / DIGIT / "." / "-" / "_" )
+      ; For component keys (dots allowed)
+      ; Matches [a-zA-Z0-9\.\-_]+
+
+  name = *( CHAR )
+      ; Allows unrestricted characters for query/path parameter names and field references
+
+  ; JSON Pointer (RFC 6901)
+  json-pointer = *( "/" reference-token )
+  reference-token = *( unescaped / escaped )
+  unescaped = %x00-2E / %x30-7A / %x7C / %x7F-10FFFF
+      ; Excludes / (%x2F), { (%x7B), } (%x7D), and ~ (%x7E)
+  escaped = "~" ( "0" / "1" )
+      ; representing '~' and '/', respectively
+
+  ; Token for header names (RFC 9110)
+  token = 1*tchar
+  tchar = "!" / "#" / "$" / "%" / "&" / "'" / "*" / "+" / "-" / "." /
+          "^" / "_" / "`" / "|" / "~" / DIGIT / ALPHA
+
+  ; CHAR definition (RFC 7159, adapted to exclude { and })
+  CHAR = unescape / escape (
+      %x22 /          ; "    quotation mark  U+0022
+      %x5C /          ; \    reverse solidus U+005C
+      %x2F /          ; /    solidus         U+002F
+      %x62 /          ; b    backspace       U+0008
+      %x66 /          ; f    form feed       U+000C
+      %x6E /          ; n    line feed       U+000A
+      %x72 /          ; r    carriage return U+000D
+      %x74 /          ; t    tab             U+0009
+      %x75 4HEXDIG )  ; uXXXX                U+XXXX
+  escape = %x5C       ; \
+  unescape = %x20-21 / %x23-5B / %x5D-7A / %x7C / %x7E-10FFFF
+      ; Excludes { (%x7B) and } (%x7D) for unambiguous embedded expression parsing
+
+  ; Expression strings
+  expression-string = *( literal-char / embedded-expression )
+  embedded-expression = "{" expression "}"
+  literal-char = %x00-7A / %x7C / %x7E-10FFFF
+      ; Excludes { and } - simpler than CHAR for literal text
+
+  ; Core ABNF rules (RFC 5234)
+  ALPHA = %x41-5A / %x61-7A   ; A-Z / a-z
+  DIGIT = %x30-39             ; 0-9
+  HEXDIG = DIGIT / "A" / "B" / "C" / "D" / "E" / "F" 
 ```
+
+Here, `json-pointer` is taken from [RFC6901](https://tools.ietf.org/html/rfc6901), `CHAR` from [RFC7159](https://tools.ietf.org/html/rfc7159#section-7) and `token` from [RFC7230](https://tools.ietf.org/html/rfc7230#section-3.2.6).
+
+The `name` identifier is case-sensitive, whereas `token` is not.
 
 #### Examples
 
-| Source Location       | example expression                                     | notes                                                                                                                                                                                            |
-| --------------------- | :----------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| HTTP Method           | `$method`                                              | The allowable values for the `$method` will be those for the HTTP operation.                                                                                                                     |
-| Requested media type  | `$request.header.accept`                               |                                                                                                                                                                                                  |
-| Request parameter     | `$request.path.id`                                     | Request parameters MUST be declared in the `parameters` section of the parent operation or they cannot be evaluated. This includes request headers.                                              |
-| Request body property | `$request.body#/user/uuid`                             | In operations which accept payloads, references may be made to portions of the `requestBody` or the entire body.                                                                                 |
-| Request URL           | `$url`                                                 |                                                                                                                                                                                                  |
-| Response value        | `$response.body#/status`                               | In operations which return payloads, references may be made to portions of the response body or the entire body.                                                                                 |
-| Response header       | `$response.header.Server`                              | Single header values only are available.                                                                                                                                                         |
-| Message header        | `$message.header.Server`                               | Single header values only are available.                                                                                                                                                         |
-| Payload value         | `$message.payload#/status`                             | In operations which return payloads, references may be made to portions of the payload or the entire payload.                                                                                    |
-| workflow input        | `$inputs.username` or `$workflows.foo.inputs.username` | Single input values only are available.                                                                                                                                                          |
-| Step output value     | `$steps.someStepId.outputs.pets`                       | In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$steps.someStepId.outputs.pets#/0/id`) or the entire body.        |
-| Workflow output value | `$outputs.bar` or `$workflows.foo.outputs.bar`         | In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$workflows.foo.outputs.mappedResponse#/name`) or the entire body. |
-| Components parameter  | `$components.parameters.foo`                           | Accesses a foo parameter defined within the Components Object.                                                                                                                                   |
+| Source Location              | example expression                                                   | notes                                                                                                                                                                                            |
+|------------------------------|:---------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| HTTP Method                  | `$method`                                                            | The allowable values for the `$method` will be those for the HTTP operation.                                                                                                                     |
+| Requested media type         | `$request.header.accept`                                             |                                                                                                                                                                                                  |
+| Request parameter            | `$request.path.id`                                                   | Request parameters MUST be declared in the `parameters` section of the parent operation or they cannot be evaluated. This includes request headers.                                              |
+| Request body property        | `$request.body#/user/uuid`                                           | In operations which accept payloads, references may be made to portions of the `requestBody` or the entire body.                                                                                 |
+| Request URL                  | `$url`                                                               |                                                                                                                                                                                                  |
+| Response value               | `$response.body#/status`                                             | In operations which return payloads, references may be made to portions of the response body or the entire body.                                                                                 |
+| Response array element       | `$response.body#/items/0/id`                                         | Array elements can be accessed using numeric indices in JSON Pointer syntax.                                                                                                                     |
+| Response header              | `$response.header.Server`                                            | Single header values only are available.                                                                                                                                                         |
+| Message header               | `$message.header.Server`                                             | Single header values only are available.                                                                                                                                                         |
+| Payload value                | `$message.payload#/status`                                           | In operations which return payloads, references may be made to portions of the payload or the entire payload.                                                                                    |
+| Self URI                     | `$self`                                                              | References the canonical URI of the current Arazzo Description as defined by the `$self` field.                                                                                                  |
+| Workflow input               | `$inputs.username` or `$workflows.foo.inputs.username`               | Single input values only are available.                                                                                                                                                          |
+| Step output value            | `$steps.someStepId.outputs.pets`                                     | In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$steps.someStepId.outputs.pets#/0/id`) or the entire body.        |
+| Workflow output value        | `$outputs.bar` or `$workflows.foo.outputs.bar`                       | In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$workflows.foo.outputs.mappedResponse#/name`) or the entire body. |
+| Embedded expressions         | `https://{$inputs.host}/api/{$steps.create.outputs.id}/status`       | Multiple runtime expressions can be embedded within a single string value by wrapping each in curly braces.                                                                                      |
+| Source description reference | `$sourceDescriptions.petstore.getPetById`                            | References an operationId or workflowId from the named source description. Resolution priority: (1) operationId/workflowId, (2) field names.                                                     |
+| Source description field     | `$sourceDescriptions.petstore.url`                                   | References a field from the Source Description Object. Resolved when no matching operationId/workflowId is found.                                                                                |
+| Components parameter         | `$components.parameters.foo`                                         | Accesses a foo parameter defined within the Components Object.                                                                                                                                   |
+| Components action            | `$components.successActions.bar` or `$components.failureActions.baz` | Accesses a success or failure action defined within the Components Object.                                                                                                                       |
 
 Runtime expressions preserve the type of the referenced value.
-Expressions can be embedded into string values by surrounding the expression with `{}` curly braces.
+Expressions can be embedded into string values by surrounding the expression with `{}` curly braces. When a runtime expression is embedded in this manner, the following rules apply based on the value type:
 
+- Scalar values (string, number, boolean, null) are converted to their string representation.
+- Complex values (object, array) are handled based on their current representation:
+  - If the value is already a string (e.g., an XML or YAML response body stored without parsing), it is embedded as-is without modification.
+  - If the value is a parsed structure (e.g., a JSON object or array from a parsed response, or workflow input), it MUST be serialized as JSON per RFC 8259.
+
+Whether a value is stored as a string or parsed structure depends on its content type. JSON responses and inputs are typically parsed into structures, while XML and plain text are typically stored as strings. When embedding a parsed structure into a non-JSON payload format, the resulting JSON serialization may not match the target format's expected structure.
+
+#### Source Description Expression Resolution
+
+When using `$sourceDescriptions.<name>.<reference>`, the `<reference>` portion is resolved with the following priority:
+
+- **operationId or workflowId** - If the referenced source description is an OpenAPI description, `<reference>` is first matched against operationIds. If the source description is an Arazzo document, `<reference>` is matched against workflowIds.
+- **Source description field** - If no operationId/workflowId match is found, `<reference>` is matched against field names of the Source Description Object (e.g., `url`,
+  `type`).
+
+**Examples:**
+
+Given this source description:
+
+```yaml
+sourceDescriptions:
+  - name: petstore
+    url: https://api.example.com/petstore.yaml
+    type: openapi
+```
+
+Given the above example source description and an OpenAPI description at that specified URL containing an operation with operationId: `getPetById`:
+
+- `$sourceDescriptions.petstore.getPetById` resolves to the operation with operationId `getPetById` (_priority 1_)
+- `$sourceDescriptions.petstore.url` resolves to `https://api.example.com/petstore.yaml` (_priority 2_)
+- `$sourceDescriptions.petstore.type` resolves to `openapi` (_priority 2_)
+
+If an operationId happens to conflict with a field name (e.g., an operation with operationId: url), the operationId takes precedence.
 
 ### Specification Extensions
 
@@ -1048,7 +1274,7 @@ While the Arazzo Specification tries to accommodate most use cases, additional d
 The extension properties are implemented as patterned fields that are always prefixed by `"x-"`.
 
 | Field Pattern                      | Type | Description                                                                                                                                                                                                                                                                                                                   |
-| ---------------------------------- | :--: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|------------------------------------|:----:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <a name="arazzoExtensions"></a>^x- | Any  | Allows extensions to the Arazzo Specification. The field name MUST begin with `x-`, for example, `x-internal-id`. Field names beginning `x-oai-`, `x-oas-`, and `x-arazzo` are reserved for uses defined by the [OpenAPI Initiative](https://www.openapis.org/). The value MAY be `null`, a primitive, an array or an object. |
 
 The extensions may or may not be supported by the available tooling, but those may be extended as well to add requested support (if tools are internal or open-sourced).
@@ -1125,6 +1351,136 @@ The proposed MIME media type for Arazzo documents (e.g. workflows) that require 
 
 | Version | Date       | Notes                                           |
 |---------|------------|-------------------------------------------------|
-| 1.1.0   | 2025-12-08 | Minor release of the Arazzo Specification 1.1.0 |
+| 1.1.0   | 2026-04-16 | Minor release of the Arazzo Specification 1.1.0 |
 | 1.0.1   | 2025-01-16 | Patch release of the Arazzo Specification 1.0.1 |
 | 1.0.0   | 2024-05-29 | First release of the Arazzo Specification       |
+
+## Appendix B: Examples of Base URI Determination and Reference Resolution
+
+This appendix provides concrete examples demonstrating how the [`$self`](#arazzoSelf) field, Source Description URLs, and relative references work together across different deployment scenarios.
+
+### Base URI Within Content (Using `$self`)
+
+Assume the following Arazzo document is retrieved from `file:///Users/dev/projects/workflows/purchase.arazzo.yaml`:
+
+```yaml
+arazzo: 1.1.0
+$self: https://api.example.com/workflows/purchase.arazzo.yaml
+info:
+  title: Pet Purchase Workflow
+  version: 1.0.0
+sourceDescriptions:
+  - name: petstore
+    url: ../specs/petstore.yaml  # Resolves to https://api.example.com/specs/petstore.yaml
+    type: openapi
+```
+
+The relative URL `../specs/petstore.yaml` resolves against the `$self` base URI `https://api.example.com/workflows/purchase.arazzo.yaml`. The resolution algorithm per [RFC3986 Section 5.2](https://tools.ietf.org/html/rfc3986#section-5.2) removes the final path segment during resolution, producing `https://api.example.com/specs/petstore.yaml`, regardless of the retrieval URI.
+
+### Base URI From the Retrieval URI (No `$self`)
+
+If the same document does not define `$self`:
+
+```yaml
+arazzo: 1.1.0
+# No $self field
+info:
+  title: Pet Purchase Workflow
+  version: 1.0.0
+sourceDescriptions:
+  - name: petstore
+    url: ../specs/petstore.yaml
+    type: openapi
+```
+
+Retrieved from `file:///Users/dev/projects/workflows/purchase.arazzo.yaml`, the relative URL resolves to `file:///Users/dev/projects/specs/petstore.yaml`.
+
+### Base URI From Encapsulating Entity
+
+Per [RFC3986 Section 5.1.2](https://tools.ietf.org/html/rfc3986#section-5.1.2), the base URI can be provided by an encapsulating entity. For example, in a `multipart/related` response where an Arazzo Description is embedded:
+
+```http
+Content-Type: multipart/related; boundary=example; type=application/vnd.oai.arazzo+json
+
+--example
+Content-Type: application/vnd.oai.arazzo+json
+Content-Location: https://api.example.com/workflows/purchase.arazzo.json
+
+{
+  "arazzo": "1.1.0",
+  "info": {...},
+  "sourceDescriptions": [
+    {
+      "name": "petstore",
+      "url": "../specs/petstore.json"
+    }
+  ]
+}
+--example--
+```
+
+The `Content-Location` header provides the base URI (`https://api.example.com/workflows/purchase.arazzo.json`), so `../specs/petstore.json` resolves to `https://api.example.com/specs/petstore.json` even without a `$self` field.
+
+### Application-Specific Default Base URI
+
+Per [RFC3986 Section 5.1.4](https://tools.ietf.org/html/rfc3986#section-5.1.4), applications may define default base URIs. For documents loaded without explicit retrieval URIs (e.g., from a database), implementations typically generate a unique base URI per document using a fixed prefix plus a unique identifier.
+
+For example, a workflow orchestration platform might construct base URIs as `https://workflows.example.com/{uuid}` for each document:
+
+```yaml
+arazzo: 1.1.0
+# No $self field
+# Loaded from database, assigned base URI: https://workflows.example.com/a7b3c4d5
+info:
+  title: Pet Purchase Workflow
+  version: 1.0.0
+sourceDescriptions:
+  - name: petstore
+    url: specs/petstore.yaml  # Resolves using application default
+```
+
+If the application assigns base URI `https://workflows.example.com/a7b3c4d5` to this document, then `specs/petstore.yaml` resolves to `https://workflows.example.com/specs/petstore.yaml`.
+
+**Note:** While a base URI of `https://workflows.example.com/` (with trailing slash) is technically valid per RFC3986, the final path component is an empty string. In practice, implementations typically assign unique identifiers as the final component to distinguish documents.
+
+### Resolving Relative `$self`
+
+When `$self` is itself a relative URI-reference, it must be resolved before being used as a base URI:
+
+```yaml
+arazzo: 1.1.0
+$self: workflows/purchase.arazzo.yaml
+info:
+  title: Pet Purchase Workflow
+  version: 1.0.0
+sourceDescriptions:
+  - name: petstore
+    url: ../specs/petstore.yaml
+```
+
+Retrieved from `https://api.example.com/v2/api-description.yaml`:
+
+1. First, resolve the `$self` relative reference `workflows/purchase.arazzo.yaml` against the base URI `https://api.example.com/v2/api-description.yaml`, which resolves to `https://api.example.com/v2/workflows/purchase.arazzo.yaml` per [RFC3986 Section 5.2](https://tools.ietf.org/html/rfc3986#section-5.2).
+2. Then resolve the Source Description `url` relative reference `../specs/petstore.yaml` against the resolved `$self` base URI `https://api.example.com/v2/workflows/purchase.arazzo.yaml`, which resolves to `https://api.example.com/v2/specs/petstore.yaml`.
+
+### Identity vs Location: Why `$self` Matters
+
+An Arazzo Description may be retrieved from multiple locations but have a single canonical identity. Consider:
+
+```yaml
+arazzo: 1.1.0
+$self: https://workflows.example.com/canonical/purchase.arazzo.yaml
+info:
+  title: Pet Purchase Workflow
+  version: 1.0.0
+```
+
+This document might be:
+
+- Retrieved from `https://cdn.example.com/cache/abc123.yaml`
+- Retrieved from `file:///local/dev/purchase.arazzo.yaml`
+- Embedded in a `multipart/related` response
+
+In all cases, references to this Arazzo Description MUST use `https://workflows.example.com/canonical/purchase.arazzo.yaml` (the `$self` value), not the retrieval location. This ensures that references remain stable even when the document is mirrored, cached, or moved.
+
+Identity-based referencing via `$self` is particularly valuable in security-restricted environments. When deploying document sets behind firewalls or on air-gapped networks, implementations can scan for `$self` values to locate documents from a provided collection without making network requests that security policies might prevent. This enables reference resolution in environments where external network access is restricted or prohibited.
