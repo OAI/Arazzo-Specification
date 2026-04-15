@@ -946,23 +946,107 @@ A runtime expression allows values to be defined based on information that will 
 The runtime expression is defined by the following [ABNF](https://tools.ietf.org/html/rfc5234) syntax:
 
 ```abnf
-      expression = ( "$url" / "$method" / "$statusCode" / "$request." source / "$response." source / "$inputs." name / "$outputs." name / "$steps." name / "$workflows." name / "$sourceDescriptions." name / "$components." name / "$components.parameters." parameter-name)
-      parameter-name = name ; Reuses 'name' rule for parameter names
-      source = ( header-reference / query-reference / path-reference / body-reference )
-      header-reference = "header." token
-      query-reference = "query." name
-      path-reference = "path." name
-      body-reference = "body" ["#" json-pointer ]
-      json-pointer    = *( "/" reference-token )
-      reference-token = *( unescaped / escaped )
-      unescaped       = %x00-2E / %x30-7D / %x7F-10FFFF
-         ; %x2F ('/') and %x7E ('~') are excluded from 'unescaped'
-      escaped         = "~" ( "0" / "1" )
-        ; representing '~' and '/', respectively
-      name = *( CHAR )
-      token = 1*tchar
-      tchar = "!" / "#" / "$" / "%" / "&" / "'" / "*" / "+" / "-" / "." /
-        "^" / "_" / "`" / "|" / "~" / DIGIT / ALPHA
+  ; Top-level expression
+  expression = (
+      "$url" /
+      "$method" /
+      "$statusCode" /
+      "$request." source /
+      "$response." source /
+      "$inputs." inputs-reference /
+      "$outputs." outputs-reference /
+      "$steps." steps-reference /
+      "$workflows." workflows-reference /
+      "$sourceDescriptions." source-reference /
+      "$components." components-reference /
+      "$self"
+  )
+
+  ; Request/Response sources
+  source = ( header-reference / query-reference / path-reference / body-reference )
+  header-reference = "header." token
+  query-reference = "query." name
+  path-reference = "path." name
+  body-reference = "body" ["#" json-pointer ]
+
+  ; Input/Output references
+  inputs-reference = input-name [ "#" json-pointer ]
+  outputs-reference = output-name [ "#" json-pointer ]
+  input-name = identifier
+  output-name = identifier
+
+  ; Steps expressions
+  steps-reference = step-id ".outputs." output-name [ "#" json-pointer ]
+  step-id = identifier-strict
+
+  ; Workflows expressions
+  workflows-reference = workflow-id "." workflow-field "." workflow-field-name [ "#" json-pointer ]
+  workflow-id = identifier-strict
+  workflow-field = "inputs" / "outputs"
+  workflow-field-name = identifier
+
+  ; Source descriptions expressions
+  source-reference = source-name "." source-reference-id
+  source-name = identifier-strict
+  source-reference-id = 1*CHAR
+      ; operationIds have no character restrictions in OpenAPI/AsyncAPI
+      ; Resolution priority defined in spec text: (1) operationId/workflowId, (2) field names
+
+  ; Components expressions
+  components-reference = component-type "." component-name
+  component-type = "parameters" / "successActions" / "failureActions"
+  component-name = identifier
+
+  ; Identifier rules
+  identifier-strict = 1*( ALPHA / DIGIT / "-" / "_" )
+      ; For step IDs, workflow IDs, and sourceDescription names (no dots)
+      ; Matches [A-Za-z0-9_\-]+
+
+  identifier = 1*( ALPHA / DIGIT / "." / "-" / "_" )
+      ; For component keys (dots allowed)
+      ; Matches [a-zA-Z0-9\.\-_]+
+
+  name = *( CHAR )
+      ; Allows unrestricted characters for query/path parameter names and field references
+
+  ; JSON Pointer (RFC 6901)
+  json-pointer = *( "/" reference-token )
+  reference-token = *( unescaped / escaped )
+  unescaped = %x00-2E / %x30-7A / %x7C / %x7F-10FFFF
+      ; Excludes / (%x2F), { (%x7B), } (%x7D), and ~ (%x7E)
+  escaped = "~" ( "0" / "1" )
+      ; representing '~' and '/', respectively
+
+  ; Token for header names (RFC 9110)
+  token = 1*tchar
+  tchar = "!" / "#" / "$" / "%" / "&" / "'" / "*" / "+" / "-" / "." /
+          "^" / "_" / "`" / "|" / "~" / DIGIT / ALPHA
+
+  ; CHAR definition (RFC 7159, adapted to exclude { and })
+  CHAR = unescape / escape (
+      %x22 /          ; "    quotation mark  U+0022
+      %x5C /          ; \    reverse solidus U+005C
+      %x2F /          ; /    solidus         U+002F
+      %x62 /          ; b    backspace       U+0008
+      %x66 /          ; f    form feed       U+000C
+      %x6E /          ; n    line feed       U+000A
+      %x72 /          ; r    carriage return U+000D
+      %x74 /          ; t    tab             U+0009
+      %x75 4HEXDIG )  ; uXXXX                U+XXXX
+  escape = %x5C       ; \
+  unescape = %x20-21 / %x23-5B / %x5D-7A / %x7C / %x7E-10FFFF
+      ; Excludes { (%x7B) and } (%x7D) for unambiguous embedded expression parsing
+
+  ; Expression strings
+  expression-string = *( literal-char / embedded-expression )
+  embedded-expression = "{" expression "}"
+  literal-char = %x00-7A / %x7C / %x7E-10FFFF
+      ; Excludes { and } - simpler than CHAR for literal text
+
+  ; Core ABNF rules (RFC 5234)
+  ALPHA = %x41-5A / %x61-7A   ; A-Z / a-z
+  DIGIT = %x30-39             ; 0-9
+  HEXDIG = DIGIT / "A" / "B" / "C" / "D" / "E" / "F" 
 ```
 
 Here, `json-pointer` is taken from [RFC6901](https://tools.ietf.org/html/rfc6901), `CHAR` from [RFC7159](https://tools.ietf.org/html/rfc7159#section-7) and `token` from [RFC7230](https://tools.ietf.org/html/rfc7230#section-3.2.6).
@@ -979,15 +1063,56 @@ The `name` identifier is case-sensitive, whereas `token` is not.
 | Request body property | `$request.body#/user/uuid` | In operations which accept payloads, references may be made to portions of the `requestBody` or the entire body. |
 | Request URL | `$url` | |
 | Response value | `$response.body#/status` | In operations which return payloads, references may be made to portions of the response body or the entire body. |
+| Response array element | `$response.body#/items/0/id` | Array elements can be accessed using numeric indices in JSON Pointer syntax. |
 | Response header | `$response.header.Server` | Single header values only are available. |
-| workflow input | `$inputs.username` or `$workflows.foo.inputs.username` | Single input values only are available. |
+| Self URI | `$self` | References the canonical URI of the current Arazzo Description as defined by the `$self` field. |
+| Workflow input | `$inputs.username` | Single input values only are available. |
+| Workflow input property | `$inputs.customer#/firstName` | To access nested properties within an input object, use JSON Pointer syntax. The input name is `customer`, and `#/firstName` is the JSON Pointer to the nested property. |
 | Step output value | `$steps.someStepId.outputs.pets` | In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$steps.someStepId.outputs.pets#/0/id`) or the entire body. |
+| Step output deep nested | `$steps.fetchUser.outputs.data#/profile/address/postalCode` | JSON Pointers can traverse multiple levels to access deeply nested properties. |
 | Workflow output value | `$outputs.bar` or `$workflows.foo.outputs.bar` | In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$workflows.foo.outputs.mappedResponse#/name`) or the entire body. |
+| Embedded expressions | `https://{$inputs.host}/api/{$steps.create.outputs.id}/status` | Multiple runtime expressions can be embedded within a single string value by wrapping each in curly braces. |
+| Source description reference | `$sourceDescriptions.petstore.getPetById` | References an operationId or workflowId from the named source description. Resolution priority: (1) operationId/workflowId, (2) field names. |
+| Source description field | `$sourceDescriptions.petstore.url` | References a field from the Source Description Object. Resolved when no matching operationId/workflowId is found. |
 | Components parameter | `$components.parameters.foo` | Accesses a foo parameter defined within the Components Object. |
+| Components action | `$components.successActions.bar` or `$components.failureActions.baz` | Accesses a success or failure action defined within the Components Object. |
 
 Runtime expressions preserve the type of the referenced value.
-Expressions can be embedded into string values by surrounding the expression with `{}` curly braces.
+Expressions can be embedded into string values by surrounding the expression with `{}` curly braces. When a runtime expression is embedded in this manner, the following rules apply based on the value type:
 
+- Scalar values (string, number, boolean, null) are converted to their string representation.
+- Complex values (object, array) are handled based on their current representation:
+  - If the value is already a string (e.g., an XML or YAML response body stored without parsing), it is embedded as-is without modification.
+  - If the value is a parsed structure (e.g., a JSON object or array from a parsed response, or workflow input), it MUST be serialized as JSON per RFC 8259.
+
+Whether a value is stored as a string or parsed structure depends on its content type. JSON responses and inputs are typically parsed into structures, while XML and plain text are typically stored as strings. When embedding a parsed structure into a non-JSON payload format, the resulting JSON serialization may not match the target format's expected structure.
+
+#### Source Description Expression Resolution
+
+When using `$sourceDescriptions.<name>.<reference>`, the `<reference>` portion is resolved with the following priority:
+
+- **operationId or workflowId** - If the referenced source description is an OpenAPI description, `<reference>` is first matched against operationIds. If the source description is an Arazzo document, `<reference>` is matched against workflowIds.
+- **Source description field** - If no operationId/workflowId match is found, `<reference>` is matched against field names of the Source Description Object (e.g., `url`,
+`type`).
+
+**Examples:**
+
+Given this source description:
+
+```yaml
+sourceDescriptions:
+  - name: petstore
+    url: https://api.example.com/petstore.yaml
+    type: openapi
+```
+
+Given the above example source description and an OpenAPI description at that specified URL containing an operation with operationId: `getPetById`:
+
+- `$sourceDescriptions.petstore.getPetById` resolves to the operation with operationId `getPetById` (_priority 1_)
+- `$sourceDescriptions.petstore.url` resolves to `https://api.example.com/petstore.yaml` (_priority 2_)
+- `$sourceDescriptions.petstore.type` resolves to `openapi` (_priority 2_)
+
+If an operationId happens to conflict with a field name (e.g., an operation with operationId: url), the operationId takes precedence.
 
 ### Specification Extensions
 
