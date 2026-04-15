@@ -223,7 +223,7 @@ sourceDescriptions:
   url: https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml
   type: openapi
 - name: asyncOrderApiDescription
-  url: https://github.com/OAI/Arazzo-Specification/blob/dev/src/specification/order-asyncapi.yaml
+  url: https://raw.githubusercontent.com/OAI/Arazzo-Specification/main/examples/1.1.0/pet-asyncapi.yaml
   type: asyncapi
 
 workflows:
