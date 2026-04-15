@@ -506,6 +506,7 @@ $defs:
         enum:
           - path
           - query
+          - querystring
           - header
           - cookie
       value:
