@@ -172,9 +172,6 @@ $defs:
       description:
         description: A description of the step. CommonMark syntax MAY be used for rich text representation
         type: string
-      operationId:
-        description: The name of an existing, resolvable operation, as defined with a unique operationId and existing within one of the sourceDescriptions
-        type: string
       timeout:
         description: The duration in milliseconds to wait before timing out the step
         type: integer
@@ -233,29 +230,28 @@ $defs:
               - $ref: '#/$defs/selector-object'
     required:
       - stepId
+  operation-step-parameters:
+    type: array
+    uniqueItems: true
+    items:
+      oneOf:
+        - $ref: '#/$defs/reusable-object'
+        - $ref: '#/$defs/parameter-object'
+          required:
+            - in
   openapi-step-object:
     allOf:
       - $ref: '#/$defs/step-object-base'
       - type: object
         properties:
+          operationId:
+            description: The name of an existing, resolvable operation, as defined with a unique operationId and existing within one of the sourceDescriptions
+            type: string
           operationPath:
             description: A reference to a Source combined with a JSON Pointer to reference an operation
             type: string
-      - if:
-          oneOf:
-            - required:
-                - operationPath
-            - required:
-                - operationId
-        then:
-          properties:
-            parameters:
-              items:
-                oneOf:
-                  - $ref: '#/$defs/reusable-object'
-                  - $ref: '#/$defs/parameter-object'
-                    required:
-                      - in
+          parameters:
+            $ref: '#/$defs/operation-step-parameters'
       - oneOf:
           - required:
               - operationId
@@ -268,6 +264,9 @@ $defs:
       - $ref: '#/$defs/step-object-base'
       - type: object
         properties:
+          operationId:
+            description: The name of an existing, resolvable operation, as defined with a unique operationId and existing within one of the sourceDescriptions
+            type: string
           channelPath:
             description: A reference to a Source combined with a JSON Pointer to reference an async channel
             type: string
@@ -284,23 +283,10 @@ $defs:
             enum:
               - send
               - receive
+          parameters:
+            $ref: '#/$defs/operation-step-parameters'
         required:
           - action
-      - if:
-          oneOf:
-            - required:
-                - operationId
-            - required:
-                - channelPath
-        then:
-          properties:
-            parameters:
-              items:
-                oneOf:
-                  - $ref: '#/$defs/reusable-object'
-                  - $ref: '#/$defs/parameter-object'
-                    required:
-                      - in
       - if:
           required:
             - correlationId

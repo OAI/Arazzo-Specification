@@ -2,6 +2,10 @@ arazzo: 1.1.0
 info:
   title: Workflow step cannot have operationId
   version: 1.0.0
+sourceDescriptions:
+  - name: exampleAPI
+    url: https://example.com/asyncapi.yaml
+    type: asyncapi
 workflows:
   - workflowId: parentWorkflow
     steps:

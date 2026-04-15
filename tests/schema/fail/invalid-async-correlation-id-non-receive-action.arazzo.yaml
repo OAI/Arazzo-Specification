@@ -1,6 +1,6 @@
 arazzo: 1.1.0
 info:
-  title: Minimal Arazzo Example for AsyncAPI
+  title: CorrelationId should only be present when action is receive
   version: 1.0.0
 sourceDescriptions:
   - name: exampleAPI
