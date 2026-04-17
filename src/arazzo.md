@@ -443,25 +443,25 @@ This object MAY be extended with [Specification Extensions](#specification-exten
 
 The `dependsOn` field at the step level is primarily intended to coordinate asynchronous operations.
 
-**Recommended Approach for Synchronous Workflows**
+###### Recommended Approach for Synchronous Workflows
 
 For workflows containing only synchronous steps, the RECOMMENDED approach is to order steps sequentially in the steps array without using `dependsOn`. This provides the simplest and clearest execution model. Step-level `dependsOn` is typically unnecessary when all operations complete synchronously and execution follows a linear path.
 
-**Use Case: Async Coordination**
+###### Use Case: Async Coordination
 
 When a step must wait for an asynchronous operation to complete before proceeding, `dependsOn` establishes a join point for in-flight async work. For example, a step that requests an order status SHOULD declare `dependsOn` on the step that receives order creation status from an async order placement, even if no explicit output reference exists. This ensures the async operation completes before the dependent step executes.
 
-**Authoring Guidance**
+###### Authoring Guidance
 
 For async workflows, authors SHOULD use `dependsOn` to explicitly declare when a step must wait for async work to complete, regardless of output references. This is the intended use case for step-level dependencies.
 
-**Tool Behavior**
+###### Tool Behavior
 
 Tools MUST respect all declared `dependsOn` relationships. Tools MUST also treat runtime expression output references (e.g., `$steps.stepId.outputs.field`) as implicit dependencies and ensure the referenced step completes before the referencing step executes.
 
 Tools supporting only sequential execution MUST execute steps in an order that satisfies both explicit (`dependsOn`) and implicit (output reference) dependencies.
 
-**Validation Recommendations**
+###### Validation Recommendations
 
 Implementations SHOULD validate the following scenario:
 
