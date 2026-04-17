@@ -474,6 +474,7 @@ For steps that reference AsyncAPI operations (via `operationId` or `channelPath`
 Because AsyncAPI channels MAY define multiple message types, and because message payloads MAY represent either success or failure conditions, authors SHOULD define `successCriteria` for AsyncAPI receive steps to explicitly evaluate the received message payload (for example, via `$message.payload`) and determine whether the step succeeded.
 
 Authors MAY omit `successCriteria` only when both of the following conditions are met:
+
 - The channel defines a single message type that unambiguously represents successful completion
 - The message payload does not contain fields indicating error states (e.g., status codes or error flags)
 
