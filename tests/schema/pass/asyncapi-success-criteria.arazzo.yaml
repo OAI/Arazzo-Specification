@@ -1,0 +1,19 @@
+arazzo: 1.1.0
+info:
+  title: AsyncAPI step with success criteria
+  version: 1.0.0
+sourceDescriptions:
+  - name: UserAPI
+    url: https://user.com/asyncapi.yaml
+    type: asyncapi
+workflows:
+  - workflowId: asyncWorkflow
+    steps:
+      - stepId: receiveOrder
+        operationId: $sourceDescriptions.UserAPI.orderCreated
+        action: receive
+        correlationId: request-123
+        successCriteria:
+          - context: $message.payload
+            condition: $.status == 'accepted'
+            type: jsonpath

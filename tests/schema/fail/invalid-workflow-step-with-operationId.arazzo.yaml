@@ -1,0 +1,22 @@
+arazzo: 1.1.0
+info:
+  title: Workflow step cannot have operationId
+  version: 1.0.0
+sourceDescriptions:
+  - name: exampleAPI
+    url: https://example.com/asyncapi.yaml
+    type: asyncapi
+workflows:
+  - workflowId: parentWorkflow
+    steps:
+      - stepId: invalidStep
+        operationId: getUsers
+        workflowId: childWorkflow
+        successCriteria:
+          - condition: $statusCode == 200
+  - workflowId: childWorkflow
+    steps:
+      - stepId: childStep
+        operationId: listUsers
+        successCriteria:
+          - condition: $statusCode == 200

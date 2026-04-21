@@ -1,0 +1,32 @@
+arazzo: 1.1.0
+info:
+  title: Async dependsOn across workflows in one document
+  version: 1.0.0
+sourceDescriptions:
+  - name: exampleAPI
+    url: https://example.com/asyncapi.yaml
+    type: asyncapi
+workflows:
+  - workflowId: producerWorkflow
+    steps:
+      - stepId: produceEvent
+        operationId: createUser
+        action: send
+      - stepId: waitForEvent
+        operationId: fetchUserId
+        action: receive
+        correlationId: id123
+        timeout: 6000
+        outputs:
+          userId: $message.payload.userId
+  - workflowId: consumerWorkflow
+    steps:
+      - stepId: processEvent
+        operationId: updateUser
+        action: send
+        dependsOn:
+          - $workflows.producerWorkflow.steps.waitForEvent
+        parameters:
+          - name: userId
+            in: header
+            value: $workflows.producerWorkflow.steps.waitForEvent.outputs.userId

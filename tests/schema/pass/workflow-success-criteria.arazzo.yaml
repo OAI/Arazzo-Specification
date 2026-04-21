@@ -1,0 +1,25 @@
+arazzo: 1.1.0
+info:
+  title: Valid workflow step success criteria
+  version: 1.0.0
+sourceDescriptions:
+  - name: UserAPI
+    url: https://users.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: parentWorkflow
+    steps:
+      - stepId: nestedWorkflow
+        workflowId: childWorkflow
+        successCriteria:
+          - condition: $workflows.childWorkflow.outputs.userId > 0
+  - workflowId: childWorkflow
+    steps:
+      - stepId: childStep
+        operationId: $sourceDescriptions.userAPI.listUsers
+        outputs:
+          userId: $response.body#/id
+        successCriteria:
+          - condition: $statusCode == 200
+    outputs:
+      userId: $steps.childStep.outputs.userId

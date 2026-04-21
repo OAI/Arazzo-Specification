@@ -1,0 +1,19 @@
+arazzo: 1.1.0
+info:
+  title: OpenAPI step parameter with in
+  version: 1.0.0
+sourceDescriptions:
+  - name: userAPI
+    url: https://users.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: openapiWorkflow
+    steps:
+      - stepId: getUsers
+        operationId: $sourceDescriptions.userAPI.listUsers
+        parameters:
+          - name: limit
+            in: query
+            value: 10
+        successCriteria:
+          - condition: $statusCode == 200

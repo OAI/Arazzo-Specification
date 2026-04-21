@@ -1,0 +1,17 @@
+arazzo: 1.1.0
+info:
+  title: Async step parameter requires in
+  version: 1.0.0
+sourceDescriptions:
+  - name: eventAPI
+    url: https://events.com/asyncapi.yaml
+    type: asyncapi
+workflows:
+  - workflowId: asyncWorkflow
+    steps:
+      - stepId: sendEvent
+        operationId: $sourceDescriptions.eventAPI.orderCreated
+        action: send
+        parameters:
+          - name: correlationId
+            value: abc123
