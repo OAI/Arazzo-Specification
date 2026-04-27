@@ -43,7 +43,7 @@
         "yargs": "^18.0.0"
     },
     "devDependencies": {
-        "markdownlint-cli2": "^0.22.0",
+        "markdownlint-cli2": "^0.22.1",
         "yaml": "2.8.3",
         "@hyperjump/json-schema": "^1.17.5",
         "c8": "^11.0.0",
