@@ -32,6 +32,7 @@ The latest version of the Arazzo Specification can be viewed at [Arazzo Specific
 The Arazzo ecosystem is growing with various tools to help you work with Arazzo descriptions:
 
 ### Editors, Design Tools, and Renderers
+
 - **[Arazzo Editor (from Jentic)](https://jentic.com/arazzo-editor)** - Build and edit Arazzo workflows with form-based editing and real-time diagrammatic representation.
 - **[Arazzo Editor (from Symplr)](https://arazzo-editor.symplr.io/)** - A tool that lets you visualize, execute & publish Arazzo workflows
 - **[Arazzo UI](https://arazzo-ui.jentic.com/)** - Visualize Arazzo workflows as interactive documentation with diagram and documentation views.
@@ -39,28 +40,33 @@ The Arazzo ecosystem is growing with various tools to help you work with Arazzo 
 - **[ApiTapVia](https://github.com/lornajane/apitapviz)** - Simple visualisation of OpenAPI Arazzo files as Markdown or mermaidjs.
 
 ### Generators
+
 - **[Arazzo Generator (by @jentic)](https://github.com/jentic/arazzo-engine/tree/main/generator)** - A tool for analyzing OpenAPI specifications and generating meaningful Arazzo workflows by identifying logical API sequences and patterns.
 - **[Arazzo Generator (by @JaredCE)](https://github.com/JaredCE/Arazzo-Generator)** - Generate Arazzo Workflows from your OpenAPI Documents.
 
 ### Validation and Linting
+
 - **[Arazzo Validator](https://github.com/jentic/jentic-arazzo-tools/tree/main/packages/jentic-arazzo-validator)** - A validator and linter for Arazzo Specification documents. It performs JSON Schema validation, semantic validation, and semantic linting.
 - **[Redocly CLI](https://github.com/Redocly/redocly-cli)** - An all-in-one API documentation utility for working with OpenAPI, AsyncAPI, and Arazzo.
 - **[Spectral](https://stoplight.io/spectral)** - Flexible OpenAPI/AsyncAPI/Arazzo linter for API governance and style guides.
 - **[Speakeasy OpenAPI](https://github.com/speakeasy-api/openapi)** - OSS packages and CLI tools for validation, bundling, and working with Arazzo, OpenAPI, and Overlay documents.
 
 ### Parsers and Resolvers
+
 - **[Arazzo Parser](https://github.com/jentic/jentic-arazzo-tools/tree/main/packages/jentic-arazzo-parser)** - TypeScript/JavaScript parser for Arazzo 1.0.0 and 1.0.1 documents.
 - **[Arazzo Resolver](https://github.com/jentic/jentic-arazzo-tools/tree/main/packages/jentic-arazzo-resolver)** - TypeScript/JavaScript resolver and dereferencer for Arazzo and OpenAPI documents.
 - **[Arazzo Runtime Expression](https://github.com/swaggerexpert/arazzo-runtime-expression)** - Arazzo Runtime Expressions parser, validator and extractor.
 - **[Itarazzo](https://github.com/leidenheit/itarazzo-library)** - Library to parse, validate and execute an Arazzo specification.
 
 ### Workflow Execution and Testing
+
 - **[arazzo-cli](https://strefethen.github.io/arazzo-cli/)** - Standalone Arazzo 1.0 workflow executor with runtime engine, debugger, and MCP server for AI agent integration.
 - **[Arazzo Runner](https://github.com/jentic/arazzo-engine/tree/main/runner)** - A workflow execution engine that processes and executes API workflows defined in the Arazzo format and individual API calls defined in OpenAPI specifications.
 - **[Respect CLI](https://redocly.com/respect-cli)** - A tool to run OpenAPI Arazzo workflows, identify gaps in schemas, status codes, and content types, and evaluate success criteria—all in one simple command
 - **[Specmatic](https://specmatic.io/)** - Simplified Arazzo Authoring & API Workflow Testing.
 
 ### Converters
+
 - **[arazzo2openapi](https://frankkilcommins.github.io/arazzo2openapi)** - Convert Arazzo workflow documents into OpenAPI documents with intelligent type inference.
 - **[pyarazzo](https://github.com/b-lab-io/pyarazzo)** - A CLI to transform Arazzo specification into some other formats (e.g., Markdown, PlantUML).
 
