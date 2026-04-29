@@ -108,10 +108,6 @@ Reference targets include the Arazzo Object's [`$self`](#arazzoSelf) field (when
 
 Implementations MUST NOT treat a reference as unresolvable before completely parsing all documents provided to the implementation as possible parts of the Arazzo Description.
 
-JSON Schema validation alone is not sufficient to prove full Arazzo conformance.
-The Specification is the source of truth, and some constraints require source resolution or other semantic validation across referenced API descriptions and Arazzo documents.
-As a result, a document may be structurally valid according to the published JSON Schema while still being non-compliant if, for example, source typing is inconsistent with step usage or referenced operations/channels cannot be resolved correctly.
-
 #### Fragmentary Parsing
 
 **Fragmentary parsing** occurs when an implementation parses only the specific part of a document being referenced, rather than parsing the complete document first. This practice is **strongly discouraged** and produces undefined behavior.
