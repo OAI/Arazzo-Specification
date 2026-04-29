@@ -43,6 +43,7 @@ The Arazzo ecosystem is growing with various tools to help you work with Arazzo 
 
 - **[Arazzo Generator (by @jentic)](https://github.com/jentic/arazzo-engine/tree/main/generator)** - A tool for analyzing OpenAPI specifications and generating meaningful Arazzo workflows by identifying logical API sequences and patterns.
 - **[Arazzo Generator (by @JaredCE)](https://github.com/JaredCE/Arazzo-Generator)** - Generate Arazzo Workflows from your OpenAPI Documents.
+- **[Specmatic](https://specmatic.io/)** - Simplified Authoring, Generation, Mocking, and Testing of Arazzo Workflows.
 
 ### Validation and Linting
 
@@ -63,12 +64,16 @@ The Arazzo ecosystem is growing with various tools to help you work with Arazzo 
 - **[arazzo-cli](https://strefethen.github.io/arazzo-cli/)** - Standalone Arazzo 1.0 workflow executor with runtime engine, debugger, and MCP server for AI agent integration.
 - **[Arazzo Runner](https://github.com/jentic/arazzo-engine/tree/main/runner)** - A workflow execution engine that processes and executes API workflows defined in the Arazzo format and individual API calls defined in OpenAPI specifications.
 - **[Respect CLI](https://redocly.com/respect-cli)** - A tool to run OpenAPI Arazzo workflows, identify gaps in schemas, status codes, and content types, and evaluate success criteria—all in one simple command
-- **[Specmatic](https://specmatic.io/)** - Simplified Arazzo Authoring & API Workflow Testing.
+- **[Specmatic](https://specmatic.io/)** - Simplified Authoring, Generation, Mocking, and Testing of Arazzo Workflows.
 
 ### Converters
 
 - **[arazzo2openapi](https://frankkilcommins.github.io/arazzo2openapi)** - Convert Arazzo workflow documents into OpenAPI documents with intelligent type inference.
 - **[pyarazzo](https://github.com/b-lab-io/pyarazzo)** - A CLI to transform Arazzo specification into some other formats (e.g., Markdown, PlantUML).
+
+### Mocking
+
+- **[Specmatic](https://specmatic.io/)** - Simplified Authoring, Generation, Mocking, and Testing of Arazzo Workflows.
 
 For another comprehensive and up-to-date listing of Arazzo tooling, visit [openapi.tools](https://openapi.tools/?arazzo=true) and filter by Arazzo support.
 
