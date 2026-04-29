@@ -1,0 +1,23 @@
+arazzo: 1.1.0
+info:
+  title: Async step parameter using reusable reference
+  version: 1.0.0
+sourceDescriptions:
+  - name: eventAPI
+    url: https://events.com/asyncapi.yaml
+    type: asyncapi
+components:
+  parameters:
+    correlationId:
+      name: correlationId
+      in: header
+      value: placeholder
+workflows:
+  - workflowId: asyncWorkflow
+    steps:
+      - stepId: sendEvent
+        operationId: $sourceDescriptions.eventAPI.orderCreated
+        action: send
+        parameters:
+          - reference: $components.parameters.correlationId
+            value: abc123
