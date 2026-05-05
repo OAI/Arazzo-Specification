@@ -34,15 +34,16 @@ The initial Workflows SIG was made up of the following individuals.
 
 - David O'Neill ([COO, APIContext](https://www.linkedin.com/in/davidon/))
 - Kin Lane ([API Governance Lead, Bloomberg](https://www.linkedin.com/in/kinlane/))
-- Frank Kilcommins ([API Evangelist, SmartBear](https://www.linkedin.com/in/frank-kilcommins))
+- Frank Kilcommins ([Head of Architecture, Jentic](https://www.linkedin.com/in/frank-kilcommins))
 
 ### Contributors
 
 - Nick Denny ([Chief Engineer, APIContext](https://www.linkedin.com/in/nickdenny/))
-- Frank Kilcommins ([API Evangelist, SmartBear](https://www.linkedin.com/in/frank-kilcommins))
+- Frank Kilcommins ([Head of Architecture, Jentic](https://www.linkedin.com/in/frank-kilcommins))
 - Mike Ralphson ([OpenAPI Specification Lead, Postman](https://www.linkedin.com/in/mikeralphson/))
 - Alessandro Duminuco ([Senior Technical Leader, Cisco](https://www.linkedin.com/in/alessandroduminuco/))
 - Mark Haine ([Founder, Considrd Consulting](https://www.linkedin.com/in/mark-haine/))
 - Phil Sturgeon ([API Consultant](https://www.linkedin.com/in/philipsturgeon/))
 - Kevin Duffey ([Tech Lead](https://www.linkedin.com/in/kmd/))
 - Shai Sachs ([Staff Engineer, Chewy](https://linkedin.com/in/shaisachs/))
+- Naresh Jain ([Founder/CEO, Specmatic](https://www.linkedin.com/in/nareshjain/))
