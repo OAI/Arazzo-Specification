@@ -1,0 +1,22 @@
+arazzo: 1.1.0
+info:
+  title: OpenAPI step parameter can use reusable reference
+  version: 1.0.0
+sourceDescriptions:
+  - name: userAPI
+    url: https://users.com/openapi.yaml
+    type: openapi
+components:
+  parameters:
+    limit:
+      name: limit
+      in: query
+      value: 10
+workflows:
+  - workflowId: openapiWorkflow
+    steps:
+      - stepId: getUsers
+        operationId: $sourceDescriptions.userAPI.listUsers
+        parameters:
+          - reference: $components.parameters.limit
+            value: 20

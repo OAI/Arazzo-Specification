@@ -1,0 +1,30 @@
+arazzo: 1.1.0
+info:
+  title: Workflow step parameter using reusable reference
+  version: 1.0.0
+sourceDescriptions:
+  - name: userAPI
+    url: https://users.com/openapi.yaml
+    type: openapi
+components:
+  parameters:
+    userId:
+      name: userId
+      value: 10
+workflows:
+  - workflowId: parentWorkflow
+    steps:
+      - stepId: nestedWorkflow
+        workflowId: childWorkflow
+        parameters:
+          - reference: $components.parameters.userId
+            value: 11
+  - workflowId: childWorkflow
+    inputs:
+      type: object
+      properties:
+        userId:
+          type: integer
+    steps:
+      - stepId: childStep
+        operationId: $sourceDescriptions.userAPI.listUsers

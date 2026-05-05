@@ -1,0 +1,16 @@
+arazzo: 1.1.0
+info:
+  title: Characterization of permissive channelPath string validation
+  version: 1.0.0
+sourceDescriptions:
+  - name: eventAPI
+    url: https://events.com/asyncapi.yaml
+    type: asyncapi
+workflows:
+  - workflowId: asyncWorkflow
+    steps:
+      # Characterization test: this passes today because channelPath is only
+      # validated as a string, not as a resolvable runtime-expression pointer.
+      - stepId: receiveEvent
+        channelPath: definitely-not-a-runtime-expression
+        action: receive
