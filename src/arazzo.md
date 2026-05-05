@@ -872,6 +872,192 @@ As part of a condition expression, you can use `boolean`, `null`, `number`, or `
 
 String comparisons `MUST` be case insensitive.
 
+##### Runtime Expressions in Conditions
+
+For `simple` conditions, [Runtime Expressions](#runtime-expressions) can be used directly within the `condition` field:
+
+```yaml
+# Direct usage in simple conditions
+successCriteria:
+  - condition: $statusCode == 200
+  - condition: $response.body.count > $inputs.threshold
+```
+
+For `regex`, `jsonpath`, and `xpath` conditions, runtime expressions MUST be embedded within the `condition` string using `{}` curly braces. The runtime expressions are evaluated first, then substituted into the condition string before the expression is evaluated:
+
+```yaml
+# Embedded expressions in JSONPath
+successCriteria:
+  - context: $response.body
+    condition: '$[?(@.status == "{$inputs.expectedStatus}")]'
+    type: jsonpath
+
+# Embedded expressions in XPath
+successCriteria:
+  - context: $response.body
+    condition: '/root/items[price > {$steps.getPricing.outputs.minPrice}]'
+    type: xpath
+
+# Embedded expressions in Regex
+successCriteria:
+  - context: $response.body.status
+    condition: '^({$inputs.statusPattern})$'
+    type: regex
+```
+
+The evaluation order is as follows:
+
+- Runtime expressions within `{}` are evaluated and converted to strings
+- The resulting string is the final condition expression
+- The condition expression is evaluated according to its `type` (regex, jsonpath, xpath)
+- The result is converted to pass/fail per [Condition Evaluation](#condition-evaluation)
+
+The entire `condition` string MUST be quoted when it contains embedded expressions to ensure proper YAML parsing.
+
+When runtime expressions are embedded in strings, type conversion follows the rules defined in [Runtime Expressions](#runtime-expressions).
+
+##### Condition Evaluation
+
+A condition specified in a [Criterion Object](#criterion-object) MUST evaluate to a pass (truthy) or fail (falsy) state. The evaluation semantics depend on the `type` of condition.
+
+###### Simple Conditions
+
+When `type` is `simple` or omitted, the `condition` MUST be an expression that combines [Runtime Expressions](#runtime-expressions), [literals](#literals), and [operators](#operators). The condition evaluates to:
+
+A condition passes (truthy) when:
+
+- The expression evaluates to `true`.
+- A comparison operator (`==`, `!=`, `<`, `>`, `<=`, `>=`) evaluates to true.
+- A logical operator (`&&`, `||`) evaluates to true.
+  
+A condition fails (falsy) when:
+
+- The expression evaluates to `false`.
+- Any comparison or logical operator evaluates to false.
+- The expression evaluates to `null`.
+
+The following type conversion applies:
+
+- String comparisons MUST be case-insensitive.
+- Numeric strings SHOULD be coerced to numbers when compared with numeric operators.
+- `null` only equals itself (`null == null` is `true`). Comparing `null` with any other value evaluates to `false`.
+
+Example:
+
+```yaml
+# Pass if status code is 200
+- condition: $statusCode == 200
+
+# Pass if status code is 200 AND body contains data
+- condition: $statusCode == 200 && $response.body.data != null
+```
+
+###### Regex Conditions
+
+When `type` is `regex`, the `condition` MUST be a valid regular expression pattern, and `context` MUST be provided. The condition evaluates to:
+
+- A condition passes (truthy) when the regex pattern matches the `context` value.
+- A condition fails (falsy) when the regex pattern does not match the `context` value.
+
+If the `context` evaluates to `null` or `undefined`, the condition MUST evaluate to _fail_.
+
+Example:
+
+```yaml
+# Pass if status code starts with 2 (any 2xx code)
+- context: $statusCode
+  condition: '^2\d{2}$'
+  type: regex
+```
+
+###### JSONPath Conditions
+
+When `type` is `jsonpath`, the `condition` MUST be a valid JSONPath expression conforming to [RFC 9535](https://tools.ietf.org/html/rfc9535), and `context` MUST be provided.
+
+JSONPath expressions return a `NodesType` (a nodelist, which is a sequence of zero or more nodes). The condition evaluates to:
+
+- A condition passes (truthy) when the JSONPath expression returns a non-empty nodelist (one or more nodes).
+- A condition fails (falsy) when the JSONPath expression returns an empty nodelist (zero nodes).
+
+If the `context` evaluates to `null` or `undefined`, or if the JSONPath expression is syntactically invalid, the condition MUST evaluate to _fail_.
+
+JSONPath filter expressions (e.g., `$[?count(@.pets) > 0]`) that match nodes will return those nodes in the result nodelist. A filter with no matches returns an empty nodelist.
+
+Example:
+
+```yaml
+# Pass if response body contains at least one pet
+- context: $response.body
+  condition: $[?count(@.pets) > 0]
+  type: jsonpath
+
+# Pass if any pets array has elements
+- context: $response.body
+  condition: $.pets[*]
+  type: jsonpath
+```
+
+###### XPath Conditions
+
+When `type` is `xpath`, the `condition` MUST be a valid XPath expression conforming to the version specified (default: [XML Path Language 3.1](https://www.w3.org/TR/xpath-31/) or as specified using an [Expression Type Object](#expression-type-object)), and `context` MUST be provided.
+
+XPath expressions can return different types: boolean, number, string, or node-set. The condition evaluates to:
+
+- A condition passes (truthy) when:
+  - The XPath expression returns `true` (boolean)
+  - The XPath expression returns a non-zero number
+  - The XPath expression returns a non-empty string
+  - The XPath expression returns a node-set with at least one node
+  
+- A condition fails (falsy) when:
+  - The XPath expression returns `false` (boolean)
+  - The XPath expression returns zero (number)
+  - The XPath expression returns an empty string
+  - The XPath expression returns an empty node-set
+
+If the `context` evaluates to `null` or `undefined`, or if the XPath expression is syntactically invalid, the condition MUST evaluate to _fail_.
+
+Type conversion MUST follow the Effective Boolean Value (EBV) semantics defined by the XPath version being used. See [Expression Type Object](#expression-type-object) for version-specific semantics.
+
+Example:
+
+```yaml
+# Pass if count of pets is greater than 0 (returns boolean)
+- context: $response.body
+  condition: count(/root/pets/*) > 0
+  type: xpath
+
+# Pass if pets node exists (returns node-set)
+- context: $response.body
+  condition: /root/pets
+  type: xpath
+```
+
+###### Evaluation Errors
+
+If a condition cannot be evaluated due to:
+
+- Syntax errors in the expression
+- Invalid context (e.g., applying JSONPath to non-JSON data)
+- Runtime evaluation errors (e.g., division by zero, invalid regex)
+
+Then the condition MUST evaluate to _fail_, and implementations SHOULD log or report the error to aid debugging.
+
+###### Multiple Criteria
+
+When multiple [Criterion Objects](#criterion-object) are specified in `successCriteria` or `criteria` arrays, all conditions MUST evaluate to pass (truthy) for the overall criteria to be satisfied. This is equivalent to a logical AND operation across all criteria.
+
+Example:
+
+```yaml
+successCriteria:
+  # Both conditions must pass
+  - condition: $statusCode == 200
+  - context: $response.body
+    condition: $.data[*]
+    type: jsonpath
+```
+
 ##### Fixed Fields
 
 | Field Name                                 |                             Type                              | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
@@ -926,6 +1112,18 @@ The supported expression selector types and versions are as follows:
 | `jsonpath`    | `rfc9535`, `draft-goessner-dispatch-jsonpath-00` | `rfc9535`  |
 | `xpath`       | `xpath-31`, `xpath-30`, `xpath-20`, `xpath-10`   | `xpath-31` |
 | `jsonpointer` | `rfc6901` (added for completeness)               | `rfc6901`  |
+
+When used to specify a particular version of JSONPath or XPath, implementations MUST apply the semantics defined in that version's specification. This includes:
+
+- Query syntax, filter expressions, and function behavior for JSONPath as defined in the specified version.
+- Expression syntax, function library, and type conversion rules (including Effective Boolean Value) for XPath as defined in the specified version.
+
+For [Criterion Object](#criterion-object) condition evaluation, the version-specific Effective Boolean Value (EBV) rules MUST be used when evaluating XPath expressions:
+
+- XPath 3.1 (default): [Section 19.1.2 - Effective Boolean Value](https://www.w3.org/TR/xpath-31/#id-ebv)
+- XPath 3.0: [Section 2.4.3 - Effective Boolean Value](https://www.w3.org/TR/xpath-30/#id-ebv)
+- XPath 2.0: [Section 2.4.3 - Effective Boolean Value](https://www.w3.org/TR/xpath20/#id-ebv)
+- XPath 1.0: [Section 4.2 - Boolean Conversions](https://www.w3.org/TR/xpath-10/#booleans)
 
 If this object is not defined, the default version for the selector type MUST be used.
 
