@@ -17,11 +17,11 @@ Exceptions may be made when links to external documents have been changed by a 3
 
 Published versions of the specification are in the `versions/` folder.
 The under-development versions of the specification are in the file `src/arazzo.md` on the appropriately-versioned branch.
-For example, work on the next release for 1.1 is on `v1.1-dev` in the file `src/arazzo.md`.
+For example, work on the next release for 1.2 is on `v1.2-dev` in the file `src/arazzo.md`.
 
 The [spec site](https://spec.openapis.org) is the source of truth for the Arazzo specification as it contains all the citations and author credits.
 
-The OpenAPI project (which Arazzo sits under) is almost entirely staffed by volunteers.
+The OpenAPI Initiative project, which Arazzo sits under, is almost entirely staffed by volunteers.
 Please be patient with the people in this project, who all have other jobs and are active here because we believe this project has a positive impact in the world.
 
 ### Active branches
@@ -30,8 +30,8 @@ The current active specification releases are:
 
 | Version | Branch | Notes |
 | ------- | ------ | ----- |
-| 1.0.2 | `v1.0-dev` | active patch release line |
-| 1.1.0 | `v1.1-dev` | minor release in development |
+| 1.1.1 | `v1.1-dev` | active patch release line |
+| 1.2.0 | `v1.2-dev` | minor release in development |
 
 ## Pull Requests
 
@@ -56,7 +56,7 @@ Overview of branches:
 
 Our roadmap for Arazzo releases is community-driven, meaning the specification is open for proposed additions by anyone.
 
-Changes in minor releases (such as 1.1) meet the following criteria:
+Changes in minor releases (such as 1.2) meet the following criteria:
 
 - Are **backwards-compatible** and be reasonably easy to implement in tooling that already supports the previous minor version.
   For example, new optional fields can be added.
