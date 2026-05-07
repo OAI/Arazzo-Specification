@@ -16,16 +16,16 @@ const url = require('url');
 const hljs = require('highlight.js');
 const cheerio = require('cheerio');
 
-let argv = require('yargs')
+let argv = require('yargs')(process.argv.slice(2))
     .boolean('respec')
-    .alias('r','respec')
-    .describe('respec','Output in respec format')
-    .default('respec',true)
+    .alias('r', 'respec')
+    .describe('respec', 'Output in respec format')
+    .default('respec', true)
     .string('maintainers')
-    .alias('m','maintainers')
-    .describe('maintainers','path to MAINTAINERS.md')
+    .alias('m', 'maintainers')
+    .describe('maintainers', 'path to MAINTAINERS.md')
     .demandCommand(1)
-    .argv;
+    .parse();
 const abstract = 'What is the Arazzo Specification?';
 let maintainers = [];
 let emeritus = [];
