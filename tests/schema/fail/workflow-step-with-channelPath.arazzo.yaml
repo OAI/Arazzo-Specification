@@ -1,0 +1,18 @@
+arazzo: 1.1.0
+info:
+  title: Workflow step cannot have channelPath
+  version: 1.0.0
+sourceDescriptions:
+  - name: userAPI
+    url: https://users.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: parentWorkflow
+    steps:
+      - stepId: nestedWorkflow
+        workflowId: childWorkflow
+        channelPath: orders
+  - workflowId: childWorkflow
+    steps:
+      - stepId: childStep
+        operationId: $sourceDescriptions.userAPI.listUsers

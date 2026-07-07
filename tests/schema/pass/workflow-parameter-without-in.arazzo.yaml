@@ -1,0 +1,27 @@
+arazzo: 1.1.0
+info:
+  title: Workflow step parameter does not require in
+  version: 1.0.0
+sourceDescriptions:
+  - name: userAPI
+    url: https://users.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: parentWorkflow
+    steps:
+      - stepId: nestedWorkflow
+        workflowId: childWorkflow
+        parameters:
+          - name: userId
+            value: 10
+  - workflowId: childWorkflow
+    inputs:
+      type: object
+      properties:
+        userId:
+          type: integer
+    steps:
+      - stepId: childStep
+        operationId: $sourceDescriptions.userAPI.listUsers
+        successCriteria:
+          - condition: $statusCode == 200

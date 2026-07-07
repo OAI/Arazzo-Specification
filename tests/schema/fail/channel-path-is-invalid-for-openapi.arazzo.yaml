@@ -1,0 +1,13 @@
+arazzo: 1.1.0
+info:
+  title: Minimal Arazzo Example for AsyncAPI
+  version: 1.0.0
+sourceDescriptions:
+  - name: exampleAPI
+    url: https://example.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: basicWorkflow
+    steps:
+      - stepId: step1
+        channelPath: createUser

@@ -1,0 +1,20 @@
+arazzo: 1.1.0
+info:
+  title: Bad Expression Type Version
+  version: 1.1.0
+sourceDescriptions:
+  - name: example
+    url: 'https://example.com/openapi.yaml'
+    type: openapi
+workflows:
+  - workflowId: wf2
+    steps:
+      - stepId: step2
+        operationId: getThings
+        outputs:
+          brokenSelector:
+            expression: $response.body
+            selector: '$.items[0]'
+            type:
+              type: xpath
+              version: rfc9535

@@ -7,9 +7,11 @@
 schemaDir="src/schemas/validation"
 branch=$(git branch --show-current)
 
+
 if [ -z "$1" ]; then
   if [[ $branch =~ ^v([0-9]+\.[0-9]+)-dev$ ]]; then
-    deploydir="./deploy/arazzo/${BASH_REMATCH[1]}"
+    version="${BASH_REMATCH[1]}"
+    deploydir="./deploy/arazzo/${version}"
   else
     echo "Unable to determine version from branch name; should be vX.Y-dev"
     exit 1
@@ -35,16 +37,31 @@ publish_schema() {
   # replace the WORK-IN-PROGRESS placeholders
   sed ${sedCmd[@]} $schemaDir/$schema | npx yaml --json --indent 2 --single > $target
 
-  # Find the jekyll lander markdown file for this iteration.
+  # find the jekyll lander markdown file
   local jekyllLander=$(find "$deploydir/$base" -maxdepth 1 -name "*.md")
 
-  # Move the jekyll lander markdown for this iteration to the deploy destination.
-  # The lander files only exist in the gh-pages branch.
+  # rename or create the jekyll lander markdown file for this iteration
   if [ ! -z "$jekyllLander" ]; then
+    if [ "$jekyllLander" = "$target.md" ]; then
+      echo " * $base did not change since $date"
+    else
     mv $jekyllLander $target.md
-    echo " * $newestCommitDate: $schema & jekyll lander $(basename $jekyllLander)"
+      echo " * $base: $date added & jekyll lander moved from $(basename $jekyllLander)"
+    fi
   else
-    echo " * $newestCommitDate: $schema"
+    # find the most recent preceding version
+    local lastdir=""; for fn in $(dirname $deploydir)/?.?; do test "$fn" "<" "$deploydir" && lastdir="$fn"; done
+    local lastVersion=$(basename $lastdir)
+    # find the jekyll lander markdown file for the preceding version
+    local lastLander=$(find "$lastdir/$base" -maxdepth 1 -name "*.md" 2>/dev/null)
+
+    if [ ! -z "$lastLander" ]; then
+      # copy and adjust the lander file from the preceding version
+      sed "s/$lastVersion/$version/g" $lastLander > $target.md
+      echo " * $base: $date added & jekyll lander copied from $(basename $lastLander) of $lastVersion"
+  else
+      echo " * $base: $date added"
+    fi
   fi
 }
 
@@ -53,12 +70,12 @@ echo === Building schemas into $deploydir
 # list of schemas to process, dependent schemas come first
 schemas=(schema.yaml)
 
-# publish each schema using its or any of its dependencies newest commit date.
+# publish each schema using its or any of its dependencies newest commit date
 maxDate=""
 sedCmds=()
 for schema in "${schemas[@]}"; do
   if [ -f  "$schemaDir/$schema" ]; then
-    newestCommitDate=$(git log -1 --format="%ad" --date=short "$schemaDir/$schema")
+    newestCommitDate=$(git log -1 --format="%cd" --date=short "$schemaDir/$schema")
 
     # the newest date across a schema and all its dependencies is its date stamp
     if [ "$newestCommitDate" \> "$maxDate" ]; then
@@ -66,7 +83,7 @@ for schema in "${schemas[@]}"; do
     fi
 
     base=$(basename $schema '.yaml')
-    # Add the replacement for this schema's placeholder to list of sed commands.
+    # add the replacement for this schema's placeholder to list of sed commands
     sedCmds+=("s/${base}\/WORK-IN-PROGRESS/${base}\/${maxDate}/g")
 
     publish_schema "$schema" "$maxDate" $(printf '%s;' "${sedCmds[@]}")

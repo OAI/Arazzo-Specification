@@ -1,0 +1,16 @@
+arazzo: "1.1.0"
+info:
+  title: Invalid Querystring Test
+  version: 1.0.0
+sourceDescriptions:
+  - name: api
+    url: https://api.example.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: testInvalid
+    steps:
+      - stepId: search
+        operationId: $sourceDescriptions.api.searchItems
+        parameters:
+          - name: q
+            in: querystring

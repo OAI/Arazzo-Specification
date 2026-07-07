@@ -1,0 +1,15 @@
+arazzo: 1.1.0
+info:
+  title: Characterization of permissive operationPath string validation
+  version: 1.0.0
+sourceDescriptions:
+  - name: userAPI
+    url: https://users.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: openapiWorkflow
+    steps:
+      # Characterization test: this passes today because operationPath is only
+      # validated as a string, not as a resolvable runtime-expression pointer.
+      - stepId: getUsers
+        operationPath: definitely-not-a-runtime-expression

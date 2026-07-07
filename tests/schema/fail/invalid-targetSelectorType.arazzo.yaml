@@ -1,0 +1,19 @@
+arazzo: 1.1.0
+info:
+  title: Bad targetSelectorType
+  version: 1.1.0
+sourceDescriptions:
+  - name: example
+    url: 'https://example.com/openapi.yaml'
+    type: openapi
+workflows:
+  - workflowId: wf3
+    steps:
+      - stepId: step3
+        operationId: updateItem
+        requestBody:
+          contentType: application/json
+          replacements:
+            - target: $.status
+              targetSelectorType: jmespath
+              value: completed

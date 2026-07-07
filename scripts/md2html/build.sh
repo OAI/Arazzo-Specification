@@ -71,7 +71,7 @@ for specification in $specifications; do
     fi
   fi
 
-  if [ ${minorVersion} != ${lastMinor} ] && [[ ${minorVersion} =~ ^[3-9] ]]; then
+  if [ ${minorVersion} != ${lastMinor} ]; then
     ln -sf $(basename $destination) $deploydir/v$minorVersion.html
     lastMinor=$minorVersion
   fi

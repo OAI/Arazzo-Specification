@@ -1,0 +1,15 @@
+arazzo: 1.1.0
+info:
+  title: Minimal Arazzo Example for AsyncAPI with Correlation ID for Receive Action
+  version: 1.0.0
+sourceDescriptions:
+  - name: exampleAPI
+    url: https://example.com/asyncapi.yaml
+    type: asyncapi
+workflows:
+  - workflowId: basicWorkflow
+    steps:
+      - stepId: step1
+        operationId: createUser
+        action: receive
+        correlationId: id123

@@ -1,0 +1,20 @@
+arazzo: 1.1.0
+info:
+  title: Selector in Parameter
+  version: 1.0.1
+sourceDescriptions:
+  - name: source1
+    url: https://example.com/api.yaml
+    type: openapi
+workflows:
+  - workflowId: workflowWithSelector
+    steps:
+      - stepId: stepA
+        operationId: op1
+        parameters:
+          - name: userId
+            in: query
+            value:
+              context: $inputs.user
+              selector: $.id
+              type: jsonpath

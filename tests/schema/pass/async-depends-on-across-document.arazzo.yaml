@@ -1,0 +1,29 @@
+arazzo: 1.1.0
+info:
+  title: Async dependsOn across documents
+  version: 1.0.0
+sourceDescriptions:
+  - name: localAsyncApi
+    url: https://example.com/local-asyncapi.yaml
+    type: asyncapi
+  - name: otherWorkflowDoc
+    url: https://example.com/other.arazzo.yaml
+    type: arazzo
+workflows:
+  - workflowId: localWorkflow
+    steps:
+      - stepId: waitForLocalEvent
+        operationId: localReceive
+        action: receive
+        correlationId: id123
+        timeout: 6000
+      - stepId: useLocalDirectStepId
+        operationId: localSend
+        action: send
+        dependsOn:
+          - waitForLocalEvent
+      - stepId: useExternalWorkflowStep
+        operationId: localSend
+        action: send
+        dependsOn:
+          - $sourceDescriptions.otherWorkflowDoc.remoteWorkflow.steps.remoteReceive
