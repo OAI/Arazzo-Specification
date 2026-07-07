@@ -62,7 +62,7 @@ workflows:
         successCriteria:
           - condition: $statusCode == 200
           - context: $response.body
-            condition: $.access_token != null
+            condition: $[?@.access_token != null]
             type: jsonpath
         outputs:
           access_token: $response.body#/access_token
@@ -102,7 +102,7 @@ workflows:
         successCriteria:
           - condition: $statusCode == 200
           - context: $response.body
-            condition: $.access_token != null
+            condition: $[?@.access_token != null]
             type: jsonpath
         outputs:  
           access_token: $response.body#/access_token
@@ -151,9 +151,7 @@ workflows:
           value: '12345'
         successCriteria:
           - condition: $statusCode == 200
-          - context: $response.body
-            condition: $.access_token != null
-            type: jsonpath
+          - condition: $response.body#/access_token != null
         outputs:  
           code: $response.body#/code  # Not really, this is a query parameter
       
@@ -171,9 +169,7 @@ workflows:
             client_secret: $inputs.client_secret
         successCriteria:
           - condition: $statusCode == 200
-          - context: $response.body
-            condition: $.access_token != null
-            type: jsonpath
+          - condition: $response.body#/access_token != null
         outputs:  
           access_token: $response.body#/access_token
           refresh_token: $response.body#/refresh_token
