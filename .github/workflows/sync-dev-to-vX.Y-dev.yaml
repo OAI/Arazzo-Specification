@@ -1,0 +1,73 @@
+name: sync-dev-to-vX.Y-dev
+
+# author: @ralfhandl
+
+#
+# This workflow creates PRs to update the vX.Y-dev branch with the latest changes from dev
+#
+
+# run this on push to dev
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch: {}
+
+jobs:
+  sync-branches:
+    if: github.repository == 'OAI/Arazzo-Specification'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate access token
+        id: generate-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.OAI_SPEC_PUBLISHER_APPID }}
+          private-key: ${{ secrets.OAI_SPEC_PUBLISHER_PRIVATE_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Create pull requests
+        id: pull_requests
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          DEV_BRANCHES=$(git branch -r --list origin/v?.?-dev)
+          for DEV_BRANCH in $DEV_BRANCHES; do
+            BASE=${DEV_BRANCH:7}
+            SYNC="$BASE-sync-with-$HEAD"
+
+            git checkout -b $SYNC origin/$SYNC || git checkout -b $SYNC origin/$BASE
+            git merge origin/$HEAD -m "Merge $HEAD into $SYNC"
+            git checkout origin/$BASE src/
+            git checkout origin/$BASE tests/schema/
+            git commit -m "Restored src/ and tests/schema/" || echo ""
+            git push -u origin $SYNC
+
+            EXISTS=$(gh pr list --base $BASE --head $SYNC \
+              --json number --jq '.[] | .number')
+            if [ ! -z "$EXISTS" ]; then
+              echo "PR #$EXISTS already wants to merge $SYNC into $BASE"
+              continue
+            fi
+
+            PR=$(gh pr create --base $BASE --head $SYNC \
+              --label "Housekeeping" \
+              --title "$BASE: sync with $HEAD" \
+              --body "Merge relevant changes from \`$HEAD\` into \`$BASE\`.")
+            echo ""
+            echo "PR to sync $BASE with $HEAD: $PR"
+            sleep 60 # allow status checks to be triggered
+
+            gh pr checks $PR --watch --required || continue
+            gh pr merge $PR --merge --admin
+          done
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          HEAD: dev
