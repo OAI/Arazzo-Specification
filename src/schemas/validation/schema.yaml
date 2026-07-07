@@ -1,18 +1,13 @@
-$id: 'https://spec.openapis.org/arazzo/1.1/schema/WORK-IN-PROGRESS'
+$id: 'https://spec.openapis.org/arazzo/1.0/schema/WORK-IN-PROGRESS'
 $schema: 'https://json-schema.org/draft/2020-12/schema'
 description: |-
-  The description of Arazzo v1.1.x documents
+  The description of Arazzo v1.0.x documents
 type: object
 properties:
   arazzo:
     description: The version number of the Arazzo Specification
     type: string
-    pattern: '^1\.1\.\d+(-.+)?$'
-  $self:
-    type: string
-    format: uri-reference
-    $comment: MUST NOT contain a fragment
-    pattern: '^[^#]*$'    
+    pattern: '^1\.0\.\d+(-.+)?$'
   info:
     $ref: '#/$defs/info'
   sourceDescriptions:
@@ -40,7 +35,7 @@ $ref: '#/$defs/specification-extensions'
 unevaluatedProperties: false
 $defs:
   info:
-    $comment: https://spec.openapis.org/arazzo/v1.1#info-object
+    $comment: https://spec.openapis.org/arazzo/v1.0#info-object
     description: Provides metadata about the Arazzo description
     type: object
     properties:
@@ -62,7 +57,7 @@ $defs:
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
   source-description-object:
-    $comment: https://spec.openapis.org/arazzo/v1.1#source-description-object
+    $comment: https://spec.openapis.org/arazzo/v1.0#source-description-object
     description: |-
       Describes a source description (such as an OpenAPI description)
       that will be referenced by one or more workflows described within
@@ -82,14 +77,13 @@ $defs:
         enum:
           - arazzo
           - openapi
-          - asyncapi
     required:
       - name
       - url
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
   workflow-object:
-    $comment: https://spec.openapis.org/arazzo/v1.1#workflow-object
+    $comment: https://spec.openapis.org/arazzo/v1.0#workflow-object
     description: Describes the steps to be taken across one or more APIs to achieve an objective
     type: object
     properties:
@@ -136,15 +130,11 @@ $defs:
             - $ref: '#/$defs/failure-action-object'
             - $ref: '#/$defs/reusable-object'
       outputs:
-        description: >
-          A map between a friendly name and a dynamic output value defined using a
-          Runtime Expression or Selector Object. Keys must match the regex: ^[a-zA-Z0-9\.\-_]+$
+        description: A map between a friendly name and a dynamic output value
         type: object
         patternProperties:
           '^[a-zA-Z0-9\.\-_]+$':
-            oneOf:
-              - type: string
-              - $ref: '#/$defs/selector-object'
+            type: string
       parameters:
         description: A list of parameters that are applicable for all steps described under this workflow
         type: array
@@ -159,15 +149,10 @@ $defs:
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
   step-object:
-    $comment: https://spec.openapis.org/arazzo/v1.1#step-object'
+    $comment: https://spec.openapis.org/arazzo/v1.0#step-object'
     description: |-
       Describes a single workflow step which MAY be a call to an
-      API operation (OpenAPI Operation Object or AsyncAPI Operation Object or another Workflow Object)
-    oneOf:
-      - $ref: '#/$defs/openapi-step-object'
-      - $ref: '#/$defs/asyncapi-step-object'
-      - $ref: '#/$defs/workflow-step-object'
-  step-object-base:
+      API operation (OpenAPI Operation Object or another Workflow Object)
     type: object
     properties:
       stepId:
@@ -177,22 +162,15 @@ $defs:
       description:
         description: A description of the step. CommonMark syntax MAY be used for rich text representation
         type: string
-      timeout:
-        description: The duration in milliseconds to wait before timing out the step
-        type: integer
-      dependsOn:
-        description: Specifies a list of step identifiers that must complete (or be waited for) before the current step can begin execution. `dependsOn` only establishes a prerequisite relationship for the current step and does not trigger execution of the referenced steps. Steps referred by dependsOn SHOULD be non-blocking/async steps. Steps in the current workflow MUST be referenced directly by stepId. Steps in another workflow in the same Arazzo document MUST use $workflows.<workflowId>.steps.<stepId>. Steps in another Arazzo document MUST use $sourceDescriptions.<name>.<workflowId>.steps.<stepId>.
-        type: array
-        uniqueItems: true
-        minItems: 1
-        items:
-          oneOf:
-            - type: string
-              pattern: ^(?!\$).+$
-            - type: string
-              pattern: ^\$workflows\.[^.]+\.steps\.[^.]+$
-            - type: string
-              pattern: ^\$sourceDescriptions\.[^.]+\.[^.]+\.steps\.[^.]+$
+      operationId:
+        description: The name of an existing, resolvable operation, as defined with a unique operationId and existing within one of the sourceDescriptions
+        type: string
+      operationPath:
+        description: A reference to a Source combined with a JSON Pointer to reference an operation
+        type: string
+      workflowId:
+        description: The workflowId referencing an existing workflow within the Arazzo description
+        $ref: '#workflowId'
       parameters:
         description: A list of parameters that MUST be passed to an operation or workflow as referenced by operationId, operationPath, or workflowId
         type: array
@@ -224,110 +202,51 @@ $defs:
             - $ref: '#/$defs/failure-action-object'
             - $ref: '#/$defs/reusable-object'
       outputs:
-        description: >
-          A map between a friendly name and a dynamic output value defined using a
-          Runtime Expression or Selector Object. Keys must match the regex: ^[a-zA-Z0-9\.\-_]+$
+        description: A map between a friendly name and a dynamic output value defined using a runtime expression
         type: object
         patternProperties:
           '^[a-zA-Z0-9\.\-_]+$':
-            oneOf:
-              - type: string
-              - $ref: '#/$defs/selector-object'
+            type: string
     required:
       - stepId
-  operation-step-parameters:
-    type: array
-    uniqueItems: true
-    items:
-      oneOf:
-        - $ref: '#/$defs/reusable-object'
-        - $ref: '#/$defs/parameter-object'
-          required:
-            - in
-  openapi-step-object:
+    oneOf:
+      - required:
+          - operationId
+      - required:
+          - operationPath
+      - required:
+          - workflowId
     allOf:
-      - $ref: '#/$defs/step-object-base'
-      - type: object
-        properties:
-          operationId:
-            description: The name of an existing, resolvable operation, as defined with a unique operationId and existing within one of the sourceDescriptions
-            type: string
-          operationPath:
-            description: A reference to a Source combined with a JSON Pointer to reference an operation
-            type: string
-          parameters:
-            $ref: '#/$defs/operation-step-parameters'
-      - oneOf:
-          - required:
-              - operationId
-          - required:
-              - operationPath
-    $ref: '#/$defs/specification-extensions'
-    unevaluatedProperties: false
-  asyncapi-step-object:
-    allOf:
-      - $ref: '#/$defs/step-object-base'
-      - type: object
-        properties:
-          operationId:
-            description: The name of an existing, resolvable operation, as defined with a unique operationId and existing within one of the sourceDescriptions
-            type: string
-          channelPath:
-            description: A reference to a Source combined with a JSON Pointer to reference an async channel
-            type: string
-          correlationId:
-            description: ID to correlate async responses with their requests, only specified for async receive steps
-            type:
-              - string
-              - number
-              - boolean
-              - object
-              - array
-          action:
-            description: Specifies the intended operation on the async channel, indicating whether the action is sending data to the channel or receiving data from the channel
-            enum:
-              - send
-              - receive
-          parameters:
-            $ref: '#/$defs/operation-step-parameters'
-        required:
-          - action
       - if:
-          required:
-            - correlationId
+          oneOf:
+            - required:
+                - operationPath
+            - required:
+                - operationId
         then:
           properties:
-            action:
-              const: receive
+            parameters:
+              items:
+                oneOf:
+                  - $ref: '#/$defs/reusable-object'
+                  - $ref: '#/$defs/parameter-object'
+                    required:
+                      - in
+      - if:
           required:
-            - action
-      - oneOf:
-          - required:
-              - operationId
-          - required:
-              - channelPath
-    $ref: '#/$defs/specification-extensions'
-    unevaluatedProperties: false
-  workflow-step-object:
-    allOf:
-      - $ref: '#/$defs/step-object-base'
-      - type: object
-        properties:
-          workflowId:
-            description: The workflowId referencing an existing workflow within the Arazzo description
-            $ref: '#workflowId'
-          parameters:
-            items:
-              oneOf:
-                - $ref: '#/$defs/parameter-object'
-                - $ref: '#/$defs/reusable-object'
-        required:
-          - workflowId
+            - workflowId
+        then:
+          properties:
+            parameters:
+              items:
+                oneOf:
+                  - $ref: '#/$defs/parameter-object'
+                  - $ref: '#/$defs/reusable-object'
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
   request-body-object:
-    $comment: https://spec.openapis.org/arazzo/v1.1#request-body-object
-    description: The request body to pass to an operation as referenced by operationId or operationPath or channelPath
+    $comment: https://spec.openapis.org/arazzo/v1.0#request-body-object
+    description: The request body to pass to an operation as referenced by operationId or operationPath
     type: object
     properties:
       contentType:
@@ -343,7 +262,7 @@ $defs:
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
   criterion-object:
-    $comment: https://spec.openapis.org/arazzo/v1.1#criterion-object
+    $comment: https://spec.openapis.org/arazzo/v1.0#criterion-object
     description: |-
       An object used to specify the context, conditions, and condition types
       that can be used to prove or satisfy assertions specified in Step Object successCriteria,
@@ -356,17 +275,18 @@ $defs:
       condition:
         description: The condition to apply
         type: string
-      type:
-        description: The type of condition to be applied or a reference to an expression type object
-        oneOf:
-          - type: string
+    anyOf:
+      - type: object
+        properties:
+          type:
+            description: The type of condition to be applied
             enum:
               - simple
               - regex
               - jsonpath
               - xpath
             default: simple
-          - $ref: '#/$defs/expression-type-object'
+      - $ref: '#/$defs/criterion-expression-type-object'
     required:
       - condition
     dependentRequired:
@@ -374,21 +294,18 @@ $defs:
         - context
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
-  expression-type-object:
-    $comment: https://spec.openapis.org/arazzo/v1.1#expression-type-object
-    description: An object used to describe the type and version of an expression used within a Criterion Object or Selector Object. If the `version` is omitted, a default value is assumed based on the expression `type`
+  criterion-expression-type-object:
+    $comment: https://spec.openapis.org/arazzo/v1.0#criterion-expression-type-object
+    description: An object used to describe the type and version of an expression used within a Criterion Object
     type: object
     properties:
       type:
-        description: The type of selector to use
+        description: The type of condition to be applied
         enum:
           - jsonpath
           - xpath
-          - jsonpointer
       version:
-        description: >
-            A short hand string representing the version of the expression type.
-            If omitted, the default for the selected type will be used.
+        description: A short hand string representing the version of the expression type
         type: string
     required:
       - type
@@ -403,10 +320,7 @@ $defs:
         then:
           properties:
             version:
-              enum:
-                - rfc9535
-                - draft-goessner-dispatch-jsonpath-00
-
+              const: draft-goessner-dispatch-jsonpath-00
       - if:
           required:
             - type
@@ -420,19 +334,9 @@ $defs:
                 - xpath-10
                 - xpath-20
                 - xpath-30
-                - xpath-31
-
-      - if:
-          properties:
-            type:
-              const: jsonpointer
-        then:
-          properties:
-            version:
-              const: rfc6901
     $ref: '#/$defs/specification-extensions'
   success-action-object:
-    $comment: https://spec.openapis.org/arazzo/v1.1#success-action-object
+    $comment: https://spec.openapis.org/arazzo/v1.0#success-action-object
     description: A single success action which describes an action to take upon success of a workflow step
     type: object
     properties:
@@ -450,11 +354,6 @@ $defs:
       stepId:
         description: The stepId to transfer to upon success of the step
         $ref: '#stepId'
-      parameters:
-        description: A list of parameters that MUST be passed to a workflow as referenced by workflowId
-        type: array
-        uniqueItems: true
-        items: true
       criteria:
         description: A list of assertions to determine if this action SHALL be executed
         type: array
@@ -473,19 +372,13 @@ $defs:
                 - workflowId
             - required:
                 - stepId
-      - if:
-          required:
-            - parameters
-        then:
-          required:
-            - workflowId
     required:
       - name
       - type
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
   failure-action-object:
-    $comment: https://spec.openapis.org/arazzo/v1.1#failure-action-object
+    $comment: https://spec.openapis.org/arazzo/v1.0#failure-action-object
     description: A single failure action which describes an action to take upon failure of a workflow step
     type: object
     properties:
@@ -504,11 +397,6 @@ $defs:
       stepId:
         description: The stepId to transfer to upon failure of the step
         $ref: '#stepId'
-      parameters:
-        description: A list of parameters that MUST be passed to a workflow as referenced by workflowId
-        type: array
-        uniqueItems: true
-        items: true
       retryAfter:
         description: A non-negative decimal indicating the seconds to delay after the step failure before another attempt SHALL be made
         type: number
@@ -535,19 +423,13 @@ $defs:
                 - workflowId
             - required:
                 - stepId
-      - if:
-          required:
-            - parameters
-        then:
-          required:
-            - workflowId
     required:
       - name
       - type
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
   reusable-object:
-    $comment: https://spec.openapis.org/arazzo/v1.1#reusable-object
+    $comment: https://spec.openapis.org/arazzo/v1.0#reusable-object
     description: A simple object to allow referencing of objects contained within the Components Object
     type: object
     properties:
@@ -567,7 +449,7 @@ $defs:
       - reference
     unevaluatedProperties: false
   parameter-object:
-    $comment: https://spec.openapis.org/arazzo/v1.1#parameter-object
+    $comment: https://spec.openapis.org/arazzo/v1.0#parameter-object
     description: Describes a single step parameter
     type: object
     properties:
@@ -579,82 +461,40 @@ $defs:
         enum:
           - path
           - query
-          - querystring
           - header
           - cookie
-          - channel
       value:
         description: The value to pass in the parameter
-        oneOf:
-         - type:
-            - string
-            - boolean
-            - array
-            - number
-            - 'null'
-         - $ref: '#/$defs/selector-object'
+        type:
+          - string
+          - boolean
+          - object
+          - array
+          - number
+          - 'null'
     required:
       - name
       - value
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
   payload-replacement-object:
-    $comment: https://spec.openapis.org/arazzo/v1.1#payload-replacement-object
+    $comment: https://spec.openapis.org/arazzo/v1.0#payload-replacement-object
     description: Describes a location within a payload (e.g., a request body) and a value to set within the location
     type: object
     properties:
       target:
-        description: A JSONPath, JSON Pointer, or XPath Expression which MUST be resolved against the request body
+        description: A JSON Pointer or XPath Expression which MUST be resolved against the request body
         type: string
-      targetSelectorType:
-        description: >
-          The selector expression type to use (e.g., `jsonpath`, `xpath`, or `jsonpointer`).
-          Should an alternate version be required, the Expression Type Object may be used instead.
-          If omitted, defaults to JSON Pointer for `application/json` or XPath for XML-based media types.
-        $ref: '#/$defs/selector-type'
       value:
-        description: >
-          The value to set at the location defined by the target. May be a literal,
-          a runtime expression string, or a selector object.
-        oneOf:
-          - type: string
-          - $ref: '#/$defs/selector-object'
+        description: The value set within the target location
+        type: string
     required:
       - target
       - value
     unevaluatedProperties: false
     $ref: '#/$defs/specification-extensions'
-  selector-type:
-    description: A selector expression type that may be a simple string enum or an Expression Type Object for version-specific support
-    oneOf:
-      - type: string
-        enum:
-          - jsonpointer
-          - jsonpath
-          - xpath
-      - $ref: '#/$defs/expression-type-object'
-  selector-object:
-    $comment: https://spec.openapis.org/arazzo/v1.1#selector-object
-    description: An object which enables fine-grained traversal and precise data selection from structured data
-    type: object
-    properties:
-      context:
-        description: A valid Runtime Expression which MUST evaluate to structured data (e.g., `$response.body`), and sets the context for the selector to be applied on
-        type: string
-      selector:
-        description: A selector expression (e.g., `$.items[0].id`, `/Envelope/Item`) in the form of JSONPath expression, XPath expression, or JSON Pointer expression
-        type: string
-      type:
-        description: The selector expression type to use (e.g., `jsonpath`, `xpath`, or `jsonpointer`) or an Expression Type Object for older version support
-        $ref: '#/$defs/selector-type'
-    required:
-      - context
-      - selector
-      - type
-    unevaluatedProperties: false
-    $ref: '#/$defs/specification-extensions'
   components-object:
-    $comment: https://spec.openapis.org/arazzo/v1.1#components-object
+    $comment: https://spec.openapis.org/arazzo/v1.0#components-object
     description: Holds a set of reusable objects for different aspects of the Arazzo Specification
     type: object
     properties:
@@ -686,10 +526,10 @@ $defs:
     unevaluatedProperties: false
     $ref: '#/$defs/specification-extensions'
   specification-extensions:
-    $comment: https://spec.openapis.org/arazzo/v1.1#specification-extensions
+    $comment: https://spec.openapis.org/arazzo/v1.0#specification-extensions
     description: While the Arazzo Specification tries to accommodate most use cases, additional data can be added to extend the specification at certain points
     patternProperties:
       '^x-': true
   schema:
-    $comment: https://spec.openapis.org/arazzo/v1.1#schema-object
+    $comment: https://spec.openapis.org/arazzo/v1.0#schema-object
     $ref: 'https://json-schema.org/draft/2020-12/schema'
