@@ -44,7 +44,7 @@ jobs:
             SYNC="$BASE-sync-with-$HEAD"
 
             git checkout -b $SYNC origin/$SYNC || git checkout -b $SYNC origin/$BASE
-            git merge origin/$HEAD -m "Merge $HEAD into $SYNC"
+            git merge -X theirs origin/$HEAD -m "Merge $HEAD into $SYNC"
             git checkout origin/$BASE src/
             git checkout origin/$BASE tests/schema/
             git commit -m "Restored src/ and tests/schema/" || echo ""
