@@ -1,4 +1,4 @@
-arazzo: 1.1.0
+arazzo: 1.2.0
 info:
   title: CorrelationId should only be present when action is receive
   version: 1.0.0

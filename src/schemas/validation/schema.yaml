@@ -1,13 +1,13 @@
-$id: 'https://spec.openapis.org/arazzo/1.1/schema/WORK-IN-PROGRESS'
+$id: 'https://spec.openapis.org/arazzo/1.2/schema/WORK-IN-PROGRESS'
 $schema: 'https://json-schema.org/draft/2020-12/schema'
 description: |-
-  The description of Arazzo v1.1.x documents
+  The description of Arazzo v1.2.x documents
 type: object
 properties:
   arazzo:
     description: The version number of the Arazzo Specification
     type: string
-    pattern: '^1\.1\.\d+(-.+)?$'
+    pattern: '^1\.2\.\d+(-.+)?$'
   $self:
     type: string
     format: uri-reference

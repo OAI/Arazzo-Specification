@@ -1,4 +1,4 @@
-arazzo: 1.1.0
+arazzo: 1.2.0
 $self: https://example.com/workflows/minimal-with-self.arazzo.yaml#/workflows/basicWorkflow
 info:
   title: Minimal Arazzo Example
