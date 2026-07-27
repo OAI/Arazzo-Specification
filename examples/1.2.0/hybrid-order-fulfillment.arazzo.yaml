@@ -1,7 +1,7 @@
-arazzo: "1.2.0"
+arazzo: 1.2.0
 info:
   title: Hybrid Order Fulfillment
-  version: "1.0.0"
+  version: 1.0.0
   description: >
     Demonstrates a hybrid REST + SOAP workflow. A modern OpenAPI-described retail
     API handles product lookup and order creation, while a legacy SOAP/WSDL

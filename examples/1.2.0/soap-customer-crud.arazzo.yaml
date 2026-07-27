@@ -1,14 +1,14 @@
-arazzo: "1.2.0"
+arazzo: 1.2.0
 info:
   title: SOAP CustomerService CRUD
-  version: "1.0.0"
+  version: 1.0.0
   description: >
     Exercises full CRUD via SOAP against the CustomerService.
 
 sourceDescriptions:
   - name: customerService
     url: http://localhost:4010/customer-service?wsdl
-    type: wsdl              # FIXED: was "openapi"
+    type: wsdl
 
 workflows:
   - workflowId: soap-crud
