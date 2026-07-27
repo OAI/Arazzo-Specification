@@ -83,6 +83,7 @@ $defs:
           - arazzo
           - openapi
           - asyncapi
+          - wsdl
     required:
       - name
       - url
@@ -162,9 +163,9 @@ $defs:
     $comment: https://spec.openapis.org/arazzo/v1.1#step-object'
     description: |-
       Describes a single workflow step which MAY be a call to an
-      API operation (OpenAPI Operation Object or AsyncAPI Operation Object or another Workflow Object)
+      API operation (OpenAPI Operation Object or AsyncAPI Operation Object or a WSDL Operation Object or another Workflow Object)
     oneOf:
-      - $ref: '#/$defs/openapi-step-object'
+      - $ref: '#/$defs/openapi-or-wsdl-step-object'
       - $ref: '#/$defs/asyncapi-step-object'
       - $ref: '#/$defs/workflow-step-object'
   step-object-base:
@@ -244,7 +245,7 @@ $defs:
         - $ref: '#/$defs/parameter-object'
           required:
             - in
-  openapi-step-object:
+  openapi-or-wsdl-step-object:
     allOf:
       - $ref: '#/$defs/step-object-base'
       - type: object

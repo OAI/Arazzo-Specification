@@ -1,0 +1,174 @@
+arazzo: "1.2.0"
+info:
+  title: SOAP CustomerService CRUD
+  version: "1.0.0"
+  description: >
+    Exercises full CRUD via SOAP against the CustomerService.
+
+sourceDescriptions:
+  - name: customerService
+    url: http://localhost:4010/customer-service?wsdl
+    type: wsdl              # FIXED: was "openapi"
+
+workflows:
+  - workflowId: soap-crud
+    steps:
+      - stepId: list-customers
+        operationId: $sourceDescriptions.customerService.ListCustomers   # FIXED: was operationPath: POST /api/...
+        parameters:
+          - name: Content-Type
+            in: header
+            value: "text/xml"
+          - name: SOAPAction
+            in: header
+            value: "http://example.com/customer-service/ListCustomers"
+        requestBody:
+          contentType: text/xml
+          payload: |
+            <?xml version="1.0" encoding="UTF-8"?>
+            <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                           xmlns:tns="http://example.com/customer-service">
+              <soap:Body>
+                <tns:ListCustomers/>
+              </soap:Body>
+            </soap:Envelope>
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: //ListCustomersResponse/TotalCount
+            context: $response.body
+            type:
+              type: xpath
+              version: xpath-31
+        outputs:
+          total_count: //ListCustomersResponse/TotalCount
+          first_id: //ListCustomersResponse/Customers/Customer[1]/Id
+
+      - stepId: get-customer
+        operationId: $sourceDescriptions.customerService.GetCustomer
+        parameters:
+          - name: Content-Type
+            in: header
+            value: "text/xml"
+          - name: SOAPAction
+            in: header
+            value: "http://example.com/customer-service/GetCustomer"
+        requestBody:
+          contentType: text/xml
+          payload: |
+            <?xml version="1.0" encoding="UTF-8"?>
+            <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                           xmlns:tns="http://example.com/customer-service">
+              <soap:Body>
+                <tns:GetCustomer>
+                  <tns:CustomerId>{$steps.list-customers.outputs.first_id}</tns:CustomerId>
+                </tns:GetCustomer>
+              </soap:Body>
+            </soap:Envelope>
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: //GetCustomerResponse/Customer/Id
+            context: $response.body
+            type:
+              type: xpath
+              version: xpath-31
+        outputs:
+          customer_name: //GetCustomerResponse/Customer/Name
+
+      - stepId: create-customer
+        operationId: $sourceDescriptions.customerService.CreateCustomer
+        parameters:
+          - name: Content-Type
+            in: header
+            value: "text/xml"
+          - name: SOAPAction
+            in: header
+            value: "http://example.com/customer-service/CreateCustomer"
+        requestBody:
+          contentType: text/xml
+          payload: |
+            <?xml version="1.0" encoding="UTF-8"?>
+            <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                           xmlns:tns="http://example.com/customer-service">
+              <soap:Body>
+                <tns:CreateCustomer>
+                  <tns:Name>Arazzo Test User</tns:Name>
+                  <tns:Email>arazzo@test.com</tns:Email>
+                  <tns:Phone>555-9999</tns:Phone>
+                  <tns:AccountType>Premium</tns:AccountType>
+                </tns:CreateCustomer>
+              </soap:Body>
+            </soap:Envelope>
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: //CreateCustomerResponse/Customer/Id
+            context: $response.body
+            type:
+              type: xpath
+              version: xpath-31
+        outputs:
+          new_id: //CreateCustomerResponse/Customer/Id
+          new_name: //CreateCustomerResponse/Customer/Name
+
+      - stepId: update-customer
+        operationId: $sourceDescriptions.customerService.UpdateCustomer
+        parameters:
+          - name: Content-Type
+            in: header
+            value: "text/xml"
+          - name: SOAPAction
+            in: header
+            value: "http://example.com/customer-service/UpdateCustomer"
+        requestBody:
+          contentType: text/xml
+          payload: |
+            <?xml version="1.0" encoding="UTF-8"?>
+            <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                           xmlns:tns="http://example.com/customer-service">
+              <soap:Body>
+                <tns:UpdateCustomer>
+                  <tns:CustomerId>{$steps.create-customer.outputs.new_id}</tns:CustomerId>
+                  <tns:Name>Arazzo Updated User</tns:Name>
+                  <tns:Status>Active</tns:Status>
+                </tns:UpdateCustomer>
+              </soap:Body>
+            </soap:Envelope>
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: //UpdateCustomerResponse/Customer/Name
+            context: $response.body
+            type:
+              type: xpath
+              version: xpath-31
+        outputs:
+          updated_name: //UpdateCustomerResponse/Customer/Name
+
+      - stepId: delete-customer
+        operationId: $sourceDescriptions.customerService.DeleteCustomer
+        parameters:
+          - name: Content-Type
+            in: header
+            value: "text/xml"
+          - name: SOAPAction
+            in: header
+            value: "http://example.com/customer-service/DeleteCustomer"
+        requestBody:
+          contentType: text/xml
+          payload: |
+            <?xml version="1.0" encoding="UTF-8"?>
+            <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                           xmlns:tns="http://example.com/customer-service">
+              <soap:Body>
+                <tns:DeleteCustomer>
+                  <tns:CustomerId>{$steps.create-customer.outputs.new_id}</tns:CustomerId>
+                </tns:DeleteCustomer>
+              </soap:Body>
+            </soap:Envelope>
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: //DeleteCustomerResponse/Success
+            context: $response.body
+            type:
+              type: xpath
+              version: xpath-31
+        outputs:
+          deleted: //DeleteCustomerResponse/Success

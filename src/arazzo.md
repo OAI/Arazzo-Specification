@@ -341,7 +341,7 @@ An object storing a map between named description keys and location URLs to the 
 |-------------------------------|:--------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <a name="sourceName"></a>name | `string` | **REQUIRED**. A unique name for the source description. Tools and libraries MAY use the `name` to uniquely identify a source description, therefore, it is RECOMMENDED to follow common programming naming conventions. SHOULD conform to the regular expression `[A-Za-z0-9_\-]+`. |
 | <a name="sourceURL"></a>url   | `string` | **REQUIRED**. A URL to a source description to be used by a workflow. If a relative reference is used, it MUST be in the form of a URI-reference as defined by [RFC3986](https://tools.ietf.org/html/rfc3986#section-4.2).                                                          |
-| <a name="sourceType"></a>type | `string` | The type of source description. Possible values are `"openapi"` or `"asyncapi"` or `"arazzo"`.                                                                                                                                                                                      |
+| <a name="sourceType"></a>type | `string` | The type of source description. Possible values are `"openapi"` or `"asyncapi"` or `"wsdl"` or `"arazzo"`. When the value is `"wsdl"`, the `url` field MUST point to a WSDL 1.1 or WSDL 2.0 document describing a SOAP-based web service.                                           |
 
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
@@ -352,6 +352,12 @@ This object MAY be extended with [Specification Extensions](#specification-exten
 name: petStoreDescription
 url: https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml
 type: openapi
+```
+
+```yaml
+name: customerService
+url: https://example.com/customer-service?wsdl
+type: wsdl
 ```
 
 #### Workflow Object
@@ -414,7 +420,7 @@ outputs:
 
 #### Step Object
 
-Describes a single workflow step which MAY be a call to an API operation ([OpenAPI Operation Object](https://spec.openapis.org/oas/latest.html#operation-object)), ([AysncAPI Operations Object](https://www.asyncapi.com/docs/reference/specification/latest#operationsObject)) or another [Workflow Object](#workflow-object).
+Describes a single workflow step which MAY be a call to an API operation ([OpenAPI Operation Object](https://spec.openapis.org/oas/latest.html#operation-object)), ([AysncAPI Operations Object](https://www.asyncapi.com/docs/reference/specification/latest#operationsObject)), or a WSDL operation ([WSDL 1.1](https://www.w3.org/TR/wsdl.html#_porttypes) / [WSDL 2.0](https://www.w3.org/TR/wsdl20/#component-InterfaceOperation)), or another [Workflow Object](#workflow-object).
 
 ##### Fixed Fields
 
@@ -422,8 +428,8 @@ Describes a single workflow step which MAY be a call to an API operation ([OpenA
 |---------------------------------------------------|:----------------------------------------------------------------------------------------:|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <a name="stepDescription"></a>description         |                                         `string`                                         | A description of the step. [CommonMark syntax](https://spec.commonmark.org/) MAY be used for rich text representation.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | <a name="stepId"></a>stepId                       |                                         `string`                                         | **REQUIRED**. Unique string to represent the step. The `stepId` MUST be unique amongst all steps described in the workflow. The `stepId` value is **case-sensitive**. Tools and libraries MAY use the `stepId` to uniquely identify a workflow step, therefore, it is RECOMMENDED to follow common programming naming conventions. SHOULD conform to the regular expression `[A-Za-z0-9_\-]+`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| <a name="stepOperationId"></a>operationId         |                                         `string`                                         | The name of an existing, resolvable operation, as defined with a unique `operationId` and existing within one of the `sourceDescriptions`. The referenced operation will be invoked by this workflow step. If multiple (non `arazzo` type) `sourceDescriptions` are defined, then the `operationId` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g., `$sourceDescriptions.<name>.<operationId>`) to avoid ambiguity or potential clashes. This field is mutually exclusive of the `operationPath` and `workflowId` fields respectively.                                                                                                                                                                                                                                                                                                                                                                                       |
-| <a name="stepOperationPath"></a>operationPath     |                                         `string`                                         | A reference to a [Source Description Object](#source-description-object) combined with a [JSON Pointer](https://tools.ietf.org/html/rfc6901) to reference an operation. This field is mutually exclusive of the `operationId` and `workflowId` fields respectively. The operation being referenced MUST be described within one of the `sourceDescriptions` descriptions. A [Runtime Expression](#runtime-expressions) syntax MUST be used to identify the source description document. If the referenced operation has an `operationId` defined then the `operationId` SHOULD be preferred over the `operationPath`.                                                                                                                                                                                                                                                                                                                                    |
+| <a name="stepOperationId"></a>operationId         |                                         `string`                                         | The name of an existing, resolvable operation, as defined with a unique `operationId` and existing within one of the `sourceDescriptions`. The referenced operation will be invoked by this workflow step. If multiple (non `arazzo` type) `sourceDescriptions` are defined, then the `operationId` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g., `$sourceDescriptions.<name>.<operationId>`) to avoid ambiguity or potential clashes. This field is mutually exclusive of the `operationPath` and `workflowId` fields respectively. When referencing a `wsdl` type source description, `operationId` MUST be specified and its value MUST match the `name` attribute of a `wsdl:operation` element within the WSDL document.                                                                                                                                                                                              |
+| <a name="stepOperationPath"></a>operationPath     |                                         `string`                                         | A reference to a [Source Description Object](#source-description-object) combined with a [JSON Pointer](https://tools.ietf.org/html/rfc6901) to reference an operation. This field is mutually exclusive of the `operationId` and `workflowId` fields respectively. The operation being referenced MUST be described within one of the `sourceDescriptions` descriptions. A [Runtime Expression](#runtime-expressions) syntax MUST be used to identify the source description document. If the referenced OpenAPI operation has an `operationId` defined then the `operationId` SHOULD be preferred over the `operationPath`. This field MUST NOT be used to reference a `wsdl` type source description.                                                                                                                                                                                                                                                 |
 | <a name="stepChannelPath"></a>channelPath         |                                         `string`                                         | A reference to a [Source Description Object](#source-description-object) combined with a [JSON Pointer](https://tools.ietf.org/html/rfc6901) to reference an event channel. This field is mutually exclusive of the `operationId` and `workflowId` fields respectively. The operation being referenced MUST be described within one of the `sourceDescriptions` descriptions. A [Runtime Expression](#runtime-expressions) syntax MUST be used to identify the source description document. If the referenced operation has an `operationId` defined then the `operationId` SHOULD be preferred over the `channelPath`.                                                                                                                                                                                                                                                                                                                                  |
 | <a name="stepWorkflowId"></a>workflowId           |                                         `string`                                         | The [workflowId](#fixed-fields-2) referencing an existing workflow within the Arazzo Description. If the referenced workflow is contained within an `arazzo` type `sourceDescription`, then the `workflowId` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g., `$sourceDescriptions.<name>.<workflowId>`) to avoid ambiguity or potential clashes. The field is mutually exclusive of the `operationId` and `operationPath` fields respectively.                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | <a name="stepParameters"></a>parameters           |      [[Parameter Object](#parameter-object) \| [Reusable Object](#reusable-object)]      | A list of parameters that MUST be passed to an operation or workflow as referenced by `operationId`, `operationPath`, or `workflowId`. If a parameter is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a parameter defined in the [components/parameters](#components-object) of the current Arazzo document. The list MUST NOT include duplicate parameters.                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
@@ -481,6 +487,50 @@ Authors MAY omit `successCriteria` only when both of the following conditions ar
 When `successCriteria` is omitted, receiving any message matching the `correlationId` (if specified) within the `timeout` period is considered a successful step completion.
 
 If `correlationId` is specified, only messages matching the correlation identifier are considered. If no matching message is received within the `timeout` period, the step fails and triggers any defined `onFailure` actions.
+
+##### Authoring Steps for WSDL Source Descriptions
+
+For steps that reference a `wsdl` type source description via `operationId`, tools MUST resolve the HTTP method and endpoint URL from the WSDL binding definition. Workflow authors do not specify these directly.
+
+When conveying the operation action, authors MUST deal with the nuances between [SOAP 1.1](https://www.w3.org/TR/2000/NOTE-SOAP-20000508/) and [SOAP 1.2](https://www.w3.org/TR/soap12-part1/):
+
+- SOAP 1.1: The `SOAPAction` HTTP header is required by the SOAP 1.1 protocol (it MAY carry an empty string value) and SHOULD be provided as a step `parameter` with `in: header`.
+- SOAP 1.2: The `SOAPAction` header is deprecated. The action is instead conveyed as the `action` parameter within the `Content-Type` header value, e.g. `application/soap+xml;action="http://example.com/ListCustomers"`. Authors SHOULD provide this as a single `Content-Type` header parameter combining both the media type and action.
+
+The content type SHOULD be explicitly specified as a step `parameter` with `in: header`. If omitted, implementations SHOULD infer it from the WSDL binding definition.
+
+The `requestBody` field MUST be used to supply the SOAP Envelope XML. The envelope namespace MUST match the SOAP version: `http://schemas.xmlsoap.org/soap/envelope/` for SOAP 1.1 and `http://www.w3.org/2003/05/soap-envelope` for SOAP 1.2. The `contentType` field of the Request Body Object MUST match the SOAP version in use.
+
+HTTP status code and fault XML structure also differ between SOAP versions:
+
+- SOAP 1.1: Faults are always returned as HTTP `500`. The fault body contains `<faultcode>`, `<faultstring>`, `<faultactor>` (optional), and `<detail>` (optional) elements.
+- SOAP 1.2: Faults MAY be returned as HTTP `400` (client faults, `env:Sender`) or HTTP `500` (server faults, `env:Receiver`). The fault body uses different element names: `<env:Code>`, `<env:Reason>`, `<env:Node>` (optional), `<env:Role>` (optional), and `<env:Detail>` (optional).
+
+For conformant SOAP services, `$statusCode == 200` is the appropriate `successCriteria` condition for both SOAP 1.1 and SOAP 1.2 — SOAP 1.1 requires faults to use HTTP `500`, and SOAP 1.2 requires `400` or `500` depending on fault type.
+
+Authors MAY additionally assert the presence of an expected response element using XPath, as is good practice for any XML response:
+
+```yaml
+successCriteria:
+  - condition: $statusCode == 200
+  - condition: //ListCustomersResponse
+    context: $response.body
+    type: xpath
+```
+
+Where authors wish to distinguish a SOAP fault from other non-2xx responses in `onFailure` criteria, the fault element names differ by version:
+
+```yaml
+# SOAP 1.1 — fault body contains <faultcode>
+- condition: //faultcode
+  context: $response.body
+  type: xpath
+
+# SOAP 1.2 — fault body contains <env:Code>; use local-name() to avoid namespace declarations
+- condition: //*[local-name()='Code']
+  context: $response.body
+  type: xpath
+```
 
 ##### Step Object Examples
 
@@ -1384,7 +1434,8 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
   source-name = identifier-strict
   source-reference-id = 1*CHAR
       ; operationIds have no character restrictions in OpenAPI/AsyncAPI
-      ; Resolution priority defined in spec text: (1) operationId/workflowId, (2) field names
+      ; WSDL operation names conform to the XML NCNames
+      ; Resolution priority defined in spec text: (1) operationId/workflowId/wsdl:operation name, (2) field names
 
   ; Components expressions
   components-reference = component-type "." component-name
@@ -1485,7 +1536,7 @@ Whether a value is stored as a string or parsed structure depends on its content
 
 When using `$sourceDescriptions.<name>.<reference>`, the `<reference>` portion is resolved with the following priority:
 
-- **operationId or workflowId** - If the referenced source description is an OpenAPI description, `<reference>` is first matched against operationIds. If the source description is an Arazzo document, `<reference>` is matched against workflowIds.
+- **operationId or workflowId** - If the referenced source description is an OpenAPI description, `<reference>` is first matched against operationIds. If the source description is an Arazzo document, `<reference>` is matched against workflowIds. If the source description is a WSDL document, `<reference>` is matched against the `name` attribute of `wsdl:operation` elements within the WSDL `portType` definitions ([WSDL 1.1](https://www.w3.org/TR/wsdl.html)) or `interface` definitions ([WSDL 2.0](https://www.w3.org/TR/wsdl20/)).
 - **Source description field** - If no operationId/workflowId match is found, `<reference>` is matched against field names of the Source Description Object (e.g., `url`,
   `type`).
 
@@ -1507,6 +1558,19 @@ Given the above example source description and an OpenAPI description at that sp
 - `$sourceDescriptions.petstore.type` resolves to `openapi` (_priority 2_)
 
 If an operationId happens to conflict with a field name (e.g., an operation with operationId: url), the operationId takes precedence.
+
+```yaml
+sourceDescriptions:
+  - name: customerService
+    url: https://example.com/customer-service?wsdl
+    type: wsdl
+```
+
+Given the above example and a WSDL document at that URL containing a `portType` (WSDL 1.1) or `interface` (WSDL 2.0) with an operation named `ListCustomers`:
+
+- `$sourceDescriptions.customerService.ListCustomers` resolves to the WSDL operation named `ListCustomers` (_priority 1_)
+- `$sourceDescriptions.customerService.url` resolves to `https://example.com/customer-service?wsdl` (_priority 2_)
+- `$sourceDescriptions.customerService.type` resolves to `wsdl` (_priority 2_)
 
 ### Specification Extensions
 
@@ -1592,6 +1656,7 @@ The proposed MIME media type for Arazzo documents (e.g. workflows) that require 
 
 | Version | Date       | Notes                                           |
 |---------|------------|-------------------------------------------------|
+| 1.2.0   | TBD        | Minor release of the Arazzo Specification 1.2.0 |
 | 1.1.0   | 2026-05-17 | Minor release of the Arazzo Specification 1.1.0 |
 | 1.0.1   | 2025-01-16 | Patch release of the Arazzo Specification 1.0.1 |
 | 1.0.0   | 2024-05-29 | First release of the Arazzo Specification       |

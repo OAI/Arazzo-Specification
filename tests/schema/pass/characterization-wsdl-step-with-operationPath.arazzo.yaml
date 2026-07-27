@@ -1,0 +1,17 @@
+arazzo: 1.2.0
+info:
+  title: Characterization of wsdl step using operationPath
+  version: 1.0.0
+sourceDescriptions:
+  - name: customerService
+    url: https://example.com/customer-service?wsdl
+    type: wsdl
+workflows:
+  - workflowId: basicWorkflow
+    steps:
+      # Characterization test: this passes today because the schema does not
+      # resolve sourceDescriptions.type when selecting the step-object branch.
+      # operationPath MUST NOT be used with a wsdl source description per spec
+      # prose, but the schema cannot enforce this cross-object constraint.
+      - stepId: listCustomers
+        operationPath: $sourceDescriptions.customerService#/paths/~1ListCustomers
