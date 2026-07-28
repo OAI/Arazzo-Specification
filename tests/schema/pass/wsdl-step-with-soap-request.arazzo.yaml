@@ -36,4 +36,7 @@ workflows:
               type: xpath
               version: xpath-31
         outputs:
-          totalCount: //ListCustomersResponse/TotalCount
+          totalCount:
+            context: $response.body
+            selector: //ListCustomersResponse/TotalCount
+            type: xpath

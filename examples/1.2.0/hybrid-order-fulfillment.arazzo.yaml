@@ -77,7 +77,10 @@ workflows:
               type: xpath
               version: xpath-31
         outputs:
-          availableStock: //CheckInventoryResponse/AvailableQuantity
+          availableStock:
+            context: $response.body
+            selector: //CheckInventoryResponse/AvailableQuantity
+            type: xpath
 
       # Step 3 — REST: create the order via the OpenAPI-described retail API,
       # using the product details from step 1
@@ -132,5 +135,11 @@ workflows:
               type: xpath
               version: xpath-31
         outputs:
-          trackingNumber: //DispatchOrderResponse/TrackingNumber
-          estimatedDelivery: //DispatchOrderResponse/EstimatedDelivery
+          trackingNumber:
+            context: $response.body
+            selector: //DispatchOrderResponse/TrackingNumber
+            type: xpath
+          estimatedDelivery:
+            context: $response.body
+            selector: //DispatchOrderResponse/EstimatedDelivery
+            type: xpath

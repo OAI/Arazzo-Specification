@@ -40,8 +40,14 @@ workflows:
               type: xpath
               version: xpath-31
         outputs:
-          total_count: //ListCustomersResponse/TotalCount
-          first_id: //ListCustomersResponse/Customers/Customer[1]/Id
+          total_count:
+            context: $response.body
+            selector: //ListCustomersResponse/TotalCount
+            type: xpath
+          first_id:
+            context: $response.body
+            selector: //ListCustomersResponse/Customers/Customer[1]/Id
+            type: xpath
 
       - stepId: get-customer
         operationId: $sourceDescriptions.customerService.GetCustomer
@@ -72,7 +78,10 @@ workflows:
               type: xpath
               version: xpath-31
         outputs:
-          customer_name: //GetCustomerResponse/Customer/Name
+          customer_name:
+            context: $response.body
+            selector: //GetCustomerResponse/Customer/Name
+            type: xpath
 
       - stepId: create-customer
         operationId: $sourceDescriptions.customerService.CreateCustomer
@@ -106,8 +115,14 @@ workflows:
               type: xpath
               version: xpath-31
         outputs:
-          new_id: //CreateCustomerResponse/Customer/Id
-          new_name: //CreateCustomerResponse/Customer/Name
+          new_id:
+            context: $response.body
+            selector: //CreateCustomerResponse/Customer/Id
+            type: xpath
+          new_name:
+            context: $response.body
+            selector: //CreateCustomerResponse/Customer/Name
+            type: xpath
 
       - stepId: update-customer
         operationId: $sourceDescriptions.customerService.UpdateCustomer
@@ -140,7 +155,10 @@ workflows:
               type: xpath
               version: xpath-31
         outputs:
-          updated_name: //UpdateCustomerResponse/Customer/Name
+          updated_name:
+            context: $response.body
+            selector: //UpdateCustomerResponse/Customer/Name
+            type: xpath
 
       - stepId: delete-customer
         operationId: $sourceDescriptions.customerService.DeleteCustomer
@@ -171,4 +189,7 @@ workflows:
               type: xpath
               version: xpath-31
         outputs:
-          deleted: //DeleteCustomerResponse/Success
+          deleted:
+            context: $response.body
+            selector: //DeleteCustomerResponse/Success
+            type: xpath
