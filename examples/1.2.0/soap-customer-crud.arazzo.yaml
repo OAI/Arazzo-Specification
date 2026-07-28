@@ -7,14 +7,14 @@ info:
 
 sourceDescriptions:
   - name: customerService
-    url: http://localhost:4010/customer-service?wsdl
+    url: ./customer-service.wsdl
     type: wsdl
 
 workflows:
   - workflowId: soap-crud
     steps:
       - stepId: list-customers
-        operationId: $sourceDescriptions.customerService.ListCustomers   # FIXED: was operationPath: POST /api/...
+        operationId: $sourceDescriptions.customerService.ListCustomers
         parameters:
           - name: Content-Type
             in: header

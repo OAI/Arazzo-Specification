@@ -10,10 +10,10 @@ info:
 
 sourceDescriptions:
   - name: retailAPI
-    url: https://api.example.com/retail/openapi.yaml
+    url: ./retail-api.openapi.yaml
     type: openapi
   - name: fulfillmentService
-    url: https://legacy.example.com/fulfillment?wsdl
+    url: ./fulfillment-service.wsdl
     type: wsdl
 
 workflows:
