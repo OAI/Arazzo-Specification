@@ -1,0 +1,42 @@
+arazzo: 1.2.0
+info:
+  title: WSDL step with SOAP request body and XPath criteria
+  version: 1.0.0
+sourceDescriptions:
+  - name: customerService
+    url: https://example.com/customer-service?wsdl
+    type: wsdl
+workflows:
+  - workflowId: soapWorkflow
+    steps:
+      - stepId: listCustomers
+        operationId: $sourceDescriptions.customerService.ListCustomers
+        parameters:
+          - name: SOAPAction
+            in: header
+            value: "http://example.com/customer-service/ListCustomers"
+          - name: Content-Type
+            in: header
+            value: "text/xml"
+        requestBody:
+          contentType: text/xml
+          payload: |
+            <?xml version="1.0" encoding="UTF-8"?>
+            <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                           xmlns:tns="http://example.com/customer-service">
+              <soap:Body>
+                <tns:ListCustomers/>
+              </soap:Body>
+            </soap:Envelope>
+        successCriteria:
+          - condition: $statusCode == 200
+          - context: $response.body
+            condition: //ListCustomersResponse
+            type:
+              type: xpath
+              version: xpath-31
+        outputs:
+          totalCount:
+            context: $response.body
+            selector: //ListCustomersResponse/TotalCount
+            type: xpath
