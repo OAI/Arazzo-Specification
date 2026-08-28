@@ -1,0 +1,25 @@
+arazzo: 1.2.0
+info:
+  title: Protocol Buffer streaming request items
+  version: 1.0.0
+sourceDescriptions:
+  - name: grpcLibrary
+    type: protobuf
+    url: ./grpc-library.proto
+workflows:
+  - workflowId: uploadChunks
+    steps:
+      - stepId: upload
+        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/UploadChunks
+        requestBody:
+          - payload:
+              uploadId: upload-42
+              sequence: 1
+              data: SGVsbG8=
+            replacements:
+              - target: /uploadId
+                value: upload-43
+          - payload:
+              uploadId: upload-42
+              sequence: 2
+              data: d29ybGQ=

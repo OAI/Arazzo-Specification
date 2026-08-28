@@ -1,0 +1,145 @@
+arazzo: 1.2.0
+info:
+  title: Arazzo gRPC workflow examples
+  version: 1.0.0
+sourceDescriptions:
+  - name: grpcLibrary
+    type: protobuf
+    url: ./grpc-library.proto
+workflows:
+  - workflowId: getBook
+    inputs:
+      type: object
+      properties:
+        bookId:
+          type: string
+        bearerToken:
+          type: string
+      required:
+        - bookId
+    steps:
+      - stepId: getBook
+        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/GetBook
+        parameters:
+          - name: authorization
+            in: metadata
+            value: Bearer {$inputs.bearerToken}
+        requestBody:
+          payload:
+            bookId: $inputs.bookId
+        successCriteria:
+          - condition: $response.status#/code == 0
+        outputs:
+          id: $response.body#/id
+          authors: $response.body#/authors
+          requestId: $response.metadata.x-request-id
+          traceId: $response.trailingMetadata.trace-id
+
+  - workflowId: pingWithDefaultRequest
+    steps:
+      - stepId: ping
+        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/Ping
+        # Omitted requestBody invokes google.protobuf.Empty's default instance.
+        successCriteria:
+          - condition: $response.status#/code == 0
+        outputs:
+          message: $response.body#/message
+
+  - workflowId: observeTrailersOnlyError
+    steps:
+      - stepId: missingBook
+        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/GetBook
+        requestBody:
+          payload:
+            bookId: missing
+        # A terminal error can expose status without a response message.
+        successCriteria:
+          - condition: $response.status#/code != 0
+        outputs:
+          code: $response.status#/code
+          message: $response.status#/message
+          details: $response.status#/details
+
+  - workflowId: watchBooks
+    steps:
+      - stepId: watch
+        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/WatchBooks
+        timeout: 30000
+        requestBody:
+          payload:
+            category: architecture
+        successCriteria:
+          - condition: $response.status#/code == 0
+        outputs:
+          allUpdates: $response.body
+          firstEvent: $response.body#/0/eventId
+
+  - workflowId: watchBooksWithNoMessages
+    steps:
+      - stepId: watch
+        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/WatchBooks
+        requestBody:
+          payload:
+            category: no-matches
+        # A successfully completed server stream may have response body [].
+        successCriteria:
+          - condition: $response.status#/code == 0
+        outputs:
+          updates: $response.body
+
+  - workflowId: uploadChunks
+    steps:
+      - stepId: upload
+        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/UploadChunks
+        requestBody:
+          - payload:
+              uploadId: upload-42
+              sequence: 1
+              data: SGVsbG8=
+          - payload:
+              uploadId: upload-42
+              sequence: 2
+              data: d29ybGQ=
+        # The array is sent in order, then the client request direction is
+        # half-closed before the single response and terminal status arrive.
+        successCriteria:
+          - condition: $response.status#/code == 0
+        outputs:
+          chunks: $response.body#/chunksReceived
+
+  - workflowId: uploadNoChunks
+    steps:
+      - stepId: upload
+        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/UploadChunks
+        # Zero request messages are legal; [] means immediate half-close.
+        requestBody: []
+        successCriteria:
+          - condition: $response.status#/code == 0
+
+  - workflowId: subscriptionRequiresTerminalStatus
+    steps:
+      - stepId: subscribe
+        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/Subscribe
+        timeout: 60000
+        requestBody:
+          payload:
+            topic: orders
+        # An intentionally open response stream cannot complete successfully.
+        # No matching-condition stop/cancel primitive is defined;
+        # timeout is a failure bound and ordinary success still requires terminal gRPC status.
+        successCriteria:
+          - condition: $response.status#/code == 0
+
+  - workflowId: exchangeEvents
+    steps:
+      - stepId: exchangeEvents
+        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/ExchangeEvents
+        requestBody:
+          - payload:
+              type: START
+          - payload:
+              type: FINISH
+        successCriteria:
+          - condition: $response.status#/code == 0
+        outputs:
+          events: $response.body
