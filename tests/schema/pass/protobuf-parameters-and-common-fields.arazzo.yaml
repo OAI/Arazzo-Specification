@@ -1,0 +1,49 @@
+arazzo: 1.2.0
+info:
+  title: gRPC parameters and common Step fields
+  version: 1.0.0
+sourceDescriptions:
+  - name: grpcLibrary
+    type: protobuf
+    url: ./grpc-library.proto
+components:
+  parameters:
+    authorization:
+      name: authorization
+      in: metadata
+      value: Bearer token
+workflows:
+  - workflowId: getBook
+    inputs:
+      type: object
+      properties:
+        requestId:
+          type: object
+          properties:
+            id:
+              type: string
+          required:
+            - id
+    steps:
+      - stepId: prepare
+        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/Ping
+        timeout: 1000
+        parameters:
+          - reference: $components.parameters.authorization
+          - name: x-request-id
+            in: metadata
+            value:
+              context: $inputs.requestId
+              selector: $.id
+              type: jsonpath
+        successCriteria:
+          - condition: $response.status#/code == 0
+        onSuccess:
+          - name: finish
+            type: end
+        onFailure:
+          - name: stop
+            type: end
+        outputs:
+          message: $response.body#/message
+        x-grpc-test: true

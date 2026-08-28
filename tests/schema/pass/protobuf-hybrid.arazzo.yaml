@@ -1,0 +1,35 @@
+arazzo: 1.2.0
+info:
+  title: OpenAPI and gRPC workflows using a Protocol Buffer source description
+  version: 1.0.0
+sourceDescriptions:
+  - name: petStore
+    type: openapi
+    url: ../1.0.0/pet-coupons.openapi.yaml
+  - name: grpcLibrary
+    type: protobuf
+    url: ./grpc-library.proto
+workflows:
+  - workflowId: hybrid
+    steps:
+      - stepId: getPet
+        operationId: $sourceDescriptions.petStore.getPetById
+        parameters:
+          - name: petId
+            in: path
+            value: 1
+      - stepId: upload
+        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/UploadChunks
+        parameters:
+          - name: x-trace-id
+            in: metadata
+            value: trace-1
+        requestBody:
+          - payload:
+              uploadId: upload-1
+              sequence: 1
+              data: UGV0
+        successCriteria:
+          - condition: $response.status#/code == 0
+        outputs:
+          uploadId: $response.body#/uploadId

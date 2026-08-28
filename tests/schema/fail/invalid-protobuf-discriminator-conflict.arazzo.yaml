@@ -1,0 +1,15 @@
+arazzo: 1.2.0
+info:
+  title: Invalid gRPC Step selector conflict
+  version: 1.0.0
+sourceDescriptions:
+  - name: grpcLibrary
+    type: protobuf
+    url: ./grpc-library.proto
+workflows:
+  - workflowId: invalid
+    steps:
+      - stepId: getBook
+        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/GetBook
+        # Invalid: grpcMethod is mutually exclusive with operationId.
+        operationId: getBook
