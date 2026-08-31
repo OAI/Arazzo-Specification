@@ -164,7 +164,7 @@ $defs:
     description: |-
       Describes a single workflow step which MAY be a call to an
       API operation (OpenAPI Operation Object or AsyncAPI Operation Object or a WSDL Operation Object or another Workflow Object)
-    anyOf:
+    oneOf:
       - $ref: '#/$defs/openapi-step-object'
       - $ref: '#/$defs/wsdl-step-object'
       - $ref: '#/$defs/asyncapi-step-object'
@@ -271,13 +271,13 @@ $defs:
       - $ref: '#/$defs/step-object-base'
       - type: object
         properties:
-          operationId:
+          operationName:
             description: The name of an existing, resolvable WSDL operation, as defined within a WSDL source description
             type: string
           parameters:
             $ref: '#/$defs/operation-step-parameters'
         required:
-          - operationId
+          - operationName
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
   asyncapi-step-object:

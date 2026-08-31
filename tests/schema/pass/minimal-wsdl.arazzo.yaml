@@ -10,4 +10,4 @@ workflows:
   - workflowId: basicWorkflow
     steps:
       - stepId: listCustomers
-        operationId: ListCustomers
+        operationName: ListCustomers

@@ -10,7 +10,7 @@ workflows:
   - workflowId: soapWorkflow
     steps:
       - stepId: listCustomers
-        operationId: $sourceDescriptions.customerService.ListCustomers
+        operationName: $sourceDescriptions.customerService.ListCustomers
         parameters:
           - name: SOAPAction
             in: header

@@ -46,7 +46,7 @@ workflows:
 
       # Step 2 — SOAP: check inventory availability from the legacy fulfillment service
       - stepId: check-inventory
-        operationId: $sourceDescriptions.fulfillmentService.CheckInventory
+        operationName: $sourceDescriptions.fulfillmentService.CheckInventory
         dependsOn:
           - get-product
         parameters:
@@ -104,7 +104,7 @@ workflows:
       # Step 4 — SOAP: dispatch the order via the legacy fulfillment service,
       # using the order ID returned by step 3
       - stepId: dispatch-order
-        operationId: $sourceDescriptions.fulfillmentService.DispatchOrder
+        operationName: $sourceDescriptions.fulfillmentService.DispatchOrder
         dependsOn:
           - create-order
         parameters:

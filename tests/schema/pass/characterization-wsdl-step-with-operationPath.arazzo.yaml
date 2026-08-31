@@ -11,7 +11,7 @@ info:
     sourceDescription type at validation time.
 
     This document is therefore schema-valid (it matches the openapi-step-object
-    branch of the anyOf) even though it violates the specification. Conformance
+    branch of the oneOf) even though it violates the specification. Conformance
     tooling and implementations are responsible for enforcing this rule. The
     specification prose is the authoritative source of truth.
 sourceDescriptions:
