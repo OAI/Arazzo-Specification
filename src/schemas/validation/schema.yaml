@@ -343,7 +343,7 @@ $defs:
     unevaluatedProperties: false
   request-body-object:
     $comment: https://spec.openapis.org/arazzo/v1.1#request-body-object
-    description: The request body to pass to an operation as referenced by operationId or operationPath or channelPath
+    description: The request body to pass to an operation as referenced by operationId, operationName, operationPath, or channelPath
     type: object
     properties:
       contentType:
