@@ -3,14 +3,15 @@ info:
   title: Protocol Buffer streaming request items
   version: 1.0.0
 sourceDescriptions:
-  - name: grpcLibrary
+  - name: rpcLibrary
     type: protobuf
-    url: ./grpc-library.proto
+    url: ./rpc-library.proto
 workflows:
   - workflowId: uploadChunks
     steps:
       - stepId: upload
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/UploadChunks
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
+        rpcProtocol: grpc
         requestBody:
           - payload:
               uploadId: upload-42

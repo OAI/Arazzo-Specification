@@ -1,16 +1,18 @@
 arazzo: 1.2.0
 info:
-  title: Invalid gRPC Step selector conflict
+  title: Invalid gRPC-Web request content type
   version: 1.0.0
 sourceDescriptions:
   - name: rpcLibrary
     type: protobuf
     url: ./rpc-library.proto
 workflows:
-  - workflowId: invalid
+  - workflowId: invalidGrpcWebContentType
     steps:
       - stepId: getBook
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
-        rpcProtocol: grpc
-        # Invalid: rpcMethod is mutually exclusive with operationId.
-        operationId: getBook
+        rpcProtocol: grpc-web
+        requestBody:
+          contentType: application/json
+          payload:
+            bookId: "123"

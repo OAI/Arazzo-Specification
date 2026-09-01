@@ -3,9 +3,9 @@ info:
   title: Arazzo gRPC workflow examples
   version: 1.0.0
 sourceDescriptions:
-  - name: grpcLibrary
+  - name: rpcLibrary
     type: protobuf
-    url: ./grpc-library.proto
+    url: ./rpc-library.proto
 workflows:
   - workflowId: getBook
     inputs:
@@ -19,7 +19,8 @@ workflows:
         - bookId
     steps:
       - stepId: getBook
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/GetBook
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        rpcProtocol: grpc
         parameters:
           - name: authorization
             in: metadata
@@ -38,7 +39,8 @@ workflows:
   - workflowId: pingWithDefaultRequest
     steps:
       - stepId: ping
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/Ping
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/Ping
+        rpcProtocol: grpc
         # Omitted requestBody invokes google.protobuf.Empty's default instance.
         successCriteria:
           - condition: $response.status#/code == 0
@@ -48,7 +50,8 @@ workflows:
   - workflowId: observeTrailersOnlyError
     steps:
       - stepId: missingBook
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/GetBook
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        rpcProtocol: grpc
         requestBody:
           payload:
             bookId: missing
@@ -63,7 +66,8 @@ workflows:
   - workflowId: watchBooks
     steps:
       - stepId: watch
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/WatchBooks
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/WatchBooks
+        rpcProtocol: grpc
         timeout: 30000
         requestBody:
           payload:
@@ -77,7 +81,8 @@ workflows:
   - workflowId: watchBooksWithNoMessages
     steps:
       - stepId: watch
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/WatchBooks
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/WatchBooks
+        rpcProtocol: grpc
         requestBody:
           payload:
             category: no-matches
@@ -90,7 +95,8 @@ workflows:
   - workflowId: uploadChunks
     steps:
       - stepId: upload
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/UploadChunks
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
+        rpcProtocol: grpc
         requestBody:
           - payload:
               uploadId: upload-42
@@ -110,7 +116,8 @@ workflows:
   - workflowId: uploadNoChunks
     steps:
       - stepId: upload
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/UploadChunks
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
+        rpcProtocol: grpc
         # Zero request messages are legal; [] means immediate half-close.
         requestBody: []
         successCriteria:
@@ -119,7 +126,8 @@ workflows:
   - workflowId: subscriptionRequiresTerminalStatus
     steps:
       - stepId: subscribe
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/Subscribe
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/Subscribe
+        rpcProtocol: grpc
         timeout: 60000
         requestBody:
           payload:
@@ -133,7 +141,8 @@ workflows:
   - workflowId: exchangeEvents
     steps:
       - stepId: exchangeEvents
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/ExchangeEvents
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/ExchangeEvents
+        rpcProtocol: grpc
         requestBody:
           - payload:
               type: START

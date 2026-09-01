@@ -3,9 +3,9 @@ info:
   title: gRPC parameters and common Step fields
   version: 1.0.0
 sourceDescriptions:
-  - name: grpcLibrary
+  - name: rpcLibrary
     type: protobuf
-    url: ./grpc-library.proto
+    url: ./rpc-library.proto
 components:
   parameters:
     authorization:
@@ -26,7 +26,8 @@ workflows:
             - id
     steps:
       - stepId: prepare
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/Ping
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/Ping
+        rpcProtocol: grpc
         timeout: 1000
         parameters:
           - reference: $components.parameters.authorization

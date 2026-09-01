@@ -1,16 +1,13 @@
 arazzo: 1.2.0
 info:
-  title: Invalid gRPC Step selector conflict
+  title: Invalid RPC Step without a protocol discriminator
   version: 1.0.0
 sourceDescriptions:
   - name: rpcLibrary
     type: protobuf
     url: ./rpc-library.proto
 workflows:
-  - workflowId: invalid
+  - workflowId: invalidRpcStep
     steps:
       - stepId: getBook
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
-        rpcProtocol: grpc
-        # Invalid: rpcMethod is mutually exclusive with operationId.
-        operationId: getBook
