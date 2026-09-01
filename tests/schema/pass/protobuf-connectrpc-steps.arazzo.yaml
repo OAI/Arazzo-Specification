@@ -1,0 +1,38 @@
+arazzo: 1.2.0
+info:
+  title: Connect RPC Steps
+  version: 1.0.0
+sourceDescriptions:
+  - name: rpcLibrary
+    type: protobuf
+    url: ./rpc-library.proto
+workflows:
+  - workflowId: connectRpcCalls
+    steps:
+      - stepId: getBook
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        rpcProtocol: connect
+        parameters:
+          - name: authorization
+            in: metadata
+            value: Bearer {$inputs.token}
+        requestBody:
+          contentType: application/json
+          payload:
+            bookId: "123"
+        successCriteria:
+          - condition: $statusCode == 200
+      - stepId: uploadChunks
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
+        rpcProtocol: connect
+        requestBody:
+          - contentType: application/connect+proto
+            payload:
+              data: YQ==
+          - contentType: application/connect+proto
+            payload:
+              data: Yg==
+        successCriteria:
+          - condition: $response.status#/code == "resource_exhausted"
+        outputs:
+          operationCost: $response.trailingMetadata.operation-cost

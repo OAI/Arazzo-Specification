@@ -3,19 +3,21 @@ info:
   title: Protocol Buffer request scenarios
   version: 1.0.0
 sourceDescriptions:
-  - name: grpcLibrary
+  - name: rpcLibrary
     type: protobuf
-    url: ./grpc-library.proto
+    url: ./rpc-library.proto
 workflows:
   - workflowId: defaultRequest
     steps:
       - stepId: ping
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/Ping
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/Ping
+        rpcProtocol: grpc
         # A semantic validator resolves this omitted request to the default google.protobuf.Empty instance.
   - workflowId: unaryRequest
     steps:
       - stepId: getBook
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/GetBook
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        rpcProtocol: grpc
         requestBody:
           payload:
             bookId: book-1
@@ -34,7 +36,8 @@ workflows:
         - bookId
     steps:
       - stepId: getBook
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/GetBook
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        rpcProtocol: grpc
         parameters:
           - name: authorization
             in: metadata
@@ -45,7 +48,8 @@ workflows:
   - workflowId: serverStreamRequest
     steps:
       - stepId: watch
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/WatchBooks
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/WatchBooks
+        rpcProtocol: grpc
         timeout: 30000
         requestBody:
           payload:
@@ -58,12 +62,14 @@ workflows:
   - workflowId: zeroMessageClientStream
     steps:
       - stepId: upload
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/UploadChunks
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
+        rpcProtocol: grpc
         requestBody: []
   - workflowId: trailersOnlyError
     steps:
       - stepId: missingBook
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/GetBook
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        rpcProtocol: grpc
         requestBody:
           payload:
             bookId: missing
@@ -76,7 +82,8 @@ workflows:
   - workflowId: bidirectionalStream
     steps:
       - stepId: exchangeEvents
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/ExchangeEvents
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/ExchangeEvents
+        rpcProtocol: grpc
         requestBody:
           - payload:
               type: START

@@ -1,0 +1,18 @@
+arazzo: 1.2.0
+info:
+  title: Invalid Twirp request content type
+  version: 1.0.0
+sourceDescriptions:
+  - name: rpcLibrary
+    type: protobuf
+    url: ./rpc-library.proto
+workflows:
+  - workflowId: invalidTwirpContentType
+    steps:
+      - stepId: getBook
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        rpcProtocol: twirp
+        requestBody:
+          contentType: application/xml
+          payload:
+            bookId: "123"

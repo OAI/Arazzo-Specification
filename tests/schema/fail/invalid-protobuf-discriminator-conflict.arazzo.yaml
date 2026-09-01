@@ -3,13 +3,14 @@ info:
   title: Invalid gRPC Step selector conflict
   version: 1.0.0
 sourceDescriptions:
-  - name: grpcLibrary
+  - name: rpcLibrary
     type: protobuf
-    url: ./grpc-library.proto
+    url: ./rpc-library.proto
 workflows:
   - workflowId: invalid
     steps:
       - stepId: getBook
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/GetBook
-        # Invalid: grpcMethod is mutually exclusive with operationId.
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        rpcProtocol: grpc
+        # Invalid: rpcMethod is mutually exclusive with operationId.
         operationId: getBook

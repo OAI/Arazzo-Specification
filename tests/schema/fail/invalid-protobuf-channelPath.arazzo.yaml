@@ -3,14 +3,15 @@ info:
   title: Invalid gRPC Step channelPath
   version: 1.0.0
 sourceDescriptions:
-  - name: grpcLibrary
+  - name: rpcLibrary
     type: protobuf
-    url: ./grpc-library.proto
+    url: ./rpc-library.proto
 workflows:
   - workflowId: invalid
     steps:
       - stepId: getBook
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/GetBook
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        rpcProtocol: grpc
         # Invalid: a gRPC Step cannot use AsyncAPI channelPath or action fields.
         channelPath: orders
         action: receive

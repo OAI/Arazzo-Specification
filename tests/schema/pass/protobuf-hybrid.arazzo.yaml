@@ -6,9 +6,9 @@ sourceDescriptions:
   - name: petStore
     type: openapi
     url: ../1.0.0/pet-coupons.openapi.yaml
-  - name: grpcLibrary
+  - name: rpcLibrary
     type: protobuf
-    url: ./grpc-library.proto
+    url: ./rpc-library.proto
 workflows:
   - workflowId: hybrid
     steps:
@@ -19,7 +19,8 @@ workflows:
             in: path
             value: 1
       - stepId: upload
-        grpcMethod: $sourceDescriptions.grpcLibrary.org.v1.Library/UploadChunks
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
+        rpcProtocol: grpc
         parameters:
           - name: x-trace-id
             in: metadata
