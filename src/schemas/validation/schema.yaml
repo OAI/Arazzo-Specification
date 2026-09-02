@@ -16,7 +16,7 @@ properties:
   info:
     $ref: '#/$defs/info'
   sourceDescriptions:
-    description: A list of source descriptions such as Arazzo or OpenAPI
+    description: A list of source descriptions such as Arazzo, OpenAPI, AsyncAPI, or Protocol Buffer source descriptions
     type: array
     uniqueItems: true
     minItems: 1
@@ -64,7 +64,7 @@ $defs:
   source-description-object:
     $comment: https://spec.openapis.org/arazzo/v1.1#source-description-object
     description: |-
-      Describes a source description (such as an OpenAPI description)
+      Describes a source description (such as an OpenAPI, AsyncAPI, or Protocol Buffer source description)
       that will be referenced by one or more workflows described within
       an Arazzo description
     type: object
@@ -83,6 +83,7 @@ $defs:
           - arazzo
           - openapi
           - asyncapi
+          - protobuf
     required:
       - name
       - url
@@ -162,10 +163,11 @@ $defs:
     $comment: https://spec.openapis.org/arazzo/v1.1#step-object'
     description: |-
       Describes a single workflow step which MAY be a call to an
-      API operation (OpenAPI Operation Object or AsyncAPI Operation Object or another Workflow Object)
+      API operation (OpenAPI Operation Object or AsyncAPI Operation Object), an RPC method from a Protocol Buffer service declaration, or another Workflow Object
     oneOf:
       - $ref: '#/$defs/openapi-step-object'
       - $ref: '#/$defs/asyncapi-step-object'
+      - $ref: '#/$defs/rpc-step-object'
       - $ref: '#/$defs/workflow-step-object'
   step-object-base:
     type: object
@@ -194,12 +196,10 @@ $defs:
             - type: string
               pattern: ^\$sourceDescriptions\.[^.]+\.[^.]+\.steps\.[^.]+$
       parameters:
-        description: A list of parameters that MUST be passed to an operation or workflow as referenced by operationId, operationPath, or workflowId
+        description: A list of parameters that MUST be passed to an operation, RPC method, or workflow as referenced by operationId, operationPath, channelPath, rpcMethod or workflowId
         type: array
         uniqueItems: true
         items: true
-      requestBody:
-        $ref: '#/$defs/request-body-object'
       successCriteria:
         description: A list of assertions to determine the success of the step
         type: array
@@ -249,6 +249,8 @@ $defs:
       - $ref: '#/$defs/step-object-base'
       - type: object
         properties:
+          requestBody:
+            $ref: '#/$defs/request-body-object'
           operationId:
             description: The name of an existing, resolvable operation, as defined with a unique operationId and existing within one of the sourceDescriptions
             type: string
@@ -269,6 +271,8 @@ $defs:
       - $ref: '#/$defs/step-object-base'
       - type: object
         properties:
+          requestBody:
+            $ref: '#/$defs/request-body-object'
           operationId:
             description: The name of an existing, resolvable operation, as defined with a unique operationId and existing within one of the sourceDescriptions
             type: string
@@ -308,11 +312,99 @@ $defs:
               - channelPath
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
+  rpc-step-object:
+    oneOf:
+      - $ref: '#/$defs/grpc-step-object'
+      - $ref: '#/$defs/grpc-web-step-object'
+      - $ref: '#/$defs/twirp-step-object'
+      - $ref: '#/$defs/connect-step-object'
+  rpc-method-reference:
+    description: A source-qualified RPC method identifier from a Protocol Buffer service declaration using $sourceDescriptions.<source>.<fully-qualified-service>/<method> format
+    type: string
+    pattern: '^\$sourceDescriptions\.[A-Za-z0-9_-]+(?:\.[A-Za-z_][A-Za-z0-9_]*)+/[A-Za-z_][A-Za-z0-9_]*$'
+  grpc-step-object:
+    allOf:
+      - $ref: '#/$defs/step-object-base'
+      - type: object
+        properties:
+          rpcMethod:
+            $ref: '#/$defs/rpc-method-reference'
+          rpcProtocol:
+            description: The RPC protocol and execution semantics used to invoke rpcMethod
+            const: grpc
+          parameters:
+            $ref: '#/$defs/operation-step-parameters'
+          requestBody:
+            $ref: '#/$defs/grpc-request-body'
+        required:
+          - rpcMethod
+          - rpcProtocol
+    $ref: '#/$defs/specification-extensions'
+    unevaluatedProperties: false
+  grpc-web-step-object:
+    allOf:
+      - $ref: '#/$defs/step-object-base'
+      - type: object
+        properties:
+          rpcMethod:
+            $ref: '#/$defs/rpc-method-reference'
+          rpcProtocol:
+            description: The RPC protocol and execution semantics used to invoke rpcMethod
+            const: grpc-web
+          parameters:
+            $ref: '#/$defs/operation-step-parameters'
+          requestBody:
+            $ref: '#/$defs/grpc-web-request-body-object'
+        required:
+          - rpcMethod
+          - rpcProtocol
+    $ref: '#/$defs/specification-extensions'
+    unevaluatedProperties: false
+  twirp-step-object:
+    allOf:
+      - $ref: '#/$defs/step-object-base'
+      - type: object
+        properties:
+          rpcMethod:
+            $ref: '#/$defs/rpc-method-reference'
+          rpcProtocol:
+            description: The RPC protocol and execution semantics used to invoke rpcMethod
+            const: twirp
+          parameters:
+            $ref: '#/$defs/operation-step-parameters'
+          requestBody:
+            $ref: '#/$defs/twirp-request-body-object'
+        required:
+          - rpcMethod
+          - rpcProtocol
+    $ref: '#/$defs/specification-extensions'
+    unevaluatedProperties: false
+  connect-step-object:
+    allOf:
+      - $ref: '#/$defs/step-object-base'
+      - type: object
+        properties:
+          rpcMethod:
+            $ref: '#/$defs/rpc-method-reference'
+          rpcProtocol:
+            description: The RPC protocol and execution semantics used to invoke rpcMethod
+            const: connect
+          parameters:
+            $ref: '#/$defs/operation-step-parameters'
+          requestBody:
+            $ref: '#/$defs/connect-request-body'
+        required:
+          - rpcMethod
+          - rpcProtocol
+    $ref: '#/$defs/specification-extensions'
+    unevaluatedProperties: false
   workflow-step-object:
     allOf:
       - $ref: '#/$defs/step-object-base'
       - type: object
         properties:
+          requestBody:
+            $ref: '#/$defs/request-body-object'
           workflowId:
             description: The workflowId referencing an existing workflow within the Arazzo description
             $ref: '#workflowId'
@@ -327,7 +419,7 @@ $defs:
     unevaluatedProperties: false
   request-body-object:
     $comment: https://spec.openapis.org/arazzo/v1.1#request-body-object
-    description: The request body to pass to an operation as referenced by operationId or operationPath or channelPath
+    description: The request body or message content to pass to an operation or RPC method as referenced by operationId, operationPath, channelPath or rpcMethod
     type: object
     properties:
       contentType:
@@ -342,6 +434,67 @@ $defs:
           $ref: '#/$defs/payload-replacement-object'
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
+  grpc-request-body:
+    description: |-
+      The request content for a gRPC Step. Unary and server-streaming RPCs use one Request Body Object. Client-streaming and bidirectional streaming RPCs
+      MAY use an ordered array of Request Body Objects, including an empty array for a zero-message request stream. Source-aware validation determines
+      whether the array form is valid for the referenced service declaration.
+    oneOf:
+      - $ref: '#/$defs/request-body-object'
+      - type: array
+        minItems: 0
+        items:
+          allOf:
+            - $ref: '#/$defs/request-body-object'
+            - type: object
+              required:
+                - payload
+  twirp-request-body-object:
+    allOf:
+      - $ref: '#/$defs/request-body-object'
+      - type: object
+        properties:
+          contentType:
+            enum:
+              - application/protobuf
+              - application/json
+  grpc-web-request-body-object:
+    allOf:
+      - $ref: '#/$defs/request-body-object'
+      - type: object
+        properties:
+          contentType:
+            enum:
+              - application/grpc-web
+              - application/grpc-web+proto
+              - application/grpc-web-text
+              - application/grpc-web-text+proto
+  connectrpc-request-message-object:
+    allOf:
+      - $ref: '#/$defs/request-body-object'
+      - type: object
+        properties:
+          contentType:
+            enum:
+              - application/proto
+              - application/json
+              - application/connect+proto
+              - application/connect+json
+  connect-request-body:
+    description: |-
+      The request content for a Connect RPC Step. Unary and server-streaming RPCs use one Request Body Object. Client-streaming and bidirectional streaming RPCs
+      MAY use an ordered array of Request Body Objects, including an empty array for a zero-message request stream. Source-aware validation determines
+      whether the array form and content type are valid for the referenced RPC declaration.
+    oneOf:
+      - $ref: '#/$defs/connectrpc-request-message-object'
+      - type: array
+        minItems: 0
+        items:
+          allOf:
+            - $ref: '#/$defs/connectrpc-request-message-object'
+            - type: object
+              required:
+                - payload
   criterion-object:
     $comment: https://spec.openapis.org/arazzo/v1.1#criterion-object
     description: |-
@@ -583,6 +736,7 @@ $defs:
           - header
           - cookie
           - channel
+          - metadata
       value:
         description: The value to pass in the parameter
         oneOf:

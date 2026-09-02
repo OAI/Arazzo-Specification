@@ -1,0 +1,14 @@
+arazzo: 1.2.0
+info:
+  title: Invalid RPC Step with an unsupported protocol
+  version: 1.0.0
+sourceDescriptions:
+  - name: rpcLibrary
+    type: protobuf
+    url: ./rpc-library.proto
+workflows:
+  - workflowId: invalidRpcStep
+    steps:
+      - stepId: getBook
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        rpcProtocol: json-rpc

@@ -210,7 +210,7 @@ This object MAY be extended with [Specification Extensions](#specification-exten
 ##### Arazzo Specification Object Example
 
 ```yaml
-arazzo: 1.1.0
+arazzo: 1.2.0
 $self: https://api.example.com/workflows/pet-purchase.arazzo.yaml
 info:
   title: A pet purchasing workflow
@@ -341,7 +341,7 @@ An object storing a map between named description keys and location URLs to the 
 |-------------------------------|:--------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <a name="sourceName"></a>name | `string` | **REQUIRED**. A unique name for the source description. Tools and libraries MAY use the `name` to uniquely identify a source description, therefore, it is RECOMMENDED to follow common programming naming conventions. SHOULD conform to the regular expression `[A-Za-z0-9_\-]+`. |
 | <a name="sourceURL"></a>url   | `string` | **REQUIRED**. A URL to a source description to be used by a workflow. If a relative reference is used, it MUST be in the form of a URI-reference as defined by [RFC3986](https://tools.ietf.org/html/rfc3986#section-4.2).                                                          |
-| <a name="sourceType"></a>type | `string` | The type of source description. Possible values are `"openapi"` or `"asyncapi"` or `"arazzo"`.                                                                                                                                                                                      |
+| <a name="sourceType"></a>type | `string` | The type of source description. Possible values are `"openapi"` or `"asyncapi"` or `"protobuf"` or `"arazzo"`.                                                                                                                                                                      |
 
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
@@ -353,6 +353,26 @@ name: petStoreDescription
 url: https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml
 type: openapi
 ```
+
+A Protocol Buffer source description example:
+
+```yaml
+name: rpcLibrary
+url: ./rpc-library.proto
+type: protobuf
+```
+
+##### Protocol Buffer Source Descriptions
+
+A `protobuf` Source Description identifies a Protocol Buffers source document. A Protocol Buffer source description MAY contain multiple service declarations. Tooling MUST resolve direct and transitive imports and dependencies as part of source resolution. When a Step references an RPC declaration in that source, `rpcProtocol` determines the wire protocol and execution semantics used to invoke it.
+
+Arazzo does not define:
+
+- protobuf import roots; or
+- RPC deployment targets or discovery mechanisms; or
+- protocol-specific connection construction, reflection, or generated clients.
+
+These are implementation concerns. See the [Protocol Buffers language guide](https://protobuf.dev/programming-guides/proto3/) for the underlying message and service model.
 
 #### Workflow Object
 
@@ -371,7 +391,7 @@ Describes the steps to be taken across one or more APIs to achieve an objective.
 | <a name="workflowSuccessActions"></a>successActions | [[Success Action Object](#success-action-object) \| [Reusable Object](#reusable-object)] | A list of success actions that are applicable for all steps described under this workflow. These success actions can be overridden at the step level but cannot be removed there. If a Reusable Object is provided, it MUST link to success actions defined in the [components/successActions](#components-object) of the current Arazzo document. The list MUST NOT include duplicate success actions.                                                                                                                                                                              |
 | <a name="workflowFailureActions"></a>failureActions | [[Failure Action Object](#failure-action-object) \| [Reusable Object](#reusable-object)] | A list of failure actions that are applicable for all steps described under this workflow. These failure actions can be overridden at the step level but cannot be removed there. If a Reusable Object is provided, it MUST link to failure actions defined in the [components/failureActions](#components-object) of the current Arazzo document. The list MUST NOT include duplicate failure actions.                                                                                                                                                                              |
 | <a name="workflowOutputs"></a>outputs               |           Map[`string`, {expression} \| [Selector Object](#selector-object) ]            | A map between a friendly name and a dynamic output value defined using a [Runtime Expression](#runtime-expressions) or [Selector Object](#selector-object). The name MUST use keys that match the regular expression: `^[a-zA-Z0-9\.\-_]+$`.                                                                                                                                                                                                                                                                                                                                         |
-| <a name="workflowParameters"></a>parameters         |      [[Parameter Object](#parameter-object) \| [Reusable Object](#reusable-object)]      | A list of parameters that are applicable for all steps described under this workflow. These parameters can be overridden at the step level but cannot be removed there. Each parameter MUST be passed to an operation or workflow as referenced by `operationId`, `operationPath`, or `workflowId` as specified within each step. If a Reusable Object is provided, it MUST link to a parameter defined in the [components/parameters](#components-object) of the current Arazzo document. The list MUST NOT include duplicate parameters.                                           |
+| <a name="workflowParameters"></a>parameters         |      [[Parameter Object](#parameter-object) \| [Reusable Object](#reusable-object)]      | A list of parameters that are applicable for all steps described under this workflow. These parameters can be overridden at the step level but cannot be removed there. Each parameter MUST be passed to an operation or workflow as referenced by `operationId`, `operationPath`, `channelPath`, `rpcMethod` or `workflowId` as specified within each step. If a Reusable Object is provided, it MUST link to a parameter defined in the [components/parameters](#components-object) of the current Arazzo document. The list MUST NOT include duplicate parameters.                |
 
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
@@ -414,30 +434,207 @@ outputs:
 
 #### Step Object
 
-Describes a single workflow step which MAY be a call to an API operation ([OpenAPI Operation Object](https://spec.openapis.org/oas/latest.html#operation-object)), ([AysncAPI Operations Object](https://www.asyncapi.com/docs/reference/specification/latest#operationsObject)) or another [Workflow Object](#workflow-object).
+Describes a single workflow step which MAY be a call to an API operation ([OpenAPI Operation Object](https://spec.openapis.org/oas/latest.html#operation-object)), ([AysncAPI Operations Object](https://www.asyncapi.com/docs/reference/specification/latest#operationsObject)), ([RPC method defined by a Protocol Buffer service](https://protobuf.dev/programming-guides/proto3/#services)), or another [Workflow Object](#workflow-object).
 
 ##### Fixed Fields
 
-| Field Name                                        |                                           Type                                           | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-|---------------------------------------------------|:----------------------------------------------------------------------------------------:|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| <a name="stepDescription"></a>description         |                                         `string`                                         | A description of the step. [CommonMark syntax](https://spec.commonmark.org/) MAY be used for rich text representation.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| <a name="stepId"></a>stepId                       |                                         `string`                                         | **REQUIRED**. Unique string to represent the step. The `stepId` MUST be unique amongst all steps described in the workflow. The `stepId` value is **case-sensitive**. Tools and libraries MAY use the `stepId` to uniquely identify a workflow step, therefore, it is RECOMMENDED to follow common programming naming conventions. SHOULD conform to the regular expression `[A-Za-z0-9_\-]+`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| <a name="stepOperationId"></a>operationId         |                                         `string`                                         | The name of an existing, resolvable operation, as defined with a unique `operationId` and existing within one of the `sourceDescriptions`. The referenced operation will be invoked by this workflow step. If multiple (non `arazzo` type) `sourceDescriptions` are defined, then the `operationId` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g., `$sourceDescriptions.<name>.<operationId>`) to avoid ambiguity or potential clashes. This field is mutually exclusive of the `operationPath` and `workflowId` fields respectively.                                                                                                                                                                                                                                                                                                                                                                                       |
-| <a name="stepOperationPath"></a>operationPath     |                                         `string`                                         | A reference to a [Source Description Object](#source-description-object) combined with a [JSON Pointer](https://tools.ietf.org/html/rfc6901) to reference an operation. This field is mutually exclusive of the `operationId` and `workflowId` fields respectively. The operation being referenced MUST be described within one of the `sourceDescriptions` descriptions. A [Runtime Expression](#runtime-expressions) syntax MUST be used to identify the source description document. If the referenced operation has an `operationId` defined then the `operationId` SHOULD be preferred over the `operationPath`.                                                                                                                                                                                                                                                                                                                                    |
-| <a name="stepChannelPath"></a>channelPath         |                                         `string`                                         | A reference to a [Source Description Object](#source-description-object) combined with a [JSON Pointer](https://tools.ietf.org/html/rfc6901) to reference an event channel. This field is mutually exclusive of the `operationId` and `workflowId` fields respectively. The operation being referenced MUST be described within one of the `sourceDescriptions` descriptions. A [Runtime Expression](#runtime-expressions) syntax MUST be used to identify the source description document. If the referenced operation has an `operationId` defined then the `operationId` SHOULD be preferred over the `channelPath`.                                                                                                                                                                                                                                                                                                                                  |
-| <a name="stepWorkflowId"></a>workflowId           |                                         `string`                                         | The [workflowId](#fixed-fields-2) referencing an existing workflow within the Arazzo Description. If the referenced workflow is contained within an `arazzo` type `sourceDescription`, then the `workflowId` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g., `$sourceDescriptions.<name>.<workflowId>`) to avoid ambiguity or potential clashes. The field is mutually exclusive of the `operationId` and `operationPath` fields respectively.                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| <a name="stepParameters"></a>parameters           |      [[Parameter Object](#parameter-object) \| [Reusable Object](#reusable-object)]      | A list of parameters that MUST be passed to an operation or workflow as referenced by `operationId`, `operationPath`, or `workflowId`. If a parameter is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a parameter defined in the [components/parameters](#components-object) of the current Arazzo document. The list MUST NOT include duplicate parameters.                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| <a name="stepRequestBody"></a>requestBody         |                       [Request Body Object](#request-body-object)                        | The request body to pass to an operation as referenced by `operationId` or `operationPath`. The `requestBody` is fully supported in HTTP methods where the HTTP 1.1 specification [RFC9110](https://tools.ietf.org/html/rfc9110#section-9.3) explicitly defines semantics for "content" like request bodies, such as within POST, PUT, and PATCH methods. For methods where the HTTP specification provides less clarity—such as GET, HEAD, and DELETE—the use of `requestBody` is permitted but does not have well-defined semantics. In these cases, its use SHOULD be avoided if possible.                                                                                                                                                                                                                                                                                                                                                            |
-| <a name="stepSuccessCriteria"></a>successCriteria |                         [[Criterion Object](#criterion-object)]                          | A list of assertions to determine the success of the step. Each assertion is described using a [Criterion Object](#criterion-object). All assertions `MUST` be satisfied for the step to be deemed successful. If `successCriteria` is provided, it `MUST` contain at least one [Criterion Object](#criterion-object).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| <a name="stepOnSuccess"></a>onSuccess             | [[Success Action Object](#success-action-object) \| [Reusable Object](#reusable-object)] | An array of success action objects that specify what to do upon step success. If omitted, the next sequential step shall be executed as the default behavior. If multiple success actions have similar `criteria`, the first sequential action matching the criteria SHALL be the action executed. If a success action is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a success action defined in the [components](#components-object) of the current Arazzo document. The list MUST NOT include duplicate success actions.                                                                                                                                                                                                                                                                                                      |
-| <a name="stepOnFailure"></a>onFailure             | [[Failure Action Object](#failure-action-object) \| [Reusable Object](#reusable-object)] | An array of failure action objects that specify what to do upon step failure. If omitted, the default behavior is to break and return. If multiple failure actions have similar `criteria`, the first sequential action matching the criteria SHALL be the action executed. If a failure action is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a failure action defined in the [components](#components-object) of the current Arazzo document. The list MUST NOT include duplicate failure actions.                                                                                                                                                                                                                                                                                                                             |
-| <a name="stepOutputs"></a>outputs                 |            Map[`string`, {expression} \| [Selector Object](#selector-object)]            | A map between a friendly name and a dynamic output value defined using a [Runtime Expression](#runtime-expressions) or [Selector Object](#selector-object). The name MUST use keys that match the regular expression: `^[a-zA-Z0-9\.\-_]+$`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| <a name="stepTimeout"></a>timeout                 |                                        `integer`                                         | The maximum number of milli-seconds to wait for the step to complete before aborting and failing the step. Consequently this will fail the workflow unless `onFailure` actions are defined.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| <a name="stepCorrelationId"></a>correlationId     |                                         `string`                                         | A correlationId in AsyncAPI links a request with its response (or more broadly, to trace a single logical transaction across multiple asynchronous messages). Only applicable to `asyncapi` steps with action `receive` and has to be in-sync with correlationId defined in the AsyncAPI document.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| <a name="stepAction"></a>action                   |                                         `string`                                         | Describes the message flow intent. Indicates whether the step will _send (publish)_ or _receive (subscribe)_ to a channel in an AsyncAPI document. Only applicable for `asyncapi` steps. Possible values are `"send"` or `"receive"`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| <a name="stepDependsOn"></a>dependsOn             |                                      List[`string`]                                      | A list of steps that MUST be completed before this step can be executed. `dependsOn` only establishes a prerequisite relationship for the current step and does not trigger execution of the referenced steps. Each value provided MUST be a `stepId`. The `stepId` value is case-sensitive. If the step depended on is defined within the **current workflow**, specify the `stepId` directly (e.g., `authStep`). If the step is defined in a **different workflow within the current Arazzo Document**, reference it using `$workflows.<workflowId>.steps.<stepId>`. If the step is defined in a **separate Arazzo Document**, the workflow MUST be listed in `sourceDescriptions` and referenced using `$sourceDescriptions.<name>.<workflowId>.steps.<stepId>` to avoid ambiguity. If the step depends on the output of a non-blocking/asynchronous step, then it SHOULD use `dependsOn` and refer to the async step using one of these patterns.    |
+| Field Name                                        |                                           Type                                           | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+|---------------------------------------------------|:----------------------------------------------------------------------------------------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <a name="stepDescription"></a>description         |                                         `string`                                         | A description of the step. [CommonMark syntax](https://spec.commonmark.org/) MAY be used for rich text representation.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| <a name="stepId"></a>stepId                       |                                         `string`                                         | **REQUIRED**. Unique string to represent the step. The `stepId` MUST be unique amongst all steps described in the workflow. The `stepId` value is **case-sensitive**. Tools and libraries MAY use the `stepId` to uniquely identify a workflow step, therefore, it is RECOMMENDED to follow common programming naming conventions. SHOULD conform to the regular expression `[A-Za-z0-9_\-]+`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| <a name="stepOperationId"></a>operationId         |                                         `string`                                         | The name of an existing, resolvable operation, as defined with a unique `operationId` and existing within one of the `sourceDescriptions`. The referenced operation will be invoked by this workflow step. If multiple (non `arazzo` type) `sourceDescriptions` are defined, then the `operationId` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g., `$sourceDescriptions.<name>.<operationId>`) to avoid ambiguity or potential clashes. This field is mutually exclusive of the `operationPath` and `workflowId` fields respectively.                                                                                                                                                                                                                                                                                                                                                                                    |
+| <a name="stepOperationPath"></a>operationPath     |                                         `string`                                         | A reference to a [Source Description Object](#source-description-object) combined with a [JSON Pointer](https://tools.ietf.org/html/rfc6901) to reference an operation. This field is mutually exclusive of the `operationId` and `workflowId` fields respectively. The operation being referenced MUST be described within one of the `sourceDescriptions` descriptions. A [Runtime Expression](#runtime-expressions) syntax MUST be used to identify the source description document. If the referenced operation has an `operationId` defined then the `operationId` SHOULD be preferred over the `operationPath`.                                                                                                                                                                                                                                                                                                                                 |
+| <a name="stepRpcMethod"></a>rpcMethod             |                                         `string`                                         | A fully-qualified RPC method identifier from a Protocol Buffer service declaration, in the form `$sourceDescriptions.<name>.<fully-qualified-service-name>/<method-name>`; the logical identifier is `<fully-qualified-service-name>/<method-name>` (e.g., `org.v1.Library/GetBook`). This field is mutually exclusive with `operationId`, `operationPath`, `channelPath`, and `workflowId`. When this field is present, `rpcProtocol` is **REQUIRED**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| <a name="stepRpcProtocol"></a>rpcProtocol         |                                         `string`                                         | The RPC wire protocol and execution semantics used to invoke `rpcMethod`. This field is **REQUIRED** when `rpcMethod` is present and MUST NOT be used otherwise. The value is case-sensitive. Supported values are `"grpc"`, `"grpc-web"`, `"twirp"`, and `"connect"`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| <a name="stepChannelPath"></a>channelPath         |                                         `string`                                         | A reference to a [Source Description Object](#source-description-object) combined with a [JSON Pointer](https://tools.ietf.org/html/rfc6901) to reference an event channel. This field is mutually exclusive of the `operationId` and `workflowId` fields respectively. The operation being referenced MUST be described within one of the `sourceDescriptions` descriptions. A [Runtime Expression](#runtime-expressions) syntax MUST be used to identify the source description document. If the referenced operation has an `operationId` defined then the `operationId` SHOULD be preferred over the `channelPath`.                                                                                                                                                                                                                                                                                                                               |
+| <a name="stepWorkflowId"></a>workflowId           |                                         `string`                                         | The [workflowId](#fixed-fields-2) referencing an existing workflow within the Arazzo Description. If the referenced workflow is contained within an `arazzo` type `sourceDescription`, then the `workflowId` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g., `$sourceDescriptions.<name>.<workflowId>`) to avoid ambiguity or potential clashes. The field is mutually exclusive of the `operationId` and `operationPath` fields respectively.                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| <a name="stepParameters"></a>parameters           |      [[Parameter Object](#parameter-object) \| [Reusable Object](#reusable-object)]      | A list of parameters that MUST be passed to an operation or workflow as referenced by `operationId`, `operationPath`, `channelPath`, `rpcMethod` or `workflowId`. If a parameter is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a parameter defined in the [components/parameters](#components-object) of the current Arazzo document. The list MUST NOT include duplicate parameters.                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| <a name="stepRequestBody"></a>requestBody         |                       [Request Body Object](#request-body-object)                        | The request body to pass to an operation as referenced by `operationId`, `operationPath`, `channelPath` or `rpcMethod`. The `requestBody` is fully supported in HTTP methods where the HTTP 1.1 specification [RFC9110](https://tools.ietf.org/html/rfc9110#section-9.3) explicitly defines semantics for "content" like request bodies, such as within POST, PUT, and PATCH methods. For methods where the HTTP specification provides less clarity—such as GET, HEAD, and DELETE—the use of `requestBody` is permitted but does not have well-defined semantics. In these cases, its use SHOULD be avoided if possible. For an RPC Step, see [RPC Step Semantics for Protocol Buffer Source Descriptions](#rpc-step-semantics-for-protocol-buffer-source-descriptions) for when this field may be an ordered array of Request Body Objects.                                                                                                         |
+| <a name="stepSuccessCriteria"></a>successCriteria |                         [[Criterion Object](#criterion-object)]                          | A list of assertions to determine the success of the step. Each assertion is described using a [Criterion Object](#criterion-object). All assertions `MUST` be satisfied for the step to be deemed successful. If `successCriteria` is provided, it `MUST` contain at least one [Criterion Object](#criterion-object).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| <a name="stepOnSuccess"></a>onSuccess             | [[Success Action Object](#success-action-object) \| [Reusable Object](#reusable-object)] | An array of success action objects that specify what to do upon step success. If omitted, the next sequential step shall be executed as the default behavior. If multiple success actions have similar `criteria`, the first sequential action matching the criteria SHALL be the action executed. If a success action is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a success action defined in the [components](#components-object) of the current Arazzo document. The list MUST NOT include duplicate success actions.                                                                                                                                                                                                                                                                                                   |
+| <a name="stepOnFailure"></a>onFailure             | [[Failure Action Object](#failure-action-object) \| [Reusable Object](#reusable-object)] | An array of failure action objects that specify what to do upon step failure. If omitted, the default behavior is to break and return. If multiple failure actions have similar `criteria`, the first sequential action matching the criteria SHALL be the action executed. If a failure action is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a failure action defined in the [components](#components-object) of the current Arazzo document. The list MUST NOT include duplicate failure actions.                                                                                                                                                                                                                                                                                                                          |
+| <a name="stepOutputs"></a>outputs                 |            Map[`string`, {expression} \| [Selector Object](#selector-object)]            | A map between a friendly name and a dynamic output value defined using a [Runtime Expression](#runtime-expressions) or [Selector Object](#selector-object). The name MUST use keys that match the regular expression: `^[a-zA-Z0-9\.\-_]+$`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| <a name="stepTimeout"></a>timeout                 |                                        `integer`                                         | The maximum number of milli-seconds to wait for the step to complete before aborting and failing the step. Consequently this will fail the workflow unless `onFailure` actions are defined.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| <a name="stepCorrelationId"></a>correlationId     |                                         `string`                                         | A correlationId in AsyncAPI links a request with its response (or more broadly, to trace a single logical transaction across multiple asynchronous messages). Only applicable to `asyncapi` steps with action `receive` and has to be in-sync with correlationId defined in the AsyncAPI document.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| <a name="stepAction"></a>action                   |                                         `string`                                         | Describes the message flow intent. Indicates whether the step will _send (publish)_ or _receive (subscribe)_ to a channel in an AsyncAPI document. Only applicable for `asyncapi` steps. Possible values are `"send"` or `"receive"`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| <a name="stepDependsOn"></a>dependsOn             |                                      List[`string`]                                      | A list of steps that MUST be completed before this step can be executed. `dependsOn` only establishes a prerequisite relationship for the current step and does not trigger execution of the referenced steps. Each value provided MUST be a `stepId`. The `stepId` value is case-sensitive. If the step depended on is defined within the **current workflow**, specify the `stepId` directly (e.g., `authStep`). If the step is defined in a **different workflow within the current Arazzo Document**, reference it using `$workflows.<workflowId>.steps.<stepId>`. If the step is defined in a **separate Arazzo Document**, the workflow MUST be listed in `sourceDescriptions` and referenced using `$sourceDescriptions.<name>.<workflowId>.steps.<stepId>` to avoid ambiguity. If the step depends on the output of a non-blocking/asynchronous step, then it SHOULD use `dependsOn` and refer to the async step using one of these patterns. |
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
+
+##### RPC Step Semantics for Protocol Buffer Source Descriptions
+
+###### Method Identity and Message Representation
+
+For an RPC Step, the referenced Protocol Buffer service declaration determines the request and response message types and the RPC's streaming form. `operationId`, `operationPath`, and `channelPath` MUST NOT identify an RPC method. When Protocol Buffer messages are represented as Arazzo values, implementations MUST use the [ProtoJSON representation](https://protobuf.dev/programming-guides/json/) for the declared type, including its rules for nested messages, repeated fields, maps, enums, bytes, and field naming; Arazzo does not model a protocol's wire format.
+
+The logical RPC method identity is `<fully-qualified-service-name>/<method-name>`. For example:
+
+```proto
+package org.v1;
+
+service Library {
+  rpc GetBook(GetBookRequest) returns (Book);
+}
+```
+
+identifies the RPC method `org.v1.Library/GetBook`. A source-qualified reference and its protocol discriminator are written as:
+
+```yaml
+rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+rpcProtocol: grpc
+```
+
+```text
+$sourceDescriptions.rpcLibrary. | org.v1.Library/GetBook
+        Arazzo source            RPC method identifier
+```
+
+###### RPC Forms and Request Bodies
+
+| RPC form                | Request messages                    | `$response.body`                                   |
+|-------------------------|-------------------------------------|----------------------------------------------------|
+| Unary                   | one                                 | one response message if received, otherwise absent |
+| Server streaming        | one                                 | ordered array, possibly empty                      |
+| Client streaming        | zero or more                        | one response message if received, otherwise absent |
+| Bidirectional streaming | zero or more predetermined messages | ordered array, possibly empty                      |
+
+The referenced Protocol Buffer service declaration determines the row that applies.
+
+For unary and server-streaming RPCs, a single Request Body Object represents one request message. If `requestBody` is omitted, the RPC is invoked with the protobuf default instance of its declared request type where such an invocation is valid under the referenced Protocol Buffer definition. Source-aware validation MAY reject omission where the definition does not permit a valid default request.
+
+For client-streaming RPCs, a Request Body Object represents one streamed request message. An ordered array of Request Body Objects represents those messages in authored order. An empty array or an omitted `requestBody` represents zero outbound messages. The selected `rpcProtocol` determines how the authored sequence is transmitted and completed.
+
+Bidirectional streaming uses the same authored outbound request representation as client streaming. There is no Arazzo primitive for making a later outbound message depend on an earlier inbound message: response-dependent or interactive bidirectional sequencing is not modeled.
+
+The structure and meaning of `$response.status`, protocol-specific request and response metadata, completion, cancellation, and wire encoding are determined by `rpcProtocol`.
+
+###### gRPC Protocol Semantics
+
+The following semantics apply when `rpcProtocol` is `grpc`. See the [gRPC core concepts](https://grpc.io/docs/what-is-grpc/core-concepts/) for the underlying execution model.
+
+For [client-streaming RPCs](https://grpc.io/docs/what-is-grpc/core-concepts/#client-streaming-rpc), the authored messages are sent in order and the client request direction is then [half-closed](https://grpc.io/docs/what-is-grpc/core-concepts/#rpc-life-cycle). An empty array or omitted `requestBody` sends zero outbound messages followed by immediate half-close.
+
+For [bidirectional-streaming RPCs](https://grpc.io/docs/what-is-grpc/core-concepts/#bidirectional-streaming-rpc), outbound messages are submitted in authored order. Server responses MAY arrive while client messages are still being sent; the two directions are independent. After all configured outbound messages are successfully submitted, the client request direction is half-closed, and receiving continues until terminal gRPC status.
+
+For client-streaming and bidirectional streaming request sequences, outbound messages are attempted in authored order. The server MAY terminate the RPC before all configured messages are submitted. If terminal status arrives before the authored outbound request sequence can be completed, the Arazzo Step fails because the authored interaction could not be completed. No particular implementation mechanism is prescribed.
+
+###### gRPC Completion, Status, and Timeouts
+
+A gRPC Step completes when terminal [gRPC status](https://grpc.io/docs/guides/status-codes/) is known. A gRPC call MAY terminate with status and no response Protocol Buffer message, including a [trailers-only response](https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#responses) or error termination. For [server-streaming](https://grpc.io/docs/what-is-grpc/core-concepts/#server-streaming-rpc) and bidirectional-streaming RPCs, all response messages received before terminal status are retained in receive order as `$response.body`; the array MAY be empty.
+
+For [unary](https://grpc.io/docs/what-is-grpc/core-concepts/#unary-rpc) and client-streaming RPCs, `$response.body` is the single received response message; if no response message was received, the body is absent or unavailable. Implementations MUST NOT synthesize a Protocol Buffer default response object.
+
+The terminal gRPC application status exposed by `$response.status` is an object with the following fields:
+
+For a successful status with no message or rich error details, the default representation is:
+
+```yaml
+code: 0
+message: ""
+details: []
+```
+
+- `code` is an integer terminal gRPC status code. `0` means `OK`.
+- `message` is the gRPC status message and is an empty string when no message is provided.
+- `details` contains [structured rich error details](https://grpc.io/docs/guides/error/#richer-error-model) when available, represented using ProtoJSON, and is an empty array when no details are available. When Protocol Buffer `Any` values are represented, they use ProtoJSON's normal `@type` representation. Servers are not required to provide rich status details.
+
+If `successCriteria` is present, it is evaluated normally and determines Step success. For example:
+
+```yaml
+successCriteria:
+  - condition: $response.status#/code == 5
+```
+
+This `successCriteria` MAY intentionally treat `NOT_FOUND` as an expected workflow outcome. `$statusCode` retains its existing transport/HTTP meaning; `$response.status` is the terminal gRPC application status.
+
+Server-streaming and bidirectional streaming Steps complete normally only when terminal gRPC status is received. This proposal does not model receiving from an intentionally infinite stream, stopping after a matching condition, successfully [cancelling the gRPC call](https://grpc.io/docs/guides/cancellation/), and continuing the workflow. The existing `timeout` remains a failure bound.
+
+The Step `timeout` bounds the entire gRPC RPC, including sending client-stream messages, receiving server-stream messages, and waiting for terminal status. On expiry, the implementation MUST cancel or abort the RPC and fail the Step; normal `onFailure` semantics apply. Implementations SHOULD map this behavior to an appropriate [gRPC deadline](https://grpc.io/docs/guides/deadlines/) or [cancellation](https://grpc.io/docs/guides/cancellation/) mechanism.
+
+###### Payload Representation and Source-Aware Validation
+
+For gRPC, `contentType` SHOULD normally be omitted because the referenced RPC declaration determines the message type and [gRPC message encoding](https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#requests); the Arazzo payload represents the logical Protocol Buffer message using ProtoJSON.
+
+Arazzo-visible Protocol Buffer values use ProtoJSON JSON field names. For example, this Protocol Buffer declaration:
+
+```proto
+string book_id = 1;
+int32 chunks_received = 2;
+```
+
+is visible in Arazzo as:
+
+```yaml
+bookId: ...
+chunksReceived: ...
+```
+
+The default JSON field name is the lowerCamelCase version of the proto field name. An explicit `json_name` field option overrides this default. Runtime expressions therefore use `$response.body#/bookId` and `$response.body#/chunksReceived`. See the [ProtoJSON specification](https://protobuf.dev/programming-guides/json/) for detailed conversion semantics.
+
+JSON Schema validates the RPC Step shape and its `rpcProtocol` discriminator, but it cannot load a referenced `.proto`. Source-aware validation MUST verify that a source-qualified `rpcMethod` resolves to a Protocol Buffer source and to an existing service and RPC declaration, MUST validate the payload and request-body shape against that declaration, and MUST verify that the selected protocol supports the declared RPC streaming form.
+
+###### gRPC-Web Protocol Semantics
+
+The following semantics apply when `rpcProtocol` is `grpc-web`. A gRPC-Web Step invokes the referenced method using the [gRPC-Web protocol](https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md), which adapts gRPC framing for browser-compatible HTTP transports and is commonly translated to native gRPC by a proxy. The request uses HTTP `POST` and the native gRPC [`/<service>/<method>` path form](https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#requests). Resolution of the server or proxy base URL is implementation-defined.
+
+gRPC-Web supports [unary and server-streaming RPCs](https://github.com/grpc/grpc-web#streaming-support). It does not support client-streaming or bidirectional-streaming RPCs. Source-aware validation MUST reject a gRPC-Web Step when the request type of the referenced RPC declaration is marked `stream`. The `requestBody` MUST be a single Request Body Object and MUST NOT be an array.
+
+The `contentType`, when present, MUST be `application/grpc-web`, `application/grpc-web+proto`, `application/grpc-web-text`, or `application/grpc-web-text+proto`. When omitted, implementations MUST use `application/grpc-web+proto`. The authored payload remains a logical Protocol Buffer message represented using ProtoJSON. Implementations serialize it using [gRPC-Web message framing](https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md#protocol-differences-vs-grpc-over-http2).
+
+Parameters with `in: metadata` are sent using gRPC-Web [request metadata](https://github.com/grpc/grpc-web#how-it-works). `$request.metadata.<name>` exposes the sent metadata and `$response.metadata.<name>` exposes accessible initial response metadata. The terminal [gRPC status and trailing metadata are encoded in the response](https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md#protocol-differences-vs-grpc-over-http2), either in a final trailer frame or in a trailers-only response.
+
+A gRPC-Web Step uses the same `$response.status` object, response-body cardinality, timeout, and cancellation semantics defined above for gRPC. A server-streaming Step completes normally only when terminal gRPC status is known. `$statusCode` retains its transport HTTP meaning and MUST NOT be used as a substitute for the terminal gRPC application status.
+
+###### Twirp Protocol Semantics
+
+The following semantics apply when `rpcProtocol` is `twirp`. A Twirp RPC Step invokes the referenced method using the [Twirp wire protocol](https://github.com/twitchtv/twirp/blob/main/PROTOCOL.md). Twirp supports unary RPC declarations only. Source-aware validation MUST reject a Twirp Step when either the request or response type of the referenced RPC declaration is marked `stream`.
+
+A Twirp request is sent using HTTP `POST` according to Twirp's [HTTP routing rules](https://twitchtv.github.io/twirp/docs/routing.html) for the referenced fully-qualified service and method. Resolution of the server base URL and configurable [Twirp path prefix](https://twitchtv.github.io/twirp/docs/routing.html#http-routes) is implementation-defined. Parameters with `in: header` are sent as HTTP request headers. The `metadata` parameter location and the gRPC metadata runtime expressions are not defined for Twirp Steps.
+
+The `requestBody` MUST be a single Request Body Object and MUST NOT be an array. Its `contentType`, when present, MUST be `application/protobuf` or `application/json`. When `contentType` is omitted, implementations MUST use `application/protobuf`. The authored payload remains a logical Protocol Buffer message represented using ProtoJSON; the implementation serializes it using the selected [Twirp encoding](https://twitchtv.github.io/twirp/docs/proto_and_json.html).
+
+A successful Twirp call returns HTTP status `200` and a response message encoded using the request encoding. The decoded Protocol Buffer response message is exposed as `$response.body`.
+
+A [Twirp error](https://twitchtv.github.io/twirp/docs/errors.html) uses a non-`200` HTTP status and an `application/json` response containing `code`, `msg`, and optional `meta` fields. A Twirp error is serialized as the HTTP response body, the parsed error object is exposed as `$response.body`. To ensure consistency of status view with other RPC protocols, the same object SHOULD be exposed as `$response.status`. Its fields have the following meanings:
+
+- `code` is a string [Twirp error code](https://twitchtv.github.io/twirp/docs/errors.html#error-codes).
+- `msg` is the human-readable error message.
+- `meta`, when present, is an object whose values are strings.
+
+`$statusCode` exposes the HTTP status code for both successful and error responses. `$response.header` exposes the HTTP response headers. Twirp does not define initial or trailing gRPC metadata, so `$response.metadata` and `$response.trailingMetadata` are unavailable.
+
+The Step `timeout` bounds the entire Twirp HTTP request and response. On expiry, the implementation MUST cancel or abort the request and fail the Step; normal `onFailure` semantics apply.
+
+###### Connect RPC Protocol Semantics
+
+The following semantics apply when `rpcProtocol` is `connect`. A Connect RPC Step invokes the referenced method using the [Connect protocol](https://connectrpc.com/docs/protocol/). Connect supports [unary and streaming RPC forms](https://connectrpc.com/docs/protocol/#outline), including client-streaming, server-streaming, and bidirectional-streaming Protocol Buffer RPC declarations. Source-aware validation MUST verify that the implementation can execute the referenced RPC form.
+
+A Connect request is sent using HTTP `POST` according to the protocol's [procedure-name and routing rules](https://connectrpc.com/docs/protocol/#unary-request-response-rpcs). Resolution of the server base URL and optional [routing prefix](https://connectrpc.com/docs/protocol/#unary-request) is implementation-defined. Arazzo does not model Connect's optional [HTTP GET form for side-effect-free unary procedures](https://connectrpc.com/docs/protocol/#unary-get-request).
+
+The referenced Protocol Buffer declaration determines whether the [unary or streaming Connect protocol](https://connectrpc.com/docs/protocol/#outline) applies:
+
+- For a unary RPC, `requestBody` MUST be a single Request Body Object. Its [unary content type](https://connectrpc.com/docs/protocol/#unary-request), when present, MUST be `application/proto` or `application/json`. When omitted, implementations MUST use `application/proto`.
+- For any streaming RPC, `requestBody` uses the common RPC request representation defined above. Its [streaming content type](https://connectrpc.com/docs/protocol/#streaming-request), when present, MUST be `application/connect+proto` or `application/connect+json`. When omitted, implementations MUST use `application/connect+proto`. If an authored request stream specifies `contentType` on multiple items, every specified value MUST be identical.
+
+The authored payload remains a logical Protocol Buffer message represented using ProtoJSON. Implementations serialize unary messages as bare messages and streaming messages using Connect's enveloped-message framing. Outbound client-streaming and bidirectional-streaming messages are sent in authored order. After all configured messages are submitted, the request direction is closed and response processing continues.
+
+Parameters with `in: metadata` are sent as Connect [leading metadata](https://connectrpc.com/docs/protocol/#unary-request), using HTTP-header semantics. `$request.metadata.<name>` exposes the sent metadata, `$response.metadata.<name>` exposes leading response metadata, and `$response.trailingMetadata.<name>` exposes normalized trailing metadata. For unary responses, Connect carries [trailing metadata](https://connectrpc.com/docs/protocol/#unary-response) using `trailer-`-prefixed response headers; for streaming responses, it carries trailing metadata in the final [EndStreamResponse](https://connectrpc.com/docs/protocol/#error-end-stream). Implementations MUST remove the unary `trailer-` wire prefix before exposing a name through `$response.trailingMetadata`.
+
+A successful unary Connect call returns HTTP status `200` and exposes its decoded Protocol Buffer response message as `$response.body`. A streaming response also uses HTTP status `200`; received response messages are exposed through `$response.body` according to the common RPC response-body cardinality. A streaming Step completes normally only after a valid EndStreamResponse without an error is received.
+
+A [Connect error](https://connectrpc.com/docs/protocol/#error-end-stream) is exposed as `$response.status` with these fields:
+
+- `code` is a string [Connect error code](https://connectrpc.com/docs/protocol/#error-codes).
+- `message`, when present, is a human-readable UTF-8 string.
+- `details`, when present, is an array of [Connect error-detail objects](https://connectrpc.com/docs/protocol/#error-end-stream) containing `type`, `value`, and optional `debug` fields.
+
+For a unary error, Connect uses a non-`200` HTTP status and an `application/json` response; the parsed error is exposed as `$response.body`. To ensure consistency of status view with other RPC protocols, the same object SHOULD be exposed as `$response.status`.
+
+For a streaming error, HTTP status remains `200`, response messages received before termination remain in `$response.body`, and the error from the EndStreamResponse is exposed as `$response.status`. `$response.status` is absent when the Connect RPC succeeds.
+
+`$statusCode` exposes the HTTP status.
+
+The Step `timeout` bounds the entire Connect RPC. Implementations SHOULD communicate it using the protocol's [`connect-timeout-ms` header](https://connectrpc.com/docs/protocol/#unary-request) when representable. On expiry, the implementation MUST cancel or abort the RPC and fail the Step; normal `onFailure` semantics apply.
 
 ##### Step Dependencies and Execution Order
 
@@ -505,6 +702,112 @@ outputs:
     # outputs from this step
     tokenExpires: $response.header.X-Expires-After
     rateLimit: $response.header.X-Rate-Limit
+```
+
+A gRPC unary step example:
+
+```yaml
+- stepId: getBook
+  description: retrieve a book using a unary gRPC method
+  rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+  rpcProtocol: grpc
+  parameters:
+    - name: authorization
+      in: metadata
+      value: Bearer {$inputs.bearerToken}
+  requestBody:
+    payload:
+      bookId: $inputs.bookId
+  successCriteria:
+    - condition: $response.status#/code == 0
+outputs:
+  bookId: $response.body#/id
+```
+
+A gRPC bidirectional streaming Step example:
+
+```yaml
+- stepId: exchangeEvents
+  rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/ExchangeEvents
+  rpcProtocol: grpc
+  requestBody:
+    - payload:
+        type: START
+    - payload:
+        type: FINISH
+  successCriteria:
+    - condition: $response.status#/code == 0
+  outputs:
+    events: $response.body
+```
+
+A gRPC-Web server-streaming Step example:
+
+```yaml
+- stepId: watchBooksInBrowser
+  rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/WatchBooks
+  rpcProtocol: grpc-web
+  parameters:
+    - name: authorization
+      in: metadata
+      value: Bearer {$inputs.bearerToken}
+  requestBody:
+    contentType: application/grpc-web-text+proto
+    payload:
+      category: architecture
+  successCriteria:
+    - condition: $response.status#/code == 0
+  outputs:
+    updates: $response.body
+    traceId: $response.trailingMetadata.trace-id
+```
+
+A Twirp unary Step example:
+
+```yaml
+- stepId: getBookWithTwirp
+  rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+  rpcProtocol: twirp
+  parameters:
+    - name: authorization
+      in: header
+      value: Bearer {$inputs.bearerToken}
+  requestBody:
+    contentType: application/protobuf
+    payload:
+      bookId: $inputs.bookId
+  successCriteria:
+    - condition: $statusCode == 200
+  outputs:
+    bookId: $response.body#/id
+```
+
+A Connect RPC client-streaming Step example:
+
+```yaml
+- stepId: uploadChunksWithConnect
+  rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
+  rpcProtocol: connect
+  parameters:
+    - name: authorization
+      in: metadata
+      value: Bearer {$inputs.bearerToken}
+  requestBody:
+    - contentType: application/connect+proto
+      payload:
+        uploadId: upload-123
+        sequence: 1
+        data: YQ==
+    - contentType: application/connect+proto
+      payload:
+        uploadId: upload-123
+        sequence: 2
+        data: Yg==
+  successCriteria:
+    - condition: $response.body#/chunksReceived == 2
+  outputs:
+    chunksReceived: $response.body#/chunksReceived
+    operationCost: $response.trailingMetadata.operation-cost
 ```
 
 A multiple step example:
@@ -583,14 +886,15 @@ Describes a single step parameter. A unique parameter is defined by the combinat
 - querystring - A parameter that treats the entire URL query string as a single value. This parameter location was introduced in [OpenAPI 3.2.0](https://spec.openapis.org/oas/v3.2.0.html) to support scenarios where the complete query string must be passed as a pre-formatted string rather than individual parameters. When a step references an operation that defines a querystring parameter, the value MUST match the media type format as expressed by the parameter's `content` field (e.g., `application/x-www-form-urlencoded`). The `querystring` location cannot coexist with `query` parameters in the same operation per OpenAPI constraints.
 - header - Custom headers that are expected as part of the request. Note that [RFC9110](https://tools.ietf.org/html/rfc9110#name-field-names) states field names (which includes header) are case-insensitive.
 - cookie - Used to pass a specific cookie value to the source API.
+- metadata - Protocol-defined RPC metadata. For `grpc`, see [gRPC metadata](https://grpc.io/docs/guides/metadata/). For `grpc-web`, see [gRPC-Web request metadata](https://github.com/grpc/grpc-web#how-it-works). For `connect`, see [Connect leading metadata](https://connectrpc.com/docs/protocol/#unary-request). This location is not defined for `twirp`.
 
 ##### Fixed Fields
 
-| Field Name                          |                            Type                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-|-------------------------------------|:----------------------------------------------------------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| <a name="parameterName"></a> name   |                          `string`                          | **REQUIRED**. The name of the parameter. Parameter names are _case sensitive_.                                                                                                                                                                                                                                                                                                                                                                                          |
-| <a name="parameterIn"></a> in       |                          `string`                          | The location of the parameter. Possible values are `"path"`, `"query"`, `"querystring"`, `"header"`, or `"cookie"`. When the step, success action, or failure action in context specifies a `workflowId`, then all parameters map to workflow inputs. In all other scenarios (e.g., a step specifies an `operationId`), the `in` field MUST be specified.                                                                                                               |
-| <a name="parameterValue"></a> value | Any \| {expression} \| [Selector Object](#selector-object) | **REQUIRED**. The value to pass in the parameter. The value can be a constant, a [Runtime Expression](#runtime-expressions), or a [Selector Object](#selector-object) to be evaluated and passed to the referenced operation or workflow. For `querystring` parameters, the value MUST resolve to a string representing the complete query string (e.g., `"key1=value1&key2=value2"`). Runtime expressions can be embedded within the string value using `{}` notation. |
+| Field Name                          |                            Type                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+|-------------------------------------|:----------------------------------------------------------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <a name="parameterName"></a> name   |                          `string`                          | **REQUIRED**. The name of the parameter. Parameter names are _case sensitive_, except that gRPC, gRPC-Web, and Connect metadata names are _case-insensitive_.                                                                                                                                                                                                                                                                                                               |
+| <a name="parameterIn"></a> in       |                          `string`                          | The location of the parameter. Possible values are `"path"`, `"query"`, `"querystring"`, `"header"`, `"cookie"` or `"metadata"`. When the step, success action, or failure action in context specifies a `workflowId`, then all parameters map to workflow inputs. In all other scenarios (e.g., a step specifies an `operationId`), the `in` field MUST be specified. The `metadata` location is semantically valid only for `grpc`, `grpc-web`, and `connect` RPC Steps.  |
+| <a name="parameterValue"></a> value | Any \| {expression} \| [Selector Object](#selector-object) | **REQUIRED**. The value to pass in the parameter. The value can be a constant, a [Runtime Expression](#runtime-expressions), or a [Selector Object](#selector-object) to be evaluated and passed to the referenced operation or workflow. For `querystring` parameters, the value MUST resolve to a string representing the complete query string (e.g., `"key1=value1&key2=value2"`). Runtime expressions can be embedded within the string value using `{}` notation.     |
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
@@ -621,7 +925,16 @@ This object MAY be extended with [Specification Extensions](#specification-exten
 - name: X-Api-Key
   in: header
   value: $inputs.x-api-key
+
+# RPC Metadata Example
+- name: authorization
+  in: metadata
+  value: Bearer {$inputs.accessToken}
 ```
+
+For [gRPC metadata](https://grpc.io/docs/guides/metadata/) and [gRPC-Web metadata](https://github.com/grpc/grpc-web#how-it-works), names are case-insensitive and user-defined names use the gRPC metadata-name character set. The runtime-expression grammar uses the canonical lowercase spelling; implementations MUST evaluate metadata names case-insensitively. Names such as `authorization`, `x-request-id`, `trace-id`, `custom.value`, and `custom_key` are valid. Names beginning with reserved `grpc-` are not user-defined metadata. Metadata values MAY be binary when the name ends in `-bin` and MAY be repeated; Arazzo does not define an additional metadata encoding model.
+
+For [Connect metadata](https://connectrpc.com/docs/protocol/#unary-request), names are also case-insensitive and use HTTP-header semantics. User-defined names beginning with reserved `connect-` are not permitted. Binary metadata names end in `-bin`, and their values use the base64 representation defined by the Connect protocol. Implementations MUST expose Connect metadata names through runtime expressions using canonical lowercase spelling.
 
 #### Success Action Object
 
@@ -1186,7 +1499,7 @@ A Step RequestBody example:
 
 #### Request Body Object
 
-A single request body describing the `Content-Type` and request body content to be passed by a step to an operation.
+A single request body or message content object describing the `Content-Type` and request body or message content to be passed by a step to an operation or RPC method.
 
 ##### Fixed Fields
 
@@ -1284,8 +1597,9 @@ Describes a location within a payload (e.g., a request body) and a value to set 
 
 If `targetSelectorType` is omitted, then:
 
-- `target` MUST be interpreted as [JSON Pointer](https://tools.ietf.org/html/rfc6901)if the payload is `application/json`.
+- `target` MUST be interpreted as [JSON Pointer](https://tools.ietf.org/html/rfc6901) if the payload is `application/json`.
 - `target` MUST be interpreted as [XPath Expression](https://www.w3.org/TR/xpath-31/#id-expressions) if the payload is `application/xml` or another XML-based media type.
+- For an `rpcMethod` Step, when the payload is a Protocol Buffer message represented using ProtoJSON, `target` MUST be interpreted as a [JSON Pointer](https://tools.ietf.org/html/rfc6901).
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
@@ -1333,7 +1647,7 @@ An XPath example using older XPATH 3.0:
 
 ### Runtime Expressions
 
-A runtime expression allows values to be defined based on information that will be available within the HTTP message in an actual API call, or within objects serialized from the Arazzo document such as [workflows](#workflow-object) or [steps](#step-object).
+A runtime expression allows values to be defined based on information that will be available within an HTTP message or protocol-specific request/response context in an actual API call, or within objects serialized from the Arazzo document such as [workflows](#workflow-object) or [steps](#step-object).
 
 The runtime expression is defined by the following [ABNF](https://tools.ietf.org/html/rfc5234) syntax:
 
@@ -1343,9 +1657,9 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
       "$url" /
       "$method" /
       "$statusCode" /
-      "$request." source /
-      "$response." source /
-      "$message." source / 
+      "$request." request-source /
+      "$response." response-source /
+      "$message." message-source /
       "$inputs." inputs-reference /
       "$outputs." outputs-reference /
       "$steps." steps-reference /
@@ -1355,13 +1669,24 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
       "$self"
   )
 
-  ; Request/Response sources
-  source = ( header-reference / query-reference / path-reference / body-reference / payload-reference )
+  ; Request sources
+  request-source = ( header-reference / query-reference / path-reference / body-reference / payload-reference / request-metadata-reference )
+
+  ; Response sources
+  response-source = ( header-reference / body-reference / payload-reference / status-reference / response-metadata-reference )
+
+  ; Message sources
+  message-source = ( header-reference / query-reference / path-reference / body-reference / payload-reference )
   header-reference = "header." token
   query-reference = "query." name
   path-reference = "path." name
   body-reference = "body" ["#" json-pointer ]
   payload-reference = "payload" ["#" json-pointer ]
+  status-reference = "status" ["#" json-pointer ]
+  request-metadata-reference = "metadata." metadata-name
+  response-metadata-reference = ( "metadata." / "trailingMetadata." ) metadata-name
+  metadata-name = 1*( %x61-7A / DIGIT / "-" / "_" / "." )
+      ; Canonical lowercase gRPC, gRPC-Web, and Connect metadata names; names are case-insensitive
 
   ; Input/Output references
   inputs-reference = input-name [ "#" json-pointer ]
@@ -1384,7 +1709,8 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
   source-name = identifier-strict
   source-reference-id = 1*CHAR
       ; operationIds have no character restrictions in OpenAPI/AsyncAPI
-      ; Resolution priority defined in spec text: (1) operationId/workflowId, (2) field names
+      ; RPC method identifiers use <fully-qualified-service-name>/<method-name>
+      ; Resolution priority defined in spec text: (1) operationId/rpcMethod/workflowId, (2) field names
 
   ; Components expressions
   components-reference = component-type "." component-name
@@ -1458,7 +1784,14 @@ The `name` identifier is case-sensitive, whereas `token` is not.
 | Request URL                  | `$url`                                                               |                                                                                                                                                                                                  |
 | Response value               | `$response.body#/status`                                             | In operations which return payloads, references may be made to portions of the response body or the entire body.                                                                                 |
 | Response array element       | `$response.body#/items/0/id`                                         | Array elements can be accessed using numeric indices in JSON Pointer syntax.                                                                                                                     |
+| Request metadata             | `$request.metadata.authorization`                                    | gRPC, gRPC-Web, or Connect metadata sent with the request. Metadata names are case-insensitive.                                                                                                  |
 | Response header              | `$response.header.Server`                                            | Single header values only are available.                                                                                                                                                         |
+| gRPC status                  | `$response.status#/code`                                             | The terminal gRPC status code; `0` means `OK`.                                                                                                                                                   |
+| gRPC-Web status              | `$response.status#/code`                                             | The terminal [gRPC-Web status code](https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md#message-framing-vs-http2-transport-mapping); `0` means `OK`.                                    |
+| Twirp error status           | `$response.status#/code`                                             | The Twirp error-code string, available when a Twirp call returns an error.                                                                                                                       |
+| Connect error status         | `$response.status#/code`                                             | The [Connect error-code](https://connectrpc.com/docs/protocol/#error-codes) string, available when a Connect RPC returns an error.                                                               |
+| Response metadata            | `$response.metadata.x-request-id`                                    | Initial or leading response metadata from a gRPC, gRPC-Web, or Connect RPC.                                                                                                                      |
+| Trailing metadata            | `$response.trailingMetadata.trace-id`                                | Metadata associated with gRPC, gRPC-Web, or Connect RPC completion.                                                                                                                              |
 | Message header               | `$message.header.Server`                                             | Single header values only are available.                                                                                                                                                         |
 | Payload value                | `$message.payload#/status`                                           | In operations which return payloads, references may be made to portions of the payload or the entire payload.                                                                                    |
 | Self URI                     | `$self`                                                              | References the canonical URI of the current Arazzo Description as defined by the `$self` field.                                                                                                  |
@@ -1466,10 +1799,12 @@ The `name` identifier is case-sensitive, whereas `token` is not.
 | Step output value            | `$steps.someStepId.outputs.pets`                                     | In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$steps.someStepId.outputs.pets#/0/id`) or the entire body.        |
 | Workflow output value        | `$outputs.bar` or `$workflows.foo.outputs.bar`                       | In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$workflows.foo.outputs.mappedResponse#/name`) or the entire body. |
 | Embedded expressions         | `https://{$inputs.host}/api/{$steps.create.outputs.id}/status`       | Multiple runtime expressions can be embedded within a single string value by wrapping each in curly braces.                                                                                      |
-| Source description reference | `$sourceDescriptions.petstore.getPetById`                            | References an operationId or workflowId from the named source description. Resolution priority: (1) operationId/workflowId, (2) field names.                                                     |
-| Source description field     | `$sourceDescriptions.petstore.url`                                   | References a field from the Source Description Object. Resolved when no matching operationId/workflowId is found.                                                                                |
+| Source description reference | `$sourceDescriptions.petstore.getPetById`                            | References an operationId, RPC method identifier, or workflowId from the named source description. Resolution priority: (1) operationId/rpcMethod/workflowId, (2) field names.                   |
+| Source description field     | `$sourceDescriptions.petstore.url`                                   | References a field from the Source Description Object. Resolved when no matching operationId/rpcMethod/workflowId is found.                                                                      |
 | Components parameter         | `$components.parameters.foo`                                         | Accesses a foo parameter defined within the Components Object.                                                                                                                                   |
 | Components action            | `$components.successActions.bar` or `$components.failureActions.baz` | Accesses a success or failure action defined within the Components Object.                                                                                                                       |
+
+The `status-reference`, `request-metadata-reference`, and `response-metadata-reference` runtime expression productions are defined only for RPC Steps. Their use for OpenAPI, AsyncAPI, and Workflow Steps is undefined.
 
 Runtime expressions preserve the type of the referenced value.
 Expressions can be embedded into string values by surrounding the expression with `{}` curly braces. When a runtime expression is embedded in this manner, the following rules apply based on the value type:
@@ -1486,7 +1821,8 @@ Whether a value is stored as a string or parsed structure depends on its content
 When using `$sourceDescriptions.<name>.<reference>`, the `<reference>` portion is resolved with the following priority:
 
 - **operationId or workflowId** - If the referenced source description is an OpenAPI description, `<reference>` is first matched against operationIds. If the source description is an Arazzo document, `<reference>` is matched against workflowIds.
-- **Source description field** - If no operationId/workflowId match is found, `<reference>` is matched against field names of the Source Description Object (e.g., `url`,
+- **rpcMethod** - If the referenced source description is a Protocol Buffer description, `<reference>` is matched against the fully-qualified RPC identifier `<fully-qualified-service-name>/<method-name>`.
+- **Source description field** - If no operationId/rpcMethod/workflowId match is found, `<reference>` is matched against field names of the Source Description Object (e.g., `url`,
   `type`).
 
 **Examples:**

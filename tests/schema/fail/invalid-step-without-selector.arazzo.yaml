@@ -1,0 +1,14 @@
+arazzo: 1.2.0
+info:
+  title: Invalid Step without a selector
+  version: 1.0.0
+sourceDescriptions:
+  - name: rpcLibrary
+    type: protobuf
+    url: ./rpc-library.proto
+workflows:
+  - workflowId: invalid
+    steps:
+      - stepId: noSelector
+        # Invalid: a Step Object must select an operation, channel, gRPC method, or workflow.
+        description: This step has no selector field.

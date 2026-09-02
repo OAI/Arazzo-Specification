@@ -1,0 +1,34 @@
+arazzo: 1.2.0
+info:
+  title: gRPC-Web Steps
+  version: 1.0.0
+sourceDescriptions:
+  - name: rpcLibrary
+    type: protobuf
+    url: ./rpc-library.proto
+workflows:
+  - workflowId: grpcWebCalls
+    steps:
+      - stepId: getBook
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        rpcProtocol: grpc-web
+        parameters:
+          - name: authorization
+            in: metadata
+            value: Bearer token
+        requestBody:
+          contentType: application/grpc-web+proto
+          payload:
+            bookId: "123"
+        successCriteria:
+          - condition: $response.status#/code == 0
+      - stepId: watchBooks
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/WatchBooks
+        rpcProtocol: grpc-web
+        requestBody:
+          contentType: application/grpc-web-text+proto
+          payload:
+            category: architecture
+        outputs:
+          updates: $response.body
+          traceId: $response.trailingMetadata.trace-id
