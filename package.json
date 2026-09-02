@@ -37,9 +37,9 @@
     "homepage": "https://github.com/yourusername/your-project-name#readme",
     "dependencies": {
         "cheerio": "^1.2.0",
-        "highlight.js": "^11.11.1",
-        "markdown-it": "^15.0.0",
-        "respec": "37.2.0",
+        "highlight.js": "^11.12.0",
+        "markdown-it": "^15.0.1",
+        "respec": "37.3.5",
         "yargs": "^18.1.0"
     },
     "devDependencies": {
@@ -47,6 +47,6 @@
         "yaml": "2.9.0",
         "@hyperjump/json-schema": "^1.17.8",
         "c8": "^12.0.0",
-        "vitest": "^4.1.10"
+        "vitest": "^4.1.11"
     }
 }
