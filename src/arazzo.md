@@ -838,7 +838,7 @@ An object used to specify the context, conditions, and condition types that can 
 There are four flavors of conditions supported:
 
 - simple - where basic literals, operators, and loose comparisons are used in combination with [Runtime Expressions](#runtime-expressions).
-- regex - where a regex pattern is applied on the supplied context. The context is defined by a [Runtime Expression](#runtime-expressions).
+- regex - where a regex pattern is applied on the supplied context. The pattern MUST be a valid regular expression according to the [ECMA-262](https://tc39.es/ecma262/#sec-patterns) regular expression dialect. The context is defined by a [Runtime Expression](#runtime-expressions).
 - jsonpath - where a JSONPath expression is applied. The root node context is defined by a [Runtime Expression](#runtime-expressions).
 - xpath - where an XPath expression is applied. The root node context is defined by a [Runtime Expression](#runtime-expressions).
 
@@ -954,7 +954,7 @@ Example:
 
 ###### Regex Conditions
 
-When `type` is `regex`, the `condition` MUST be a valid regular expression pattern, and `context` MUST be provided. The condition evaluates to:
+When `type` is `regex`, the `condition` MUST be a valid regular expression according to the [ECMA-262](https://tc39.es/ecma262/#sec-patterns) regular expression dialect, and `context` MUST be provided. The condition evaluates to:
 
 - A condition passes (truthy) when the regex pattern matches the `context` value.
 - A condition fails (falsy) when the regex pattern does not match the `context` value.
