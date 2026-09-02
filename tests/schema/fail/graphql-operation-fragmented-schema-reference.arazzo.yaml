@@ -1,0 +1,15 @@
+arazzo: 1.2.0
+info:
+  title: GraphQL operation requires a whole schema source reference
+  version: 1.0.0
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ./schema.graphqls
+workflows:
+  - workflowId: invalidGraphql
+    steps:
+      - stepId: fragmentedSchemaReference
+        graphqlOperation:
+          schema: $sourceDescriptions.shopSchema#/types
+          operation: 'query GetBook { book { id } }'

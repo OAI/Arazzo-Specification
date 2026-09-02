@@ -1,0 +1,97 @@
+arazzo: 1.2.0
+info:
+  title: GraphQL book workflows
+  version: 1.0.0
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ./schema.graphqls
+  - name: shopOperations
+    type: graphql
+    url: ./operations.graphql
+workflows:
+  - workflowId: lookupBook
+    inputs:
+      type: object
+      properties:
+        bookId:
+          type: string
+        requestId:
+          type: string
+    steps:
+      - stepId: getBook
+        graphqlOperation:
+          schema: $sourceDescriptions.shopSchema
+          operation: |
+            query GetBook($id: ID!) {
+              book(id: $id) {
+                id
+                title
+              }
+            }
+          extensions:
+            tracing:
+              requestId: $inputs.requestId
+        parameters:
+          - name: id
+            in: variable
+            value: $inputs.bookId
+        outputs:
+          title: $response.body#/data/book/title
+  - workflowId: updateBook
+    inputs:
+      type: object
+      properties:
+        bookId:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+        operationHash:
+          type: string
+    steps:
+      - stepId: updateBook
+        graphqlOperation:
+          schema: $sourceDescriptions.shopSchema
+          operation: $sourceDescriptions.shopOperations.UpdateBook
+          extensions:
+            persistedQuery:
+              version: 1
+              sha256Hash: $inputs.operationHash
+        parameters:
+          - name: input
+            in: variable
+            valueMode: literal
+            value:
+              bookId: $inputs.bookId
+              quantity: 1
+              shipping:
+                city: $inputs.city
+                country: $inputs.country
+  - workflowId: collectBookUpdates
+    description: Collects updates from a finite stream that the server completes naturally within the configured timeout.
+    inputs:
+      type: object
+      properties:
+        category:
+          type: string
+    steps:
+      - stepId: collectBookUpdates
+        description: The selected subscription is expected to complete naturally; an unbounded stream will time out and fail this step.
+        graphqlOperation:
+          schema: $sourceDescriptions.shopSchema
+          operation: |
+            subscription BookUpdated($category: String!) {
+              bookUpdated(category: $category) {
+                id
+                title
+              }
+            }
+        parameters:
+          - name: category
+            in: variable
+            value: $inputs.category
+        timeout: 60000
+        outputs:
+          events: $response.body
