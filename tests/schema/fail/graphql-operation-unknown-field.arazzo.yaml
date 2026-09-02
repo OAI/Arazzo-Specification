@@ -1,0 +1,16 @@
+arazzo: 1.2.0
+info:
+  title: GraphQL operation rejects unknown fields
+  version: 1.0.0
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ./schema.graphqls
+workflows:
+  - workflowId: invalidGraphql
+    steps:
+      - stepId: unknownField
+        graphqlOperation:
+          schema: $sourceDescriptions.shopSchema
+          operation: 'query GetBook { book { id } }'
+          endpoint: https://example.com/graphql

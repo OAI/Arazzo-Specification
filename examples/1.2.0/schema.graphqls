@@ -1,0 +1,28 @@
+type Query {
+  book(id: ID!): Book
+  books: [Book!]!
+}
+
+type Mutation {
+  updateBook(input: UpdateBookInput!): Book
+}
+
+type Subscription {
+  bookUpdated(category: String!): Book
+}
+
+type Book {
+  id: ID!
+  title: String!
+}
+
+input UpdateBookInput {
+  bookId: ID!
+  quantity: Int!
+  shipping: ShippingInput!
+}
+
+input ShippingInput {
+  city: String!
+  country: String!
+}
