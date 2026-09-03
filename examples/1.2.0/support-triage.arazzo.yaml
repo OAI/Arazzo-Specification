@@ -1,0 +1,223 @@
+arazzo: 1.2.0
+info:
+  title: Support Ticket Triage and Resolution
+  version: 1.0.0
+  description: >
+    Demonstrates two actor-in-the-loop interaction patterns:
+
+    - Selection from options: the ticket analysis step produces a dynamic list of
+      candidate resolutions; a support agent selects from that computed set rather
+      than from a fixed, pre-declared list.
+
+    - Partial outcome decisions: when a resolution can only be partially applied,
+      the agent is presented with the remaining unresolved items and must choose
+      between several named next steps (escalate or accept partial).
+
+sourceDescriptions:
+  - name: supportAPI
+    url: ./support-api.openapi.yaml
+    type: openapi
+
+workflows:
+  - workflowId: supportTriageWorkflow
+    summary: Analyze a support ticket and guide an agent through resolution
+    description: >
+      Analyzes the ticket to produce a dynamically computed list of candidate
+      resolutions, asks a support agent to select from those options, applies the
+      chosen resolution, and handles the partial-outcome case by asking the agent
+      to decide how to handle any items that could not be resolved automatically.
+    inputs:
+      type: object
+      required:
+        - ticketId
+      properties:
+        ticketId:
+          type: string
+          description: Unique identifier of the support ticket to triage
+
+    steps:
+
+      - stepId: analyze-ticket
+        operationId: $sourceDescriptions.supportAPI.analyzeTicket
+        parameters:
+          - name: ticketId
+            in: path
+            value: $inputs.ticketId
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          suggestedResolutions: $response.body#/suggestedResolutions
+          analysisConfidence: $response.body#/confidence
+
+      # Selection from options:
+      # The options presented to the agent are not hardcoded; they are the
+      # suggestedResolutions computed by the analyze-ticket step above.
+
+      - stepId: select-resolution
+        timeout: PT2H
+        onTimeout:
+          name: selection-timed-out
+          type: goto
+          stepId: escalate-ticket
+        onCancel:
+          name: agent-cancelled
+          type: goto
+          stepId: escalate-ticket
+        interaction:
+          mode: form
+          prompt: >
+            Ticket {$inputs.ticketId} analysis complete
+            (confidence: {$steps.analyze-ticket.outputs.analysisConfidence}).
+            Review the suggested resolutions and select the best approach,
+            or choose to escalate directly to the engineering team.
+          context:
+            ticketId: $inputs.ticketId
+            suggestedResolutions: $steps.analyze-ticket.outputs.suggestedResolutions
+            confidence: $steps.analyze-ticket.outputs.analysisConfidence
+          inputSchema:
+            type: object
+            required:
+              - resolutionId
+              - action
+            properties:
+              resolutionId:
+                type: string
+                description: ID of the chosen resolution from the suggested list
+              action:
+                type: string
+                enum: [apply, escalate]
+                description: Whether to apply the selected resolution or escalate
+              notes:
+                type: string
+                description: Optional notes from the support agent
+        successCriteria:
+          - condition: $interaction.payload#/resolutionId != null
+        onSuccess:
+          - name: apply-selected-resolution
+            type: goto
+            stepId: apply-resolution
+            criteria:
+              - condition: $steps.select-resolution.outputs.action == "apply"
+          - name: escalate-from-selection
+            type: goto
+            stepId: escalate-ticket
+            criteria:
+              - condition: $steps.select-resolution.outputs.action == "escalate"
+        outputs:
+          resolutionId: $interaction.payload#/resolutionId
+          action: $interaction.payload#/action
+          notes: $interaction.payload#/notes
+
+      - stepId: apply-resolution
+        operationId: $sourceDescriptions.supportAPI.applyResolution
+        parameters:
+          - name: ticketId
+            in: path
+            value: $inputs.ticketId
+        requestBody:
+          contentType: application/json
+          payload:
+            resolutionId: $steps.select-resolution.outputs.resolutionId
+            notes: $steps.select-resolution.outputs.notes
+        successCriteria:
+          - condition: $statusCode == 200
+        onSuccess:
+          - name: fully-resolved
+            type: goto
+            stepId: close-ticket
+            criteria:
+              - condition: $response.body#/status == "fully_resolved"
+          - name: partially-resolved
+            type: goto
+            stepId: handle-partial-outcome
+            criteria:
+              - condition: $response.body#/status == "partially_resolved"
+        outputs:
+          resolutionStatus: $response.body#/status
+          resolvedItems: $response.body#/resolvedItems
+          unresolvedItems: $response.body#/unresolvedItems
+
+      # Partial outcome decisions:
+      # The agent is presented with the mixed result and the remaining unresolved
+      # items, then chooses between several named next steps.
+
+      - stepId: handle-partial-outcome
+        timeout: PT1H
+        onTimeout:
+          name: partial-decision-timed-out
+          type: goto
+          stepId: escalate-ticket
+        onCancel:
+          name: partial-decision-cancelled
+          type: goto
+          stepId: escalate-ticket
+        interaction:
+          mode: form
+          prompt: >
+            The resolution for ticket {$inputs.ticketId} was only partially applied.
+            The following items could not be resolved automatically:
+            {$steps.apply-resolution.outputs.unresolvedItems}.
+            Choose how to handle the remaining items.
+          context:
+            ticketId: $inputs.ticketId
+            resolvedItems: $steps.apply-resolution.outputs.resolvedItems
+            unresolvedItems: $steps.apply-resolution.outputs.unresolvedItems
+          inputSchema:
+            type: object
+            required:
+              - action
+            properties:
+              action:
+                type: string
+                enum: [escalate-remaining, accept-partial]
+                description: >
+                  escalate-remaining: hand unresolved items to engineering.
+                  accept-partial: close the ticket with the partial resolution.
+              notes:
+                type: string
+        successCriteria:
+          - condition: $interaction.payload#/action != null
+        onSuccess:
+          - name: escalate-remaining-items
+            type: goto
+            stepId: escalate-ticket
+            criteria:
+              - condition: $steps.handle-partial-outcome.outputs.action == "escalate-remaining"
+          - name: accept-partial-resolution
+            type: goto
+            stepId: close-ticket
+            criteria:
+              - condition: $steps.handle-partial-outcome.outputs.action == "accept-partial"
+        outputs:
+          action: $interaction.payload#/action
+          notes: $interaction.payload#/notes
+
+      - stepId: escalate-ticket
+        operationId: $sourceDescriptions.supportAPI.escalateTicket
+        parameters:
+          - name: ticketId
+            in: path
+            value: $inputs.ticketId
+        requestBody:
+          contentType: application/json
+          payload:
+            reason: Escalated via support triage workflow
+        onSuccess:
+          - name: escalation-complete
+            type: end
+        outputs:
+          escalationId: $response.body#/escalationId
+
+      - stepId: close-ticket
+        operationId: $sourceDescriptions.supportAPI.closeTicket
+        parameters:
+          - name: ticketId
+            in: path
+            value: $inputs.ticketId
+        requestBody:
+          contentType: application/json
+          payload:
+            resolutionSummary: Resolved via support triage workflow
+        onSuccess:
+          - name: ticket-closed
+            type: end

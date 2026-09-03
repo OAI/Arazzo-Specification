@@ -1,0 +1,140 @@
+openapi: 3.1.0
+info:
+  title: OAuth 2.0 Authorization Server API
+  version: 1.0.0
+  description: >
+    Authorization server endpoints for the OAuth 2.0 authorization code flow,
+    including the authorization redirect endpoint, token exchange, and user profile.
+paths:
+  /authorize:
+    get:
+      operationId: authorize
+      summary: OAuth 2.0 authorization endpoint
+      description: >
+        Initiates the authorization code flow. The actor's browser is redirected
+        here to authenticate and grant consent. On success, the server redirects
+        back to the redirect_uri with an authorization code and the state parameter.
+      parameters:
+        - name: response_type
+          in: query
+          required: true
+          schema:
+            type: string
+            const: code
+        - name: client_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: redirect_uri
+          in: query
+          schema:
+            type: string
+            format: uri
+        - name: scope
+          in: query
+          schema:
+            type: string
+            description: Space-separated list of requested scopes
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+            description: Opaque value for CSRF protection; echoed back in the callback
+      responses:
+        '302':
+          description: >
+            Redirect to redirect_uri with authorization code and state as query parameters
+          headers:
+            Location:
+              required: true
+              schema:
+                type: string
+                format: uri
+
+  /oauth/token:
+    post:
+      operationId: exchangeCodeForToken
+      summary: Exchange an authorization code for an access token
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - grant_type
+                - code
+                - client_id
+              properties:
+                grant_type:
+                  type: string
+                  const: authorization_code
+                code:
+                  type: string
+                  description: The authorization code received from the authorization endpoint
+                client_id:
+                  type: string
+                redirect_uri:
+                  type: string
+                  format: uri
+      responses:
+        '200':
+          description: Token response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - access_token
+                  - token_type
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                  expires_in:
+                    type: integer
+                    description: Lifetime in seconds of the access token
+                  refresh_token:
+                    type: string
+                  scope:
+                    type: string
+        '400':
+          description: Invalid request or code
+
+  /userinfo:
+    get:
+      operationId: getUserProfile
+      summary: Retrieve the authenticated user's profile claims
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile claims
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - sub
+                properties:
+                  sub:
+                    type: string
+                    description: Subject identifier; unique identifier for the user
+                  name:
+                    type: string
+                  email:
+                    type: string
+                    format: email
+                  email_verified:
+                    type: boolean
+        '401':
+          description: Missing or invalid access token
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

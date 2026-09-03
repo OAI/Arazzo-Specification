@@ -1,0 +1,27 @@
+arazzo: 1.2.0
+info:
+  title: Interaction stored in components and referenced via reusable object
+  version: 1.0.0
+sourceDescriptions:
+  - name: userAPI
+    url: https://users.com/openapi.yaml
+    type: openapi
+components:
+  interactions:
+    approvalGate:
+      prompt: "Please approve this request."
+      mode: form
+      inputSchema:
+        type: object
+        required: [approved]
+        properties:
+          approved:
+            type: boolean
+workflows:
+  - workflowId: approvalWorkflow
+    steps:
+      - stepId: await-approval
+        interaction:
+          reference: $components.interactions.approvalGate
+        successCriteria:
+          - condition: $interaction.payload#/approved == true

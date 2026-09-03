@@ -46,6 +46,7 @@ The Arazzo Specification can articulate these workflows in a human-readable and 
     - [Selector Object](#selector-object)
     - [Request Body Object](#request-body-object)
     - [Payload Replacement Object](#payload-replacement-object)
+    - [Interaction Object](#interaction-object)
   - [Runtime Expressions](#runtime-expressions)
   - [Specification Extensions](#specification-extensions)
   - [Security Considerations](#security-considerations)
@@ -414,7 +415,7 @@ outputs:
 
 #### Step Object
 
-Describes a single workflow step which MAY be a call to an API operation ([OpenAPI Operation Object](https://spec.openapis.org/oas/latest.html#operation-object)), ([AysncAPI Operations Object](https://www.asyncapi.com/docs/reference/specification/latest#operationsObject)) or another [Workflow Object](#workflow-object).
+Describes a single workflow step which MAY be a call to an API operation ([OpenAPI Operation Object](https://spec.openapis.org/oas/latest.html#operation-object)), ([AsyncAPI Operations Object](https://www.asyncapi.com/docs/reference/specification/latest#operationsObject)), another [Workflow Object](#workflow-object), or an actor-in-the-loop pause via an [Interaction Object](#interaction-object).
 
 ##### Fixed Fields
 
@@ -426,13 +427,16 @@ Describes a single workflow step which MAY be a call to an API operation ([OpenA
 | <a name="stepOperationPath"></a>operationPath     |                                         `string`                                         | A reference to a [Source Description Object](#source-description-object) combined with a [JSON Pointer](https://tools.ietf.org/html/rfc6901) to reference an operation. This field is mutually exclusive of the `operationId` and `workflowId` fields respectively. The operation being referenced MUST be described within one of the `sourceDescriptions` descriptions. A [Runtime Expression](#runtime-expressions) syntax MUST be used to identify the source description document. If the referenced operation has an `operationId` defined then the `operationId` SHOULD be preferred over the `operationPath`.                                                                                                                                                                                                                                                                                                                                    |
 | <a name="stepChannelPath"></a>channelPath         |                                         `string`                                         | A reference to a [Source Description Object](#source-description-object) combined with a [JSON Pointer](https://tools.ietf.org/html/rfc6901) to reference an event channel. This field is mutually exclusive of the `operationId` and `workflowId` fields respectively. The operation being referenced MUST be described within one of the `sourceDescriptions` descriptions. A [Runtime Expression](#runtime-expressions) syntax MUST be used to identify the source description document. If the referenced operation has an `operationId` defined then the `operationId` SHOULD be preferred over the `channelPath`.                                                                                                                                                                                                                                                                                                                                  |
 | <a name="stepWorkflowId"></a>workflowId           |                                         `string`                                         | The [workflowId](#fixed-fields-2) referencing an existing workflow within the Arazzo Description. If the referenced workflow is contained within an `arazzo` type `sourceDescription`, then the `workflowId` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g., `$sourceDescriptions.<name>.<workflowId>`) to avoid ambiguity or potential clashes. The field is mutually exclusive of the `operationId` and `operationPath` fields respectively.                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| <a name="stepInteraction"></a>interaction         |                        [Interaction Object](#interaction-object)                         | Defines an actor-in-the-loop interaction pause. When present, the step suspends workflow execution until an actor provides input. No API operation is invoked directly by a step defining a human-in-the-loop interaction. This field is mutually exclusive with `operationId`, `operationPath`, `channelPath`, and `workflowId`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | <a name="stepParameters"></a>parameters           |      [[Parameter Object](#parameter-object) \| [Reusable Object](#reusable-object)]      | A list of parameters that MUST be passed to an operation or workflow as referenced by `operationId`, `operationPath`, or `workflowId`. If a parameter is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a parameter defined in the [components/parameters](#components-object) of the current Arazzo document. The list MUST NOT include duplicate parameters.                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | <a name="stepRequestBody"></a>requestBody         |                       [Request Body Object](#request-body-object)                        | The request body to pass to an operation as referenced by `operationId` or `operationPath`. The `requestBody` is fully supported in HTTP methods where the HTTP 1.1 specification [RFC9110](https://tools.ietf.org/html/rfc9110#section-9.3) explicitly defines semantics for "content" like request bodies, such as within POST, PUT, and PATCH methods. For methods where the HTTP specification provides less clarity—such as GET, HEAD, and DELETE—the use of `requestBody` is permitted but does not have well-defined semantics. In these cases, its use SHOULD be avoided if possible.                                                                                                                                                                                                                                                                                                                                                            |
 | <a name="stepSuccessCriteria"></a>successCriteria |                         [[Criterion Object](#criterion-object)]                          | A list of assertions to determine the success of the step. Each assertion is described using a [Criterion Object](#criterion-object). All assertions `MUST` be satisfied for the step to be deemed successful. If `successCriteria` is provided, it `MUST` contain at least one [Criterion Object](#criterion-object).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | <a name="stepOnSuccess"></a>onSuccess             | [[Success Action Object](#success-action-object) \| [Reusable Object](#reusable-object)] | An array of success action objects that specify what to do upon step success. If omitted, the next sequential step shall be executed as the default behavior. If multiple success actions have similar `criteria`, the first sequential action matching the criteria SHALL be the action executed. If a success action is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a success action defined in the [components](#components-object) of the current Arazzo document. The list MUST NOT include duplicate success actions.                                                                                                                                                                                                                                                                                                      |
 | <a name="stepOnFailure"></a>onFailure             | [[Failure Action Object](#failure-action-object) \| [Reusable Object](#reusable-object)] | An array of failure action objects that specify what to do upon step failure. If omitted, the default behavior is to break and return. If multiple failure actions have similar `criteria`, the first sequential action matching the criteria SHALL be the action executed. If a failure action is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a failure action defined in the [components](#components-object) of the current Arazzo document. The list MUST NOT include duplicate failure actions.                                                                                                                                                                                                                                                                                                                             |
+| <a name="stepOnTimeout"></a>onTimeout             | [[Failure Action Object](#failure-action-object) \| [Reusable Object](#reusable-object)] | The action or ordered list of actions to evaluate when the step exceeds its `timeout` duration. If `timeout` is not set on the step this field has no effect. If multiple actions are provided, they are evaluated in order; the first action whose `criteria` match is executed. If a Reusable Object is provided, it MUST link to a failure action defined in the [components](#components-object) of the current Arazzo document. The list MUST NOT include duplicate actions.                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| <a name="stepOnCancel"></a>onCancel               | [[Failure Action Object](#failure-action-object) \| [Reusable Object](#reusable-object)] | The action or ordered list of actions to evaluate if the actor explicitly cancels an interaction step. Only applicable when an `interaction` field is present on the step. If multiple actions are provided, they are evaluated in order; the first action whose `criteria` match is executed. If a Reusable Object is provided, it MUST link to a failure action defined in the [components](#components-object) of the current Arazzo document. The list MUST NOT include duplicate actions.                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | <a name="stepOutputs"></a>outputs                 |            Map[`string`, {expression} \| [Selector Object](#selector-object)]            | A map between a friendly name and a dynamic output value defined using a [Runtime Expression](#runtime-expressions) or [Selector Object](#selector-object). The name MUST use keys that match the regular expression: `^[a-zA-Z0-9\.\-_]+$`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| <a name="stepTimeout"></a>timeout                 |                                        `integer`                                         | The maximum number of milli-seconds to wait for the step to complete before aborting and failing the step. Consequently this will fail the workflow unless `onFailure` actions are defined.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| <a name="stepTimeout"></a>timeout                 |                                  `integer` \| `string`                                   | The maximum duration to wait before timing out the step. An integer value is interpreted as milliseconds. A string value MUST be a valid [ISO 8601 duration](https://www.iso.org/iso-8601-date-and-time-format.html) (e.g. `"PT30S"`, `"PT8H"`, `"P2D"`); ISO 8601 format is RECOMMENDED for human-scale timeouts. On expiry, `onTimeout` actions are evaluated; if no `onTimeout` is set the step fails and `onFailure` actions apply.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | <a name="stepCorrelationId"></a>correlationId     |                                         `string`                                         | A correlationId in AsyncAPI links a request with its response (or more broadly, to trace a single logical transaction across multiple asynchronous messages). Only applicable to `asyncapi` steps with action `receive` and has to be in-sync with correlationId defined in the AsyncAPI document.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | <a name="stepAction"></a>action                   |                                         `string`                                         | Describes the message flow intent. Indicates whether the step will _send (publish)_ or _receive (subscribe)_ to a channel in an AsyncAPI document. Only applicable for `asyncapi` steps. Possible values are `"send"` or `"receive"`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | <a name="stepDependsOn"></a>dependsOn             |                                      List[`string`]                                      | A list of steps that MUST be completed before this step can be executed. `dependsOn` only establishes a prerequisite relationship for the current step and does not trigger execution of the referenced steps. Each value provided MUST be a `stepId`. The `stepId` value is case-sensitive. If the step depended on is defined within the **current workflow**, specify the `stepId` directly (e.g., `authStep`). If the step is defined in a **different workflow within the current Arazzo Document**, reference it using `$workflows.<workflowId>.steps.<stepId>`. If the step is defined in a **separate Arazzo Document**, the workflow MUST be listed in `sourceDescriptions` and referenced using `$sourceDescriptions.<name>.<workflowId>.steps.<stepId>` to avoid ambiguity. If the step depends on the output of a non-blocking/asynchronous step, then it SHOULD use `dependsOn` and refer to the async step using one of these patterns.    |
@@ -702,9 +706,10 @@ Components are scoped to the Arazzo document they are defined in. For example, i
 | Field Name                                           | Type                                                           | Description                                                                           |
 |------------------------------------------------------|:---------------------------------------------------------------|---------------------------------------------------------------------------------------|
 | <a name="componentInputs"></a> inputs                | Map[`string`, `JSON Schema`]                                   | An object to hold reusable JSON Schema objects to be referenced from workflow inputs. |
-| <a name="componentParameters"></a>parameters         | Map[`string`, [Parameter Object](#parameter-object)]           | An object to hold reusable Parameter Objects                                          |
+| <a name="componentParameters"></a>parameters         | Map[`string`, [Parameter Object](#parameter-object)]           | An object to hold reusable Parameter Objects.                                         |
 | <a name="componentSuccessActions"></a>successActions | Map[`string`, [Success Action Object](#success-action-object)] | An object to hold reusable Success Actions Objects.                                   |
 | <a name="componentFailureActions"></a>failureActions | Map[`string`, [Failure Action Object](#failure-action-object)] | An object to hold reusable Failure Actions Objects.                                   |
+| <a name="componentInteractions"></a>interactions     | Map[`string`, [Interaction Object](#interaction-object)]       | An object to hold reusable Interaction Objects.                                       |
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
@@ -1331,6 +1336,170 @@ An XPath example using older XPATH 3.0:
       version: xpath-30
 ```
 
+#### Interaction Object
+
+An Interaction Object describes a pause point in a workflow at which an actor (a human, an AI agent, or an external automated system) must provide input before execution can continue. The step containing the Interaction Object does not invoke any API operation. Execution suspends at that step and the actor's response becomes available as step outputs via the `$interaction` runtime expressions.
+
+Interaction steps participate in the same timeout, success/failure, and output mechanics as regular API invocation steps: `timeout`, `onTimeout`, `onCancel`, `successCriteria`, `onSuccess`, `onFailure`, and `outputs` all apply normally.
+
+##### Fixed Fields
+
+| Field Name                                          |                                          Type                                          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+|-----------------------------------------------------|:--------------------------------------------------------------------------------------:|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <a name="interactionPrompt"></a>prompt              |                                        `string`                                        | **REQUIRED.** A human-readable message presented to the actor describing what input is required. The value is a `string` and MAY embed runtime expressions using `{expression}` notation to incorporate dynamic workflow values.                                                                                                                                                                                                                                                                                                 |
+| <a name="interactionContext"></a>context            | Map[`string`, `string` \| {expression} \| [Selector Object](#selector-object)]         | Named values derived from the current workflow state that are made available to the actor when the interaction is presented. Each entry is evaluated before the interaction is surfaced. The key MUST conform to the regular expression `^[a-zA-Z0-9\.\-_]+$`.                                                                                                                                                                                                                                                                   |
+| <a name="interactionInputSchema"></a>inputSchema    |                                    JSON Schema Object                                  | A [JSON Schema 2020-12](https://json-schema.org/specification) object describing the structure and constraints of the expected actor response. The field MUST be specified for `form` and `redirect` modes. Executor implementations SHOULD validate actor input against this schema before resuming the workflow. For `redirect` mode, this schema describes the expected callback query parameters. For `acknowledge` mode, when omitted the default schema `{ "acknowledged": boolean }` applies.                             |
+| <a name="interactionMode"></a>mode                  |                                        `string`                                        | The interaction mode. MUST be one of `"form"`, `"redirect"`, or `"acknowledge"`. Defaults to `"form"` when omitted. See [Interaction Modes](#interaction-modes) for detailed semantics of each mode.                                                                                                                                                                                                                                                                                                                             |
+| <a name="interactionOperationId"></a>operationId    |                                        `string`                                        | **Redirect mode only.** The `operationId` of an OpenAPI operation whose resolved URL the actor's client is redirected to. If multiple non-`arazzo` type source descriptions are defined, then the `operationId` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g. `$sourceDescriptions.<name>.<operationId>`). Mutually exclusive with `operationPath` and `url`.                                                                                                                                       |
+| <a name="interactionOperationPath"></a>operationPath|                                        `string`                                        | **Redirect mode only.** A [Runtime Expression](#runtime-expressions) combining a source description reference and a [JSON Pointer](https://tools.ietf.org/html/rfc6901) to identify an OpenAPI operation whose resolved URL the actor's client is redirected to. Mutually exclusive with `operationId` and `url`.                                                                                                                                                                                                                |
+| <a name="interactionUrl"></a>url                    |                                        `string`                                        | **Redirect mode only.** A literal URL or [Runtime Expression](#runtime-expressions) resolving to a URL, used when the redirect target cannot be expressed via a source description reference. Mutually exclusive with `operationId` and `operationPath`.                                                                                                                                                                                                                                                                         |
+| <a name="interactionParameters"></a>parameters      | [[Parameter Object](#parameter-object) \| [Reusable Object](#reusable-object)]         | **Redirect mode only.** Query parameters to append to the redirect URL. If a parameter is already defined on the referenced operation, this definition overrides it.                                                                                                                                                                                                                                                                                                                                                             |
+
+This object MAY be extended with [Specification Extensions](#specification-extensions).
+
+##### Interaction Modes
+
+**`form`** (default)
+
+The executor presents `prompt` and any `context` entries to the actor and collects a structured response. The actor's response MUST conform to `inputSchema`. The response is accessible via `$interaction.payload`. If the actor's response fails `inputSchema` validation, behaviour is implementation-defined; executors MAY re-prompt the actor or treat the validation failure as step failure. Use this mode for approvals, confirmations, multi-choice selections, data entry, and AI-agent elicitation.
+
+**`redirect`**
+
+The executor redirects the actor's client (typically a browser) to a URL constructed from `operationId`, `operationPath`, or `url`, with `parameters` appended as query parameters. Workflow execution resumes when the actor's client returns to a callback URL registered with the executor. Callback query parameters are accessible via `$interaction.query.<name>`. Exactly one of `operationId`, `operationPath`, or `url` MUST be specified when mode is `redirect`. The `inputSchema` MUST be specified and describes the expected callback query parameters returned when the actor's client completes the redirect.
+
+Use this mode for OAuth/OIDC authorization flows, external payment pages, identity verification flows, and similar out-of-band browser interactions.
+
+**`acknowledge`**
+
+The executor presents `prompt` and any `context` entries to the actor and waits for an explicit decision. When `inputSchema` is omitted, the default payload schema is:
+
+```json
+{ "acknowledged": boolean }
+```
+
+* `acknowledged: true` — the actor proceeded or accepted.
+* `acknowledged: false` — the actor explicitly declined (the step then proceeds to `successCriteria` evaluation, which will typically fail, triggering `onFailure`).
+
+These are distinct from explicit cancellation: if the actor abandons the interaction without submitting a decision, the step-level `onCancel` fires and no payload is delivered. Authors MAY specify an `inputSchema` to capture additional fields alongside the boolean if required. Use this mode for read-before-proceeding gates where no structured input beyond a proceed/decline decision is needed.
+
+##### Actor Response Expressions
+
+Actor responses are accessible within the containing step's `outputs` map and `successCriteria` using the `$interaction` runtime expressions:
+
+| Expression | Applicable modes | Description |
+| --- | --- | --- |
+| `$interaction.payload` | `form`, `acknowledge` | The complete actor response object. |
+| `$interaction.payload#/<json-pointer>` | `form`, `acknowledge` | A field within the actor response, located using a JSON Pointer. |
+| `$interaction.query.<name>` | `redirect` | A named query parameter from the redirect callback URL. |
+
+These expressions are valid only within the `outputs` and `successCriteria` of the interaction step that contains the Interaction Object. They are not accessible from other steps; use `$steps.<stepId>.outputs.<name>` to propagate values.
+
+##### Interaction Step Semantics
+
+* An interaction step does not invoke any API operation. `$response.*`, `$statusCode`, `$request.*`, `$url`, and `requestBody` are not applicable to interaction steps.
+* For `redirect` mode, the executor resolves the target URL from `operationId`, `operationPath`, or the literal `url` field, and issues the redirect to the actor's client. Resolving an operation reference to its URL does not constitute invoking that operation; the referenced operation's API endpoint is not called. A dynamic URL may be expressed by using a [Runtime Expression](#runtime-expressions) as the value of `url`.
+* An interaction step that receives a valid actor response (one that conforms to `inputSchema` when provided) proceeds to `successCriteria` evaluation. If no `successCriteria` is specified, receipt of any valid actor response (conforming to `inputSchema` when provided) is treated as step success.
+* If the actor explicitly cancels, the step-level `onCancel` actions are evaluated. If no `onCancel` is defined the step fails and `onFailure` actions apply.
+* If the step `timeout` expires before actor input is received, `onTimeout` actions are evaluated. If no `onTimeout` is defined the step fails and `onFailure` actions apply.
+
+##### Resumption and Workflow State
+
+When an interaction step suspends, the executor must preserve sufficient state to resume the workflow when actor input arrives. For short-lived interactions (seconds to minutes) an in-memory hold is sufficient. For long-lived interactions (hours to days) executors SHOULD use a durable storage mechanism.
+
+The standardized name for the resume token is **`workflowState`**. Executors SHOULD use this field name consistently, regardless of transport, so that tooling, documentation, and consumers share a common vocabulary. The content of `workflowState` is opaque and executor-defined; this specification does not constrain its format or encoding.
+
+Executors MUST protect `workflowState` against forgery and tampering using a cryptographic integrity mechanism such as HMAC-SHA256 or authenticated encryption (AEAD). The token MUST NOT expose sensitive workflow state in cleartext. See [RFC 6749 §10.12](https://www.rfc-editor.org/rfc/rfc6749#section-10.12) for analogous guidance on the OAuth 2.0 `state` parameter.
+
+How `workflowState` is transmitted depends on the interaction mode. For `redirect` mode, executors SHOULD embed `workflowState` as a query parameter in the `redirect_uri` at the point the step suspends, so that it is returned verbatim when the actor's client completes the redirect. Because `workflowState` is generated at suspension time and cannot be known by the document author, it cannot be declared in the `parameters` array; the executor injects it when constructing the redirect URL. For `form` and `acknowledge` modes, the mechanism for delivering `workflowState` to the notification or presentation layer is implementation-defined; common approaches include an outbound webhook payload or a push notification reference.
+
+The storage mechanism, callback registration, and resumption protocol are not defined by this specification. Executor implementations are responsible for defining and documenting these contracts with their consumers.
+
+Interaction Objects MAY be stored in the `interactions` map of the [Components Object](#components-object) and referenced via a [Reusable Object](#reusable-object) using `$components.interactions.<name>`.
+
+##### Interaction Object Examples
+
+A form mode approval gate:
+
+```yaml
+- stepId: await-approval
+  timeout: PT8H
+  onTimeout:
+    type: goto
+    stepId: cancel-deployment
+  interaction:
+    prompt: >
+      Change **{$inputs.changeId}** is ready to deploy to `{$inputs.environment}`.
+      Risk level: {$steps.validate-change.outputs.riskLevel}. Do you approve?
+    inputSchema:
+      type: object
+      required: [approved]
+      properties:
+        approved: {type: boolean}
+        notes:    {type: string}
+  successCriteria:
+    - condition: $interaction.payload#/approved == true
+  onFailure:
+    - type: end
+  outputs:
+    approved: $interaction.payload#/approved
+    notes:    $interaction.payload#/notes
+```
+
+A redirect mode OAuth authorization:
+
+```yaml
+- stepId: authorize
+  timeout: PT5M
+  onTimeout:
+    type: end
+  interaction:
+    mode: redirect
+    operationId: $sourceDescriptions.authServer.authorize
+    parameters:
+      - name: response_type
+        in: query
+        value: code
+      - name: client_id
+        in: query
+        value: $inputs.clientId
+      - name: state
+        in: query
+        value: $inputs.state
+    inputSchema:
+      type: object
+      required: [code, state]
+      properties:
+        code:  {type: string}
+        state: {type: string}
+  successCriteria:
+    - condition: $interaction.query.state == $inputs.state
+  outputs:
+    code: $interaction.query.code
+```
+
+An acknowledge mode terms acceptance gate:
+
+```yaml
+- stepId: accept-terms
+  timeout: PT30M
+  onTimeout:
+    type: end
+  onCancel:
+    type: end
+  interaction:
+    mode: acknowledge
+    prompt: >
+      Please read the following terms and conditions.
+      {$steps.fetch-terms.outputs.termsText}
+      Do you accept?
+    context:
+      termsVersion: $steps.fetch-terms.outputs.termsVersion
+  successCriteria:
+    - condition: $interaction.payload#/acknowledged == true
+  onFailure:
+    - type: end
+```
+
 ### Runtime Expressions
 
 A runtime expression allows values to be defined based on information that will be available within the HTTP message in an actual API call, or within objects serialized from the Arazzo document such as [workflows](#workflow-object) or [steps](#step-object).
@@ -1352,6 +1521,7 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
       "$workflows." workflows-reference /
       "$sourceDescriptions." source-reference /
       "$components." components-reference /
+      "$interaction." interaction-source /
       "$self"
   )
 
@@ -1388,8 +1558,13 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
 
   ; Components expressions
   components-reference = component-type "." component-name
-  component-type = "parameters" / "successActions" / "failureActions"
+  component-type = "parameters" / "successActions" / "failureActions" / "interactions"
   component-name = identifier
+
+  ; Interaction expressions (only valid in interaction step outputs and successCriteria)
+  interaction-source = ( payload-reference / query-reference )
+      ; payload-reference: form and acknowledge modes
+      ; query-reference:   redirect mode callback parameters
 
   ; Identifier rules
   identifier-strict = 1*( ALPHA / DIGIT / "-" / "_" )
@@ -1470,6 +1645,10 @@ The `name` identifier is case-sensitive, whereas `token` is not.
 | Source description field     | `$sourceDescriptions.petstore.url`                                   | References a field from the Source Description Object. Resolved when no matching operationId/workflowId is found.                                                                                |
 | Components parameter         | `$components.parameters.foo`                                         | Accesses a foo parameter defined within the Components Object.                                                                                                                                   |
 | Components action            | `$components.successActions.bar` or `$components.failureActions.baz` | Accesses a success or failure action defined within the Components Object.                                                                                                                       |
+| Components interaction       | `$components.interactions.confirmDeletion`                           | Accesses a reusable Interaction Object defined within the Components Object.                                                                                                                     |
+| Interaction payload          | `$interaction.payload`                                               | The complete actor response object. Valid in `form` and `acknowledge` modes only.                                                                                                                |
+| Interaction payload field    | `$interaction.payload#/approved`                                     | A field within the actor response. Valid in `form` and `acknowledge` modes only.                                                                                                                 |
+| Redirect callback parameter  | `$interaction.query.code`                                            | A named query parameter from the redirect callback URL. Valid in `redirect` mode only.                                                                                                           |
 
 Runtime expressions preserve the type of the referenced value.
 Expressions can be embedded into string values by surrounding the expression with `{}` curly braces. When a runtime expression is embedded in this manner, the following rules apply based on the value type:
