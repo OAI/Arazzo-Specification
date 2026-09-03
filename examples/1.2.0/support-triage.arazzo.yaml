@@ -36,7 +36,6 @@ workflows:
           description: Unique identifier of the support ticket to triage
 
     steps:
-
       - stepId: analyze-ticket
         operationId: $sourceDescriptions.supportAPI.analyzeTicket
         parameters:
@@ -54,15 +53,6 @@ workflows:
       # suggestedResolutions computed by the analyze-ticket step above.
 
       - stepId: select-resolution
-        timeout: PT2H
-        onTimeout:
-          name: selection-timed-out
-          type: goto
-          stepId: escalate-ticket
-        onCancel:
-          name: agent-cancelled
-          type: goto
-          stepId: escalate-ticket
         interaction:
           mode: form
           prompt: >
@@ -90,6 +80,15 @@ workflows:
               notes:
                 type: string
                 description: Optional notes from the support agent
+        timeout: PT2H
+        onTimeout:
+          name: selection-timed-out
+          type: goto
+          stepId: escalate-ticket
+        onCancel:
+          name: agent-cancelled
+          type: goto
+          stepId: escalate-ticket                
         successCriteria:
           - condition: $interaction.payload#/resolutionId != null
         onSuccess:
@@ -142,15 +141,6 @@ workflows:
       # items, then chooses between several named next steps.
 
       - stepId: handle-partial-outcome
-        timeout: PT1H
-        onTimeout:
-          name: partial-decision-timed-out
-          type: goto
-          stepId: escalate-ticket
-        onCancel:
-          name: partial-decision-cancelled
-          type: goto
-          stepId: escalate-ticket
         interaction:
           mode: form
           prompt: >
@@ -175,6 +165,15 @@ workflows:
                   accept-partial: close the ticket with the partial resolution.
               notes:
                 type: string
+        timeout: PT1H
+        onTimeout:
+          name: partial-decision-timed-out
+          type: goto
+          stepId: escalate-ticket
+        onCancel:
+          name: partial-decision-cancelled
+          type: goto
+          stepId: escalate-ticket                
         successCriteria:
           - condition: $interaction.payload#/action != null
         onSuccess:

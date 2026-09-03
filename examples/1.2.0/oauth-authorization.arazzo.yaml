@@ -56,7 +56,6 @@ workflows:
       # Those query parameters are accessible as $interaction.query.<name>.
 
       - stepId: authorize
-        timeout: PT5M
         interaction:
           mode: redirect
           prompt: >
@@ -91,14 +90,15 @@ workflows:
               state:
                 type: string
                 description: State parameter echoed back; MUST match the value sent
-        successCriteria:
-          - condition: $interaction.query.state == $inputs.state                
+        timeout: PT5M                             
         onTimeout:
           name: auth-timed-out
           type: end
         onCancel:
           name: auth-cancelled
           type: end                
+        successCriteria:
+          - condition: $interaction.query.state == $inputs.state          
         onFailure:
           - name: state-mismatch
             type: end

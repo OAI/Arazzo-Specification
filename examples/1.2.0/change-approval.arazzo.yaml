@@ -46,11 +46,8 @@ workflows:
         secondaryApprover:
           type: string
           description: Name or identifier of the secondary approver (escalation target)
-    outputs:
-      deploymentId: $steps.execute-deployment.outputs.deploymentId
 
     steps:
-
       - stepId: validate-change
         operationId: $sourceDescriptions.changeAPI.validateChange
         parameters:
@@ -72,15 +69,6 @@ workflows:
       # rejection ends the workflow via cancellation.
 
       - stepId: request-primary-approval
-        timeout: PT8H
-        onTimeout:
-          name: primary-timed-out
-          type: goto
-          stepId: escalate-to-secondary
-        onCancel:
-          name: primary-cancelled
-          type: goto
-          stepId: cancel-deployment
         interaction:
           mode: form
           prompt: >
@@ -104,6 +92,15 @@ workflows:
               notes:
                 type: string
                 description: Optional notes from the approver
+        timeout: PT8H
+        onTimeout:
+          name: primary-timed-out
+          type: goto
+          stepId: escalate-to-secondary
+        onCancel:
+          name: primary-cancelled
+          type: goto
+          stepId: cancel-deployment                
         successCriteria:
           - condition: $interaction.payload#/approved == true
         onSuccess:
@@ -123,15 +120,6 @@ workflows:
       # a shorter 4-hour window; any further timeout cancels the deployment.
 
       - stepId: escalate-to-secondary
-        timeout: PT4H
-        onTimeout:
-          name: secondary-timed-out
-          type: goto
-          stepId: cancel-deployment
-        onCancel:
-          name: secondary-cancelled
-          type: goto
-          stepId: cancel-deployment
         interaction:
           mode: form
           prompt: >
@@ -157,6 +145,15 @@ workflows:
               notes:
                 type: string
                 description: Optional notes from the approver
+        timeout: PT4H
+        onTimeout:
+          name: secondary-timed-out
+          type: goto
+          stepId: cancel-deployment
+        onCancel:
+          name: secondary-cancelled
+          type: goto
+          stepId: cancel-deployment                
         successCriteria:
           - condition: $interaction.payload#/approved == true
         onSuccess:
@@ -198,3 +195,6 @@ workflows:
         onSuccess:
           - name: deployment-cancelled
             type: end
+
+    outputs:
+      deploymentId: $steps.execute-deployment.outputs.deploymentId            
