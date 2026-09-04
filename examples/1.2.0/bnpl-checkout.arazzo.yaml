@@ -1,0 +1,225 @@
+arazzo: 1.2.0
+info:
+  title: BNPL Checkout — Partial Eligibility Handling
+  version: 1.0.0
+  description: >
+    Demonstrates a four-way actor decision with onSuccess + criteria routing:
+    when some basket items cannot be financed, a customer selects how to handle
+    the ineligible items (finance eligible only, charge ineligible immediately,
+    choose an alternative payment method, or cancel). If all items are eligible
+    the interaction is bypassed entirely.
+
+    The key pattern: successCriteria validates that the actor provided any valid
+    response; onSuccess with criteria routes to the appropriate step per choice.
+    User choices are not failures — onFailure is not used for routing decisions.
+
+sourceDescriptions:
+  - name: checkoutAPI
+    url: ./checkout-api.openapi.yaml
+    type: openapi
+
+workflows:
+  - workflowId: bnpl-checkout
+    summary: BNPL checkout with partial-eligibility handling
+    description: >
+      Checks BNPL eligibility for the basket. If all items are eligible the
+      order is created directly. If some items cannot be financed, the customer
+      chooses how to proceed: finance eligible items only, finance eligible and
+      charge ineligible immediately, select an alternative payment method for
+      ineligible items, or cancel.
+    inputs:
+      type: object
+      required:
+        - basketId
+        - customerId
+      properties:
+        basketId:
+          type: string
+          description: Unique identifier of the shopping basket
+        customerId:
+          type: string
+          description: Unique identifier of the customer
+    outputs:
+      orderId: $steps.create-bnpl-order.outputs.orderId
+
+    steps:
+
+      - stepId: check-eligibility
+        operationId: $sourceDescriptions.checkoutAPI.checkBnplEligibility
+        parameters:
+          - name: basketId
+            in: path
+            value: $inputs.basketId
+        successCriteria:
+          - condition: $statusCode == 200
+        onSuccess:
+          # All items eligible — skip the interaction and create the order directly
+          - name: all-items-eligible
+            type: goto
+            stepId: create-bnpl-order
+            criteria:
+              - condition: $response.body#/allEligible == true
+        outputs:
+          allEligible:     $response.body#/allEligible
+          eligibleItems:   $response.body#/eligibleItems
+          ineligibleItems: $response.body#/ineligibleItems
+          eligibleTotal:   $response.body#/eligibleTotal
+          ineligibleTotal: $response.body#/ineligibleTotal
+
+      # Four-way actor decision:
+      # successCriteria validates any valid response was received; onSuccess
+      # routes to the appropriate next step based on the actor's choice.
+      # Choices are not failures — they are all valid outcomes of the interaction.
+
+      - stepId: confirm-partial
+        interaction:
+          mode: form
+          prompt: >
+            Some items in your basket cannot be financed and will need to be
+            handled separately.
+
+            **Eligible for BNPL:** {$steps.check-eligibility.outputs.eligibleTotal}
+            **Cannot be financed:** {$steps.check-eligibility.outputs.ineligibleTotal}
+
+            How would you like to proceed?
+          context:
+            eligibleItems:   $steps.check-eligibility.outputs.eligibleItems
+            ineligibleItems: $steps.check-eligibility.outputs.ineligibleItems
+          inputSchema:
+            type: object
+            required:
+              - decision
+            properties:
+              decision:
+                type: string
+                enum:
+                  - proceed-eligible-only
+                  - proceed-eligible-pay-now-ineligible
+                  - alternative-payment
+                  - cancel
+                description: >
+                  proceed-eligible-only: finance eligible items via BNPL, remove
+                  ineligible items from the order.
+                  proceed-eligible-pay-now-ineligible: finance eligible items via
+                  BNPL and charge ineligible items immediately.
+                  alternative-payment: select a different payment method for
+                  ineligible items, then finance eligible items via BNPL.
+                  cancel: abandon checkout entirely.
+        timeout: PT15M
+        onTimeout:
+          name: selection-timed-out
+          type: end
+        onCancel:
+          name: checkout-cancelled
+          type: end                  
+        successCriteria:
+          # Any valid enum value from the actor is a successful interaction response
+          - condition: $interaction.payload#/decision != null
+        onSuccess:
+          # Actions are evaluated in order; first matching criteria wins
+          - name: finance-eligible-only
+            type: goto
+            stepId: create-bnpl-order
+            criteria:
+              - condition: $interaction.payload#/decision == "proceed-eligible-only"
+          - name: charge-ineligible-now
+            type: goto
+            stepId: charge-ineligible-items
+            criteria:
+              - condition: $interaction.payload#/decision == "proceed-eligible-pay-now-ineligible"
+          - name: choose-alternative-payment
+            type: goto
+            stepId: select-alternative-payment
+            criteria:
+              - condition: $interaction.payload#/decision == "alternative-payment"
+          - name: customer-cancelled
+            type: end
+            criteria:
+              - condition: $interaction.payload#/decision == "cancel"
+        outputs:
+          decision: $interaction.payload#/decision
+
+      - stepId: charge-ineligible-items
+        operationId: $sourceDescriptions.checkoutAPI.chargeItems
+        requestBody:
+          contentType: application/json
+          payload:
+            customerId: $inputs.customerId
+            items:      $steps.check-eligibility.outputs.ineligibleItems
+        successCriteria:
+          - condition: $statusCode == 200
+        onSuccess:
+          - name: ineligible-items-charged
+            type: goto
+            stepId: create-bnpl-order
+        outputs:
+          paymentId: $response.body#/paymentId
+
+      # Second interaction step: the customer selects an alternative payment method
+      # for the items that could not be financed via BNPL.
+
+      - stepId: select-alternative-payment
+        timeout: PT10M
+        onTimeout:
+          name: payment-selection-timed-out
+          type: end
+        onCancel:
+          name: payment-selection-cancelled
+          type: end
+        interaction:
+          mode: form
+          prompt: >
+            Select an alternative payment method for the items that cannot be
+            financed: {$steps.check-eligibility.outputs.ineligibleTotal}
+          context:
+            ineligibleItems: $steps.check-eligibility.outputs.ineligibleItems
+            ineligibleTotal: $steps.check-eligibility.outputs.ineligibleTotal
+          inputSchema:
+            type: object
+            required:
+              - paymentMethod
+            properties:
+              paymentMethod:
+                type: string
+                enum: [credit-card, debit-card, paypal]
+                description: Payment method to use for the ineligible items
+        successCriteria:
+          - condition: $interaction.payload#/paymentMethod != null
+        onSuccess:
+          - name: payment-method-selected
+            type: goto
+            stepId: charge-ineligible-with-alt-method
+        outputs:
+          paymentMethod: $interaction.payload#/paymentMethod
+
+      - stepId: charge-ineligible-with-alt-method
+        operationId: $sourceDescriptions.checkoutAPI.chargeItems
+        requestBody:
+          contentType: application/json
+          payload:
+            customerId:    $inputs.customerId
+            items:         $steps.check-eligibility.outputs.ineligibleItems
+            paymentMethod: $steps.select-alternative-payment.outputs.paymentMethod
+        successCriteria:
+          - condition: $statusCode == 200
+        onSuccess:
+          - name: alt-payment-charged
+            type: goto
+            stepId: create-bnpl-order
+        outputs:
+          paymentId: $response.body#/paymentId
+
+      - stepId: create-bnpl-order
+        operationId: $sourceDescriptions.checkoutAPI.createBnplOrder
+        requestBody:
+          contentType: application/json
+          payload:
+            customerId: $inputs.customerId
+            items:      $steps.check-eligibility.outputs.eligibleItems
+        successCriteria:
+          - condition: $statusCode == 201
+        onSuccess:
+          - name: order-created
+            type: end
+        outputs:
+          orderId: $response.body#/orderId

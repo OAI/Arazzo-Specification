@@ -1,0 +1,242 @@
+arazzo: 1.2.0
+info:
+  title: OAuth 2.0 Authorization Code Flow with PAR and JARM (FAPI 2.0)
+  version: 1.0.0
+  description: >
+    Demonstrates the redirect interaction pattern with Pushed Authorization
+    Requests (RFC 9126) and JWT Secured Authorization Response Mode (JARM,
+    OpenID FAPI JARM), as required by the FAPI 2.0 Security Profile.
+
+    With JARM, the authorization server wraps the entire authorization response
+    (code, state, iss, exp) in a signed JWT. JARM supports multiple delivery
+    modes (query.jwt, fragment.jwt, form_post.jwt, or the shorthand jwt); this
+    example uses response_mode: jwt, which for authorization code flow defaults
+    to query delivery. This protects the response from tampering and provides
+    non-repudiation.
+
+    Callback handling is split across two steps:
+      1. authorize-with-provider (redirect): captures the raw JARM JWT from
+         the callback. successCriteria only checks its presence — the JWT
+         is opaque at this point.
+      2. verify-jarm-response (form): an automated executor step that receives
+         the JARM JWT in context and is explicitly contracted via inputSchema
+         to verify the JWT signature, validate claims, and return the extracted
+         authorization code and state. The Arazzo runtime then validates the
+         state declaratively in successCriteria.
+
+    This two-step model makes the verification contract machine-readable:
+    an automated executor implementing this workflow has a clear spec of
+    exactly what it must do and what it must return, without relying on
+    implicit out-of-band conventions.
+
+    Flow:
+      PAR push (operation step) → browser redirect (interaction step)
+      → JARM verification (automated form interaction)
+      → token exchange (operation step)
+
+    Note: JWT signing (requestJwt, clientAssertionPar, clientAssertionToken) is
+    performed by the caller before invoking this workflow. Each client assertion
+    MUST have a unique jti (FAPI 2.0 replay protection). The requestJwt SHOULD
+    include response_mode: jwt; for authorization code flow this defaults to
+    query delivery, making the JARM JWT accessible to the executor's server-side
+    callback handler.
+
+sourceDescriptions:
+  - name: authServer
+    url: ./oauth-as.openapi.yaml
+    type: openapi
+
+workflows:
+  - workflowId: obtain-access-token-par-jarm
+    summary: Obtain an access token using PAR and JARM (FAPI 2.0)
+    description: >
+      Pushes the signed authorization request to the AS backchannel, redirects
+      the actor's browser using only client_id and request_uri, captures the
+      JARM JWT response, instructs the executor to verify it via a form
+      interaction, then exchanges the confirmed authorization code for tokens.
+    inputs:
+      type: object
+      required:
+        - clientId
+        - redirectUri
+        - state
+        - codeVerifier
+        - requestJwt
+        - clientAssertionPar
+        - clientAssertionToken
+      properties:
+        clientId:
+          type: string
+          description: The OAuth 2.0 client identifier
+        redirectUri:
+          type: string
+          description: The URI the authorization server redirects back to
+        state:
+          type: string
+          description: >
+            Unguessable random string for CSRF protection. Must match the
+            state embedded in requestJwt and will be verified against the
+            state claim in the JARM JWT.
+        codeVerifier:
+          type: string
+          description: PKCE code verifier (RFC 7636); S256 hash must be in requestJwt
+        requestJwt:
+          type: string
+          description: >
+            Signed authorization request object (JWS, RS256 or PS256). Must
+            include response_type: code, client_id, redirect_uri, scope, state,
+            code_challenge (S256), and standard JWT claims (iss, aud, exp, nbf).
+            Should include response_mode: jwt (FAPI 2.0 required); for code flow
+            this defaults to query delivery of the JARM JWT.
+        clientAssertionPar:
+          type: string
+          description: >
+            Signed JWT client assertion for private_key_jwt authentication
+            (RFC 7523) at the /par endpoint. Must have a unique jti to satisfy
+            FAPI 2.0 replay protection requirements.
+        clientAssertionToken:
+          type: string
+          description: >
+            Signed JWT client assertion for private_key_jwt authentication
+            (RFC 7523) at the /token endpoint. Must have a unique jti distinct
+            from clientAssertionPar.
+    outputs:
+      accessToken: $steps.exchange-code.outputs.accessToken
+      tokenType:   $steps.exchange-code.outputs.tokenType
+
+    steps:
+
+      # Backchannel push — all authorization parameters including response_mode
+      # are delivered inside the signed request JWT, server-to-server.
+
+      - stepId: push-authorization-request
+        operationId: $sourceDescriptions.authServer.par
+        requestBody:
+          contentType: application/x-www-form-urlencoded
+          payload:
+            client_assertion_type: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+            client_assertion: $inputs.clientAssertionPar
+            request: $inputs.requestJwt
+        successCriteria:
+          - condition: $statusCode == 201
+        outputs:
+          requestUri: $response.body#/request_uri
+          expiresIn:  $response.body#/expires_in
+
+      # JARM redirect:
+      # The actor's browser is redirected to /authorize with only client_id
+      # and request_uri. On success the AS redirects back with a single
+      # `response` query parameter containing the JARM JWT:
+      #   redirect_uri?response=<signed-JWT>
+      # The JWT payload contains: code, state, iss, aud, exp.
+      # successCriteria only verifies the JWT is present — the contents are
+      # opaque until the next step verifies the signature.
+
+      - stepId: authorize-with-provider
+        interaction:
+          mode: redirect
+          prompt: >
+            You will be redirected to the authorization server to authenticate
+            and grant access. The workflow will resume automatically when you
+            are redirected back.
+          operationId: $sourceDescriptions.authServer.authorize
+          parameters:
+            - name: client_id
+              in: query
+              value: $inputs.clientId
+            - name: request_uri
+              in: query
+              value: $steps.push-authorization-request.outputs.requestUri
+          inputSchema:
+            type: object
+            required:
+              - response
+            properties:
+              response:
+                type: string
+                description: >
+                  JARM JWT (JWS compact serialization). Contains authorization
+                  response claims (code, state, iss, aud, exp) signed by the AS.
+                  Verified and unpacked in the next step.
+        timeout: PT5M
+        onTimeout:
+          name: auth-timed-out
+          type: end
+        onCancel:
+          name: auth-cancelled
+          type: end                  
+        successCriteria:
+          - condition: $interaction.payload#/response != null
+        onFailure:
+          - name: no-jarm-response
+            type: end
+        outputs:
+          responseJwt: $interaction.payload#/response
+
+      # Automated JARM verification:
+      # The executor receives the raw JARM JWT and expected values in context.
+      # The inputSchema is the explicit contract: the executor MUST verify the
+      # JWT signature against the AS public key, validate iss, aud, and exp
+      # claims, extract code and state, and return them only if all checks pass.
+      # The Arazzo runtime then verifies state declaratively in successCriteria.
+
+      - stepId: verify-jarm-response
+        interaction:
+          mode: form
+          prompt: >
+            Verify the JARM JWT: validate the signature against the AS public
+            key, check iss, aud, and exp claims, then return the extracted
+            authorization code and state.
+          context:
+            responseJwt:      $steps.authorize-with-provider.outputs.responseJwt
+            expectedState:    $inputs.state
+            expectedAudience: $inputs.clientId
+          inputSchema:
+            type: object
+            required:
+              - code
+              - state
+            properties:
+              code:
+                type: string
+                description: >
+                  Authorization code extracted from the verified JARM JWT
+              state:
+                type: string
+                description: >
+                  State claim extracted from the verified JARM JWT; MUST
+                  match expectedState
+        timeout: PT30S
+        onTimeout:
+          name: verification-timed-out
+          type: end                  
+        successCriteria:
+          - condition: $interaction.payload#/code != null
+          - condition: $interaction.payload#/state == $inputs.state
+        onFailure:
+          - name: jarm-verification-failed
+            type: end
+        outputs:
+          code: $interaction.payload#/code
+
+      - stepId: exchange-code
+        operationId: $sourceDescriptions.authServer.token
+        requestBody:
+          contentType: application/x-www-form-urlencoded
+          payload:
+            grant_type:             authorization_code
+            code:                   $steps.verify-jarm-response.outputs.code
+            redirect_uri:           $inputs.redirectUri
+            client_id:              $inputs.clientId
+            client_assertion_type:  urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+            client_assertion:       $inputs.clientAssertionToken
+            code_verifier:          $inputs.codeVerifier
+        successCriteria:
+          - condition: $statusCode == 200
+        onSuccess:
+          - name: token-obtained
+            type: end
+        outputs:
+          accessToken: $response.body#/access_token
+          tokenType:   $response.body#/token_type
+          expiresIn:   $response.body#/expires_in

@@ -1,0 +1,132 @@
+arazzo: 1.2.0
+info:
+  title: OAuth 2.0 Authorization Code Flow
+  version: 1.0.0
+  description: >
+    Demonstrates the out-of-band redirect interaction pattern: the actor's browser
+    is redirected to the authorization server to authenticate and grant consent.
+    Workflow execution suspends at that step and resumes automatically when the
+    authorization server redirects the browser back to the executor's callback URL.
+    The executor extracts the callback data and presents it as $interaction.payload,
+    conforming to the step's inputSchema.
+
+sourceDescriptions:
+  - name: authServer
+    url: ./oauth-server.openapi.yaml
+    type: openapi
+
+workflows:
+  - workflowId: authorizationCodeFlow
+    summary: Obtain an access token using the OAuth 2.0 authorization code flow
+    description: >
+      Redirects the actor to the authorization endpoint, validates the returned
+      state parameter to prevent CSRF, exchanges the authorization code for an
+      access token, and retrieves the authenticated user's profile.
+    inputs:
+      type: object
+      required:
+        - clientId
+        - state
+      properties:
+        clientId:
+          type: string
+          description: The OAuth 2.0 client identifier
+        state:
+          type: string
+          description: An unguessable random string used for CSRF protection
+        redirectUri:
+          type: string
+          description: The URI the authorization server redirects back to
+        scope:
+          type: string
+          description: Space-separated list of requested permission scopes
+    outputs:
+      accessToken: $steps.exchange-token.outputs.accessToken
+      userId: $steps.get-user-profile.outputs.userId
+      email: $steps.get-user-profile.outputs.email
+
+    steps:
+
+      # Out-of-band redirect:
+      # The actor's browser is redirected to /authorize. The workflow suspends
+      # here. When the actor completes login and consent, the authorization server
+      # redirects back to the executor's callback URL with ?code=...&state=...
+      # The executor extracts the callback data, validates it against inputSchema,
+      # and makes the result accessible as $interaction.payload.
+
+      - stepId: authorize
+        interaction:
+          mode: redirect
+          prompt: >
+            You will be redirected to the authorization server to log in and grant
+            access. The workflow will resume automatically when you are redirected back.
+          operationId: $sourceDescriptions.authServer.authorize
+          parameters:
+            - name: response_type
+              in: query
+              value: code
+            - name: client_id
+              in: query
+              value: $inputs.clientId
+            - name: state
+              in: query
+              value: $inputs.state
+            - name: scope
+              in: query
+              value: $inputs.scope
+            - name: redirect_uri
+              in: query
+              value: $inputs.redirectUri
+          inputSchema:
+            type: object
+            required:
+              - code
+              - state
+            properties:
+              code:
+                type: string
+                description: Authorization code returned by the authorization server
+              state:
+                type: string
+                description: State parameter echoed back; MUST match the value sent
+        timeout: PT5M                             
+        onTimeout:
+          name: auth-timed-out
+          type: end
+        onCancel:
+          name: auth-cancelled
+          type: end                
+        successCriteria:
+          - condition: $interaction.payload#/state == $inputs.state
+        onFailure:
+          - name: state-mismatch
+            type: end
+        outputs:
+          code: $interaction.payload#/code
+
+      - stepId: exchange-token
+        operationId: $sourceDescriptions.authServer.exchangeCodeForToken
+        requestBody:
+          contentType: application/x-www-form-urlencoded
+          payload:
+            grant_type: authorization_code
+            code: $steps.authorize.outputs.code
+            client_id: $inputs.clientId
+            redirect_uri: $inputs.redirectUri
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          accessToken: $response.body#/access_token
+          tokenType: $response.body#/token_type
+
+      - stepId: get-user-profile
+        operationId: $sourceDescriptions.authServer.getUserProfile
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$steps.exchange-token.outputs.accessToken}"
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          userId: $response.body#/sub
+          email: $response.body#/email
