@@ -96,12 +96,12 @@ workflows:
             type: goto
             stepId: apply-resolution
             criteria:
-              - condition: $steps.select-resolution.outputs.action == "apply"
+              - condition: $interaction.payload#/action == "apply"
           - name: escalate-from-selection
             type: goto
             stepId: escalate-ticket
             criteria:
-              - condition: $steps.select-resolution.outputs.action == "escalate"
+              - condition: $interaction.payload#/action == "escalate"
         outputs:
           resolutionId: $interaction.payload#/resolutionId
           action: $interaction.payload#/action
@@ -181,12 +181,12 @@ workflows:
             type: goto
             stepId: escalate-ticket
             criteria:
-              - condition: $steps.handle-partial-outcome.outputs.action == "escalate-remaining"
+              - condition: $interaction.payload#/action == "escalate-remaining"
           - name: accept-partial-resolution
             type: goto
             stepId: close-ticket
             criteria:
-              - condition: $steps.handle-partial-outcome.outputs.action == "accept-partial"
+              - condition: $interaction.payload#/action == "accept-partial"
         outputs:
           action: $interaction.payload#/action
           notes: $interaction.payload#/notes

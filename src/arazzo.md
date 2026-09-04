@@ -1365,7 +1365,9 @@ The executor presents `prompt` and any `context` entries to the actor and collec
 
 **`redirect`**
 
-The executor redirects the actor's client (typically a browser) to a URL constructed from `operationId`, `operationPath`, or `url`, with `parameters` appended as query parameters. Workflow execution resumes when the actor's client returns to a callback URL registered with the executor. Callback query parameters are accessible via `$interaction.query.<name>`. Exactly one of `operationId`, `operationPath`, or `url` MUST be specified when mode is `redirect`. The `inputSchema` MUST be specified and describes the expected callback query parameters returned when the actor's client completes the redirect.
+The executor redirects the actor's client (typically a browser) to a URL constructed from `operationId`, `operationPath`, or `url`, with `parameters` appended as query parameters. Workflow execution resumes when the actor's client returns to a callback URL registered with the executor. The executor extracts the relevant data from the callback request — query parameters, request body, headers, or other protocol-specific channels as appropriate — and returns it to the runtime in a manner honouring `inputSchema`. The validated result is then accessible via `$interaction.payload`.
+
+Exactly one of `operationId`, `operationPath`, or `url` MUST be specified when mode is `redirect`. The `inputSchema` MUST be specified and describes the expected callback data returned when the actor's client completes the redirect.
 
 Use this mode for OAuth/OIDC authorization flows, external payment pages, identity verification flows, and similar out-of-band browser interactions.
 
@@ -1384,15 +1386,14 @@ These are distinct from explicit cancellation: if the actor abandons the interac
 
 ##### Actor Response Expressions
 
-Actor responses are accessible within the containing step's `outputs` map and `successCriteria` using the `$interaction` runtime expressions:
+Actor responses are accessible within the containing step's `outputs` map, `successCriteria`, and the `criteria` of any `onSuccess` or `onFailure` action belonging to the same step, using the `$interaction` runtime expressions:
 
 | Expression | Applicable modes | Description |
 | --- | --- | --- |
-| `$interaction.payload` | `form`, `acknowledge` | The complete actor response object. |
-| `$interaction.payload#/<json-pointer>` | `form`, `acknowledge` | A field within the actor response, located using a JSON Pointer. |
-| `$interaction.query.<name>` | `redirect` | A named query parameter from the redirect callback URL. |
+| `$interaction.payload` | `form`, `acknowledge`, `redirect` | The complete actor response object. For `redirect` mode, this is the validated callback data extracted by the executor from the callback request. |
+| `$interaction.payload#/<json-pointer>` | `form`, `acknowledge`, `redirect` | A field within the actor response, located using a JSON Pointer. |
 
-These expressions are valid only within the `outputs` and `successCriteria` of the interaction step that contains the Interaction Object. They are not accessible from other steps; use `$steps.<stepId>.outputs.<name>` to propagate values.
+These expressions are valid within the `outputs`, `successCriteria`, and the `criteria` of `onSuccess` and `onFailure` actions of the interaction step that contains the Interaction Object. They are not accessible from other steps; use `$steps.<stepId>.outputs.<name>` to propagate values beyond the step boundary.
 
 ##### Interaction Step Semantics
 
@@ -1402,19 +1403,21 @@ These expressions are valid only within the `outputs` and `successCriteria` of t
 * If the actor explicitly cancels, the step-level `onCancel` actions are evaluated. If no `onCancel` is defined the step fails and `onFailure` actions apply.
 * If the step `timeout` expires before actor input is received, `onTimeout` actions are evaluated. If no `onTimeout` is defined the step fails and `onFailure` actions apply.
 
+##### Reusable Interaction Objects
+
+Interaction Objects MAY be stored in the `interactions` map of the [Components Object](#components-object) and referenced via a [Reusable Object](#reusable-object) using `$components.interactions.<name>`.
+
 ##### Resumption and Workflow State
 
-When an interaction step suspends, the executor must preserve sufficient state to resume the workflow when actor input arrives. For short-lived interactions (seconds to minutes) an in-memory hold is sufficient. For long-lived interactions (hours to days) executors SHOULD use a durable storage mechanism.
+When an interaction step suspends, the executor must preserve sufficient state to resume the workflow when actor input arrives. For short-lived interactions (seconds to minutes) an in-memory hold may be sufficient. For long-lived interactions (hours to days) executors SHOULD use a durable storage mechanism.
 
 The standardized name for the resume token is **`workflowState`**. Executors SHOULD use this field name consistently, regardless of transport, so that tooling, documentation, and consumers share a common vocabulary. The content of `workflowState` is opaque and executor-defined; this specification does not constrain its format or encoding.
 
-Executors MUST protect `workflowState` against forgery and tampering using a cryptographic integrity mechanism such as HMAC-SHA256 or authenticated encryption (AEAD). The token MUST NOT expose sensitive workflow state in cleartext. See [RFC 6749 §10.12](https://www.rfc-editor.org/rfc/rfc6749#section-10.12) for analogous guidance on the OAuth 2.0 `state` parameter.
+Executors MUST protect `workflowState` against forgery and tampering using a cryptographic integrity mechanism such as HMAC-SHA256 ([RFC2104](https://tools.ietf.org/html/rfc2104), [RFC7518](https://tools.ietf.org/html/rfc7518)) or authenticated encryption (AEAD). The token MUST NOT expose sensitive workflow state in cleartext. See [RFC 6749 §10.12](https://www.rfc-editor.org/rfc/rfc6749#section-10.12) for analogous guidance on the OAuth 2.0 `state` parameter.
 
 How `workflowState` is transmitted depends on the interaction mode. For `redirect` mode, executors SHOULD embed `workflowState` as a query parameter in the `redirect_uri` at the point the step suspends, so that it is returned verbatim when the actor's client completes the redirect. Because `workflowState` is generated at suspension time and cannot be known by the document author, it cannot be declared in the `parameters` array; the executor injects it when constructing the redirect URL. For `form` and `acknowledge` modes, the mechanism for delivering `workflowState` to the notification or presentation layer is implementation-defined; common approaches include an outbound webhook payload or a push notification reference.
 
 The storage mechanism, callback registration, and resumption protocol are not defined by this specification. Executor implementations are responsible for defining and documenting these contracts with their consumers.
-
-Interaction Objects MAY be stored in the `interactions` map of the [Components Object](#components-object) and referenced via a [Reusable Object](#reusable-object) using `$components.interactions.<name>`.
 
 ##### Interaction Object Examples
 
@@ -1422,10 +1425,6 @@ A form mode approval gate:
 
 ```yaml
 - stepId: await-approval
-  timeout: PT8H
-  onTimeout:
-    type: goto
-    stepId: cancel-deployment
   interaction:
     prompt: >
       Change **{$inputs.changeId}** is ready to deploy to `{$inputs.environment}`.
@@ -1434,8 +1433,12 @@ A form mode approval gate:
       type: object
       required: [approved]
       properties:
-        approved: {type: boolean}
-        notes:    {type: string}
+        approved: { type: boolean }
+        notes:    { type: string }
+  timeout: PT8H
+  onTimeout:
+    type: goto
+    stepId: cancel-deployment        
   successCriteria:
     - condition: $interaction.payload#/approved == true
   onFailure:
@@ -1449,9 +1452,6 @@ A redirect mode OAuth authorization:
 
 ```yaml
 - stepId: authorize
-  timeout: PT5M
-  onTimeout:
-    type: end
   interaction:
     mode: redirect
     operationId: $sourceDescriptions.authServer.authorize
@@ -1469,23 +1469,21 @@ A redirect mode OAuth authorization:
       type: object
       required: [code, state]
       properties:
-        code:  {type: string}
-        state: {type: string}
+        code:  { type: string }
+        state: { type: string }
+  timeout: PT5M
+  onTimeout:
+    type: end        
   successCriteria:
-    - condition: $interaction.query.state == $inputs.state
+    - condition: $interaction.payload#/state == $inputs.state
   outputs:
-    code: $interaction.query.code
+    code: $interaction.payload#/code
 ```
 
 An acknowledge mode terms acceptance gate:
 
 ```yaml
 - stepId: accept-terms
-  timeout: PT30M
-  onTimeout:
-    type: end
-  onCancel:
-    type: end
   interaction:
     mode: acknowledge
     prompt: >
@@ -1494,6 +1492,11 @@ An acknowledge mode terms acceptance gate:
       Do you accept?
     context:
       termsVersion: $steps.fetch-terms.outputs.termsVersion
+  timeout: PT30M
+  onTimeout:
+    type: end
+  onCancel:
+    type: end      
   successCriteria:
     - condition: $interaction.payload#/acknowledged == true
   onFailure:
@@ -1561,10 +1564,12 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
   component-type = "parameters" / "successActions" / "failureActions" / "interactions"
   component-name = identifier
 
-  ; Interaction expressions (only valid in interaction step outputs and successCriteria)
-  interaction-source = ( payload-reference / query-reference )
-      ; payload-reference: form and acknowledge modes
-      ; query-reference:   redirect mode callback parameters
+  ; Interaction expressions (valid in interaction step outputs, successCriteria,
+  ;   and criteria of onSuccess/onFailure actions within the same step)
+  interaction-source = payload-reference
+      ; payload-reference: all interaction modes (form, acknowledge, redirect)
+      ; For redirect mode, the executor extracts callback data from the appropriate
+      ; protocol channel(s) and presents it as the unified interaction payload.
 
   ; Identifier rules
   identifier-strict = 1*( ALPHA / DIGIT / "-" / "_" )
@@ -1646,9 +1651,8 @@ The `name` identifier is case-sensitive, whereas `token` is not.
 | Components parameter         | `$components.parameters.foo`                                         | Accesses a foo parameter defined within the Components Object.                                                                                                                                   |
 | Components action            | `$components.successActions.bar` or `$components.failureActions.baz` | Accesses a success or failure action defined within the Components Object.                                                                                                                       |
 | Components interaction       | `$components.interactions.confirmDeletion`                           | Accesses a reusable Interaction Object defined within the Components Object.                                                                                                                     |
-| Interaction payload          | `$interaction.payload`                                               | The complete actor response object. Valid in `form` and `acknowledge` modes only.                                                                                                                |
-| Interaction payload field    | `$interaction.payload#/approved`                                     | A field within the actor response. Valid in `form` and `acknowledge` modes only.                                                                                                                 |
-| Redirect callback parameter  | `$interaction.query.code`                                            | A named query parameter from the redirect callback URL. Valid in `redirect` mode only.                                                                                                           |
+| Interaction payload          | `$interaction.payload`                                               | The complete actor response object. Valid in all interaction modes. For `redirect` mode, this is the validated callback data extracted by the executor from the callback request.                |
+| Interaction payload field    | `$interaction.payload#/approved`                                     | A field within the actor response, located using a JSON Pointer. Valid in all interaction modes.                                                                                                 |
 
 Runtime expressions preserve the type of the referenced value.
 Expressions can be embedded into string values by surrounding the expression with `{}` curly braces. When a runtime expression is embedded in this manner, the following rules apply based on the value type:

@@ -24,6 +24,6 @@ workflows:
               status:
                 type: string
         successCriteria:
-          - condition: $interaction.query.status == "success"
+          - condition: $interaction.payload#/status == "success"
         outputs:
-          transactionId: $interaction.query.transaction_id
+          transactionId: $interaction.payload#/transaction_id

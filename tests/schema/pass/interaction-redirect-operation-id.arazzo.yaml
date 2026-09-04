@@ -37,6 +37,6 @@ workflows:
               state:
                 type: string
         successCriteria:
-          - condition: $interaction.query.state == $inputs.state
+          - condition: $interaction.payload#/state == $inputs.state
         outputs:
-          code: $interaction.query.code
+          code: $interaction.payload#/code

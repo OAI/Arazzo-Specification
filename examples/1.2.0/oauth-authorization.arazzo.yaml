@@ -6,11 +6,9 @@ info:
     Demonstrates the out-of-band redirect interaction pattern: the actor's browser
     is redirected to the authorization server to authenticate and grant consent.
     Workflow execution suspends at that step and resumes automatically when the
-    authorization server redirects the browser back to the executor's callback URL,
-    delivering the authorization code as a URL query parameter.
-
-    The response to the interaction step comes back as URL parameters (code, state),
-    not as a request body payload.
+    authorization server redirects the browser back to the executor's callback URL.
+    The executor extracts the callback data and presents it as $interaction.payload,
+    conforming to the step's inputSchema.
 
 sourceDescriptions:
   - name: authServer
@@ -53,7 +51,8 @@ workflows:
       # The actor's browser is redirected to /authorize. The workflow suspends
       # here. When the actor completes login and consent, the authorization server
       # redirects back to the executor's callback URL with ?code=...&state=...
-      # Those query parameters are accessible as $interaction.query.<name>.
+      # The executor extracts the callback data, validates it against inputSchema,
+      # and makes the result accessible as $interaction.payload.
 
       - stepId: authorize
         interaction:
@@ -98,12 +97,12 @@ workflows:
           name: auth-cancelled
           type: end                
         successCriteria:
-          - condition: $interaction.query.state == $inputs.state          
+          - condition: $interaction.payload#/state == $inputs.state
         onFailure:
           - name: state-mismatch
             type: end
         outputs:
-          code: $interaction.query.code
+          code: $interaction.payload#/code
 
       - stepId: exchange-token
         operationId: $sourceDescriptions.authServer.exchangeCodeForToken
@@ -125,7 +124,7 @@ workflows:
         parameters:
           - name: Authorization
             in: header
-            value: "$steps.exchange-token.outputs.tokenType {$steps.exchange-token.outputs.accessToken}"
+            value: "Bearer {$steps.exchange-token.outputs.accessToken}"
         successCriteria:
           - condition: $statusCode == 200
         outputs:
