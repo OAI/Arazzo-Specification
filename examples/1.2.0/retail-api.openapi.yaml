@@ -1,0 +1,96 @@
+openapi: 3.1.0
+info:
+  title: Retail API
+  version: 1.0.0
+  description: REST API for product lookup and order creation.
+
+servers:
+  - url: https://api.example.com/retail
+
+paths:
+  /products/{productId}:
+    get:
+      operationId: getProduct
+      summary: Get product details by ID
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+
+  /orders:
+    post:
+      operationId: createOrder
+      summary: Create a new order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+
+components:
+  schemas:
+    Product:
+      type: object
+      required:
+        - id
+        - name
+        - sku
+        - price
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        sku:
+          type: string
+        price:
+          type: number
+          format: double
+
+    CreateOrderRequest:
+      type: object
+      required:
+        - customerId
+        - productId
+        - quantity
+        - unitPrice
+      properties:
+        customerId:
+          type: string
+        productId:
+          type: string
+        quantity:
+          type: integer
+        unitPrice:
+          type: number
+          format: double
+
+    Order:
+      type: object
+      required:
+        - orderId
+        - status
+      properties:
+        orderId:
+          type: string
+        status:
+          type: string

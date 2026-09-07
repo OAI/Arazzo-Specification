@@ -1,0 +1,24 @@
+arazzo: 1.2.0
+info:
+  title: Invalid — WSDL step with both operationId and operationName
+  version: 1.0.0
+  description: >
+    A step MUST NOT specify both operationId and operationName simultaneously.
+    operationName is the required field for wsdl-step-object; operationId is
+    the field for openapi-step-object and asyncapi-step-object.
+
+    A step with both fields fails all oneOf branches:
+    - openapi-step-object: operationName is an unevaluated property (rejected by unevaluatedProperties: false)
+    - wsdl-step-object: operationId is an unevaluated property (rejected by unevaluatedProperties: false)
+    - asyncapi-step-object: operationName is unevaluated and action is missing
+    - workflow-step-object: both fields are unevaluated and workflowId is missing
+sourceDescriptions:
+  - name: customerService
+    url: https://example.com/customer-service?wsdl
+    type: wsdl
+workflows:
+  - workflowId: basicWorkflow
+    steps:
+      - stepId: listCustomers
+        operationId: ListCustomers
+        operationName: ListCustomers
