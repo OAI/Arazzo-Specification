@@ -1,0 +1,19 @@
+arazzo: 1.2.0
+info:
+  title: GraphQL selector-shaped literal extensions
+  version: 1.0.0
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ./schema.graphqls
+workflows:
+  - workflowId: lookupBook
+    steps:
+      - stepId: getBook
+        graphqlOperation:
+          schema: $sourceDescriptions.shopSchema
+          operation: 'query GetBook { book { id } }'
+          extensions:
+            context: literal-extension-context
+            selector: literal-extension-selector
+            type: literal-extension-type

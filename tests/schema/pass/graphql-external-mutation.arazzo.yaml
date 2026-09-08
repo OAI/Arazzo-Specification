@@ -1,0 +1,45 @@
+arazzo: 1.2.0
+info:
+  title: GraphQL external mutation
+  version: 1.0.0
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ./schema.graphqls
+  - name: shopOperations
+    type: graphql
+    url: ./operations.graphql
+workflows:
+  - workflowId: updateBook
+    inputs:
+      type: object
+      properties:
+        bookId:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+        operationHash:
+          type: string
+    steps:
+      - stepId: updateBook
+        graphqlOperation:
+          schema: $sourceDescriptions.shopSchema
+          operation: $sourceDescriptions.shopOperations.UpdateBook
+          extensions:
+            persistedQuery:
+              version: 1
+              sha256Hash: $inputs.operationHash
+        parameters:
+          - name: input
+            in: variable
+            valueMode: literal
+            value:
+              bookId: $inputs.bookId
+              quantity: 1
+              shipping:
+                city: $inputs.city
+                country: $inputs.country
+        successCriteria:
+          - condition: $response.body#/data/updateBook/id != null

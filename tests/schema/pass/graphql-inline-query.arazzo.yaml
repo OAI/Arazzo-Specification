@@ -1,0 +1,37 @@
+arazzo: 1.2.0
+info:
+  title: GraphQL inline query
+  version: 1.0.0
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ./schema.graphqls
+workflows:
+  - workflowId: lookupBook
+    inputs:
+      type: object
+      properties:
+        bookId:
+          type: string
+        requestId:
+          type: string
+    steps:
+      - stepId: getBook
+        graphqlOperation:
+          schema: $sourceDescriptions.shopSchema
+          operation: |
+            query GetBook($id: ID!) {
+              book(id: $id) {
+                id
+                title
+              }
+            }
+          extensions:
+            tracing:
+              requestId: $inputs.requestId
+        parameters:
+          - name: id
+            in: variable
+            value: $inputs.bookId
+        outputs:
+          title: $response.body#/data/book/title

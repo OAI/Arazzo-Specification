@@ -1,0 +1,13 @@
+query GetBook($id: ID!) {
+  book(id: $id) {
+    id
+    title
+  }
+}
+
+mutation UpdateBook($input: UpdateBookInput!) {
+  updateBook(input: $input) {
+    id
+    title
+  }
+}
