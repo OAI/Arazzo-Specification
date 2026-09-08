@@ -1,0 +1,77 @@
+arazzo: 1.2.0
+info:
+  title: Arazzo Connect RPC workflow examples
+  version: 1.0.0
+sourceDescriptions:
+  - name: rpcLibrary
+    type: protobuf
+    url: ./rpc-library.proto
+workflows:
+  - workflowId: retrieveBookWithConnect
+    summary: Retrieve a book using a unary Connect RPC
+    inputs:
+      type: object
+      properties:
+        bookId:
+          type: string
+        bearerToken:
+          type: string
+      required:
+        - bookId
+    steps:
+      - stepId: getBook
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        rpcProtocol: connect
+        parameters:
+          - name: authorization
+            in: metadata
+            value: Bearer {$inputs.bearerToken}
+        requestBody:
+          contentType: application/json
+          payload:
+            bookId: $inputs.bookId
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          book: $response.body
+          requestId: $response.metadata.x-request-id
+    outputs:
+      book: $steps.getBook.outputs.book
+
+  - workflowId: uploadWithConnect
+    summary: Upload an authored stream using Connect RPC
+    steps:
+      - stepId: uploadChunks
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
+        rpcProtocol: connect
+        requestBody:
+          - contentType: application/connect+proto
+            payload:
+              uploadId: upload-123
+              sequence: 1
+              data: YQ==
+          - contentType: application/connect+proto
+            payload:
+              uploadId: upload-123
+              sequence: 2
+              data: Yg==
+        successCriteria:
+          - condition: $response.body#/chunksReceived == 2
+        outputs:
+          chunksReceived: $response.body#/chunksReceived
+          operationCost: $response.trailingMetadata.operation-cost
+
+  - workflowId: acceptExpectedConnectError
+    summary: Treat a Connect not_found error as an expected workflow outcome
+    steps:
+      - stepId: missingBook
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        rpcProtocol: connect
+        requestBody:
+          contentType: application/proto
+          payload:
+            bookId: missing
+        successCriteria:
+          - condition: $response.status#/code == "not_found"
+        outputs:
+          errorMessage: $response.status#/message

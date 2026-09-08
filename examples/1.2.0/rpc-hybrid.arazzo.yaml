@@ -1,0 +1,94 @@
+arazzo: 1.2.0
+info:
+  title: Hybrid OpenAPI and RPC workflow
+  version: 1.0.0
+sourceDescriptions:
+  - name: petStore
+    type: openapi
+    url: ../1.0.0/pet-coupons.openapi.yaml
+  - name: rpcLibrary
+    type: protobuf
+    url: ./rpc-library.proto
+workflows:
+  - workflowId: inspectAndUpload
+    inputs:
+      type: object
+      properties:
+        petId:
+          type: integer
+        uploadId:
+          type: string
+      required:
+        - petId
+        - uploadId
+    steps:
+      - stepId: getPet
+        operationId: $sourceDescriptions.petStore.getPetById
+        parameters:
+          - name: petId
+            in: path
+            value: $inputs.petId
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          petId: $response.body#/id
+      - stepId: uploadPetRecord
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
+        rpcProtocol: grpc
+        parameters:
+          - name: x-workflow-token
+            in: metadata
+            value: workflow-token
+        requestBody:
+          - payload:
+              uploadId: $inputs.uploadId
+              sequence: $steps.getPet.outputs.petId
+              data: UGV0
+        successCriteria:
+          - condition: $response.status#/code == 0
+        outputs:
+          uploadId: $response.body#/uploadId
+      - stepId: watchRelatedBooksInBrowser
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/WatchBooks
+        rpcProtocol: grpc-web
+        parameters:
+          - name: x-workflow-token
+            in: metadata
+            value: workflow-token
+        requestBody:
+          contentType: application/grpc-web-text+proto
+          payload:
+            category: pets
+        successCriteria:
+          - condition: $response.status#/code == 0
+        outputs:
+          updates: $response.body
+      - stepId: getBookWithTwirp
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        rpcProtocol: twirp
+        parameters:
+          - name: authorization
+            in: header
+            value: Bearer workflow-token
+        requestBody:
+          contentType: application/json
+          payload:
+            bookId: "{$steps.getPet.outputs.petId}"
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          book: $response.body
+      - stepId: exchangeEventsWithConnect
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/ExchangeEvents
+        rpcProtocol: connect
+        requestBody:
+          - contentType: application/connect+proto
+            payload:
+              type: missing
+          - contentType: application/connect+proto
+            payload:
+              type: found
+        successCriteria:
+          - condition: $response.body#/0/type == "acknowledged"
+        outputs:
+          errorMessage: $response.status#/message

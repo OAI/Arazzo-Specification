@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package org.v1;
+import "google/protobuf/empty.proto";
+
+// The source contains multiple services so the service name is part of the Arazzo operation identity.
+service Catalog {
+  rpc GetBook(GetBookRequest) returns (Book);
+}
+
+service Library {
+  // Unary.
+  rpc GetBook(GetBookRequest) returns (Book);
+
+  // Unary with a default/empty request.
+  rpc Ping(google.protobuf.Empty) returns (Pong);
+
+  // Server streaming.
+  rpc WatchBooks(WatchBooksRequest) returns (stream BookUpdate);
+
+  // Client streaming.
+  rpc UploadChunks(stream UploadChunk) returns (UploadSummary);
+
+  // Bidirectional streaming.
+  rpc ExchangeEvents(stream ClientEvent) returns (stream ServerEvent);
+
+  // Long-lived server stream used to show the finite-stream boundary.
+  rpc Subscribe(SubscribeRequest) returns (stream BookUpdate);
+}
+
+message GetBookRequest {
+  string book_id = 1;
+}
+
+message Book {
+  string id = 1;
+  string title = 2;
+  repeated string authors = 3;
+}
+
+message Pong {
+  string message = 1;
+}
+
+message WatchBooksRequest {
+  string category = 1;
+}
+
+message BookUpdate {
+  string event_id = 1;
+  Book book = 2;
+  string state = 3;
+}
+
+message UploadChunk {
+  string upload_id = 1;
+  int32 sequence = 2;
+  bytes data = 3;
+}
+
+message UploadSummary {
+  string upload_id = 1;
+  int32 chunks_received = 2;
+  int64 bytes_received = 3;
+}
+
+message ClientEvent {
+  string type = 1;
+}
+
+message ServerEvent {
+  string type = 1;
+  string message = 2;
+}
+
+message SubscribeRequest {
+  string topic = 1;
+}
