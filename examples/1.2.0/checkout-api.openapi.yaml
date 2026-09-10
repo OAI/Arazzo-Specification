@@ -1,0 +1,180 @@
+openapi: 3.1.0
+info:
+  title: BNPL Checkout API
+  version: 1.0.0
+  description: >
+    API for Buy Now Pay Later checkout, including eligibility checks,
+    order creation, and payment processing.
+paths:
+  /baskets/{basketId}/bnpl-eligibility:
+    get:
+      operationId: checkBnplEligibility
+      summary: Check BNPL eligibility for all items in a basket
+      description: >
+        Returns per-item eligibility for BNPL financing. If any items cannot
+        be financed, the response includes both eligible and ineligible item
+        lists along with their respective totals.
+      parameters:
+        - name: basketId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Eligibility result for the basket
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - allEligible
+                  - eligibleItems
+                  - ineligibleItems
+                  - eligibleTotal
+                  - ineligibleTotal
+                properties:
+                  allEligible:
+                    type: boolean
+                    description: True when every item in the basket is eligible for BNPL financing
+                  eligibleItems:
+                    type: array
+                    items:
+                      type: object
+                      required: [itemId, name, price]
+                      properties:
+                        itemId:
+                          type: string
+                        name:
+                          type: string
+                        price:
+                          type: number
+                          format: double
+                  ineligibleItems:
+                    type: array
+                    description: Items that cannot be financed via BNPL
+                    items:
+                      type: object
+                      required: [itemId, name, price, reason]
+                      properties:
+                        itemId:
+                          type: string
+                        name:
+                          type: string
+                        price:
+                          type: number
+                          format: double
+                        reason:
+                          type: string
+                          description: Why the item cannot be financed
+                  eligibleTotal:
+                    type: string
+                    description: Formatted total for BNPL-eligible items (e.g. "£120.00")
+                  ineligibleTotal:
+                    type: string
+                    description: Formatted total for items that cannot be financed (e.g. "£45.00")
+        '404':
+          description: Basket not found
+
+  /orders/bnpl:
+    post:
+      operationId: createBnplOrder
+      summary: Create a BNPL financing order for eligible items
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - customerId
+                - items
+              properties:
+                customerId:
+                  type: string
+                items:
+                  type: array
+                  items:
+                    type: object
+                    required: [itemId, name, price]
+                    properties:
+                      itemId:
+                        type: string
+                      name:
+                        type: string
+                      price:
+                        type: number
+                        format: double
+      responses:
+        '201':
+          description: BNPL order created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - orderId
+                properties:
+                  orderId:
+                    type: string
+                  repaymentScheduleUrl:
+                    type: string
+                    format: uri
+                    description: URL where the customer can view their repayment schedule
+
+  /payments/charge:
+    post:
+      operationId: chargeItems
+      summary: Charge a customer immediately for a set of items
+      description: >
+        Charges the customer for the given items using the specified payment
+        method. If paymentMethod is omitted, the customer's default stored
+        payment method is used.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - customerId
+                - items
+              properties:
+                customerId:
+                  type: string
+                items:
+                  type: array
+                  items:
+                    type: object
+                    required: [itemId, name, price]
+                    properties:
+                      itemId:
+                        type: string
+                      name:
+                        type: string
+                      price:
+                        type: number
+                        format: double
+                paymentMethod:
+                  type: string
+                  enum: [credit-card, debit-card, paypal]
+                  description: >
+                    Payment method to use. Omit to charge the customer's
+                    default stored payment method.
+      responses:
+        '200':
+          description: Payment processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - paymentId
+                properties:
+                  paymentId:
+                    type: string
+                  amount:
+                    type: string
+                    description: Formatted amount charged (e.g. "£45.00")
+        '402':
+          description: Payment declined

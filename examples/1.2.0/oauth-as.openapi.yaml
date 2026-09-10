@@ -1,0 +1,369 @@
+openapi: 3.1.0
+info:
+  title: OAuth 2.0 Authorization Server API (FAPI 2.0 with PAR)
+  version: 1.0.0
+  description: >
+    Authorization server endpoints supporting the OAuth 2.0 authorization code
+    flow with Pushed Authorization Requests (RFC 9126) and JWT Authorization
+    Requests (JAR, RFC 9101), aligned to the FAPI 2.0 Security Profile.
+
+    Sensitive parameters are pushed to the backchannel /par endpoint as a
+    signed JWT (`request`), keeping them out of the browser URL and server
+    logs. The browser redirect uses only `client_id` and `request_uri`.
+
+    Note: some server implementations (e.g. Connect2id) return HTTP 200 from
+    /par rather than the 201 mandated by RFC 9126 § 2.2. This document follows
+    the RFC.
+
+    The `request` body parameter in the PAR request body is documented here as
+    a plain JSON object describing the JWT payload, for tooling compatibility.
+    Implementations MUST serialize it as a JWS compact serialization (RFC 7515)
+    signed with RS256 or PS256.
+paths:
+  /par:
+    post:
+      operationId: par
+      summary: Pushed Authorization Request endpoint
+      description: >
+        Submit a signed JWT authorization request to the PAR endpoint
+        (RFC 9126). The authorization parameters are carried inside the `request`
+        JWS, keeping them off the browser URL. Returns an opaque `request_uri`
+        for use at the authorization endpoint.
+
+        Clients MUST authenticate using `private_key_jwt` (RFC 7523 § 2.2) —
+        pass `client_assertion_type` and `client_assertion` in the request body.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PARRequestBody'
+      responses:
+        '201':
+          description: >
+            Authorization request accepted (RFC 9126 § 2.2). Body contains the
+            request_uri handle to present at the authorization endpoint.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PARResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+        '401':
+          description: Client authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+        '405':
+          description: Method not allowed
+        '413':
+          description: Request entity too large
+        '429':
+          description: Too many requests
+          headers:
+            Retry-After:
+              required: true
+              description: Number of seconds to wait before retrying
+              schema:
+                type: integer
+
+  /authorize:
+    get:
+      operationId: authorize
+      summary: OAuth 2.0 authorization endpoint (browser redirect)
+      description: >
+        Initiates the browser redirect leg of the authorization code flow.
+        When used with PAR, only `client_id` and `request_uri` are required;
+        all other authorization parameters were already delivered to /par.
+        On success the server redirects back to `redirect_uri` with an
+        authorization code and `state` as query parameters.
+      parameters:
+        - name: client_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The OAuth 2.0 client identifier
+        - name: request_uri
+          in: query
+          required: true
+          description: >
+            Opaque URI returned by /par (RFC 9126). References the pushed
+            authorization request; all authorization parameters are sourced
+            from it server-side.
+          schema:
+            type: string
+            pattern: '^urn:ietf:params:oauth:request_uri:'
+            example: 'urn:ietf:params:oauth:request_uri:OsL1Z3VqIxAT9R77wB7KCw'
+      responses:
+        '302':
+          description: >
+            Redirect to `redirect_uri`. On success the Location URL includes
+            `code` and `state` as query parameters. On failure it includes
+            `error` and optionally `error_description`.
+          headers:
+            Location:
+              required: true
+              schema:
+                type: string
+                format: uri
+        '400':
+          description: >
+            Request could not be validated before issuing a redirect (e.g.
+            missing or unregistered `client_id` or `redirect_uri`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+
+  /token:
+    post:
+      operationId: token
+      summary: Exchange an authorization code for an access token
+      description: >
+        Exchanges an authorization code for an access token. Clients MUST
+        authenticate using `private_key_jwt` (same as at /par).
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRequestBody'
+      responses:
+        '200':
+          description: Token response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          description: Invalid request or code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+        '401':
+          description: Client authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+
+components:
+  schemas:
+
+    AuthorizationRequestObject:
+      type: object
+      description: >
+        JWT claims set for the signed authorization request object (JAR,
+        RFC 9101). This schema describes the JWT payload; implementations MUST
+        serialize it as a JWS compact serialization signed with RS256 or PS256.
+      required:
+        - iss
+        - aud
+        - exp
+        - nbf
+        - client_id
+        - response_type
+        - redirect_uri
+        - scope
+        - code_challenge
+        - code_challenge_method
+      properties:
+        iss:
+          type: string
+          description: Client ID of the client application (TPP), as registered with the authorization server
+        aud:
+          type: string
+          format: uri
+          description: Authorization server issuer URL (audience for the JWT)
+        exp:
+          type: integer
+          description: Unix timestamp expiry of the request object (RFC 7519 § 4.1.4)
+        nbf:
+          type: integer
+          description: Not-before time (RFC 7519 § 4.1.5); FAPI 2.0 requires this claim
+        iat:
+          type: integer
+          description: Issued-at time (RFC 7519 § 4.1.6)
+        jti:
+          type: string
+          description: Unique JWT ID for replay protection (RFC 7519 § 4.1.7)
+        client_id:
+          type: string
+          description: The OAuth 2.0 client identifier
+        response_type:
+          type: string
+          const: code
+          description: >
+            Authorization code flow as mandated by FAPI 2.0. The hybrid flow
+            response_type of "code id_token" used in FAPI 1.0 Advanced is not
+            permitted.
+        redirect_uri:
+          type: string
+          format: uri
+          description: Must match a redirect URI registered for the client
+        scope:
+          type: string
+          description: Space-separated list of requested scopes (e.g. "openid accounts")
+        state:
+          type: string
+          minLength: 1
+          description: >
+            Opaque value echoed back in the callback. Not required by FAPI 2.0
+            (PKCE covers CSRF protection) but RECOMMENDED for application-level
+            session correlation.
+        nonce:
+          type: string
+          minLength: 1
+          description: >
+            String value to associate the session with an ID token and mitigate
+            replay attacks. Optional in FAPI 2.0 authorization code flow; include
+            when an ID token is expected from the token endpoint.
+        max_age:
+          type: integer
+          minimum: 0
+          description: Maximum Authentication Age (OpenID Connect Core)
+        code_challenge:
+          type: string
+          description: PKCE code challenge (RFC 7636 § 4.3); mandatory under FAPI 2.0
+        code_challenge_method:
+          type: string
+          const: S256
+          description: >
+            PKCE code challenge method. FAPI 2.0 mandates S256; plain is not
+            permitted.
+      additionalProperties: false
+
+    PARRequestBody:
+      type: object
+      description: >
+        PAR request body (application/x-www-form-urlencoded). Carries the
+        signed authorization request object and client authentication
+        credentials.
+      required:
+        - client_assertion_type
+        - client_assertion
+        - request
+      properties:
+        client_assertion_type:
+          type: string
+          const: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+          description: >
+            Client authentication type for private_key_jwt (RFC 7523 § 2.2)
+        client_assertion:
+          type: string
+          description: >
+            Signed JWT client assertion. The JWT MUST be signed with the
+            client's private key using RS256 or PS256.
+        request:
+          $ref: '#/components/schemas/AuthorizationRequestObject'
+          description: >
+            The authorization request object. Documented here as a plain JSON
+            object for tooling; MUST be transmitted as a JWS compact
+            serialization (RFC 7515) signed with RS256 or PS256.
+      additionalProperties: false
+
+    PARResponse:
+      type: object
+      required:
+        - request_uri
+        - expires_in
+      properties:
+        request_uri:
+          type: string
+          pattern: '^urn:ietf:params:oauth:request_uri:'
+          description: >
+            Opaque URI identifying the pushed authorization request
+            (urn:ietf:params:oauth:request_uri:<reference-value> per RFC 9101).
+            Valid for expires_in seconds.
+          example: 'urn:ietf:params:oauth:request_uri:OsL1Z3VqIxAT9R77wB7KCw'
+        expires_in:
+          type: integer
+          description: Lifetime in seconds of the request_uri
+          example: 60
+      additionalProperties: false
+
+    TokenRequestBody:
+      type: object
+      required:
+        - grant_type
+        - code
+        - redirect_uri
+        - client_id
+        - client_assertion_type
+        - client_assertion
+      properties:
+        grant_type:
+          type: string
+          const: authorization_code
+        code:
+          type: string
+          description: The authorization code received from the authorization endpoint
+        redirect_uri:
+          type: string
+          format: uri
+          description: MUST match the redirect_uri in the authorization request object
+        client_id:
+          type: string
+        client_assertion_type:
+          type: string
+          const: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        client_assertion:
+          type: string
+          description: Signed JWT client assertion (same form as used at /par)
+        code_verifier:
+          type: string
+          description: PKCE code verifier (RFC 7636); MUST be present when code_challenge was used
+      additionalProperties: false
+
+    TokenResponse:
+      type: object
+      required:
+        - access_token
+        - token_type
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+        expires_in:
+          type: integer
+          description: Lifetime in seconds of the access token
+        refresh_token:
+          type: string
+        scope:
+          type: string
+      additionalProperties: false
+
+    OAuthError:
+      type: object
+      description: OAuth 2.0 error response (RFC 6749 § 5.2)
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          enum:
+            - invalid_request
+            - invalid_client
+            - invalid_grant
+            - unauthorized_client
+            - unsupported_grant_type
+            - unsupported_response_type
+            - invalid_scope
+            - server_error
+          description: Single ASCII error code from the OAuth 2.0 error registry
+        error_description:
+          type: string
+          description: Human-readable text providing additional information about the error
+        error_uri:
+          type: string
+          format: uri
+          description: URI of a web page with information about the error
+      additionalProperties: false

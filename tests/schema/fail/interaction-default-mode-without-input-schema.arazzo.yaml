@@ -1,0 +1,14 @@
+arazzo: 1.2.0
+info:
+  title: Form mode (default) interaction without required inputSchema
+  version: 1.0.0
+sourceDescriptions:
+  - name: userAPI
+    url: https://users.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: approvalWorkflow
+    steps:
+      - stepId: await-approval
+        interaction:
+          prompt: "Please review and approve the request."

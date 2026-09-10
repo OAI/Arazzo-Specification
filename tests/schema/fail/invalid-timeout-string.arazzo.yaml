@@ -1,0 +1,14 @@
+arazzo: 1.2.0
+info:
+  title: Invalid ISO 8601 duration string for timeout
+  version: 1.0.0
+sourceDescriptions:
+  - name: userAPI
+    url: https://users.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: timeoutWorkflow
+    steps:
+      - stepId: api-step
+        operationId: $sourceDescriptions.userAPI.getUser
+        timeout: "30 seconds"

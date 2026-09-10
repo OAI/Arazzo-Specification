@@ -1,0 +1,28 @@
+arazzo: 1.2.0
+info:
+  title: Acknowledge mode interaction
+  version: 1.0.0
+sourceDescriptions:
+  - name: dataAPI
+    url: https://data.example.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: deleteWorkflow
+    steps:
+      - stepId: confirm-deletion
+        timeout: PT30M
+        onCancel:
+          name: user-cancelled
+          type: end
+        interaction:
+          mode: acknowledge
+          prompt: "You are about to permanently delete {$inputs.resourceId}. This cannot be undone. Do you wish to proceed?"
+          context:
+            resourceId: $inputs.resourceId
+        successCriteria:
+          - condition: $interaction.payload#/acknowledged == true
+        onFailure:
+          - name: declined
+            type: end
+      - stepId: delete-resource
+        operationId: $sourceDescriptions.dataAPI.deleteResource

@@ -1,0 +1,29 @@
+arazzo: 1.2.0
+info:
+  title: Redirect mode interaction using literal url
+  version: 1.0.0
+sourceDescriptions:
+  - name: paymentAPI
+    url: https://payment.example.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: paymentFlow
+    steps:
+      - stepId: redirect-to-payment
+        timeout: PT10M
+        interaction:
+          mode: redirect
+          prompt: "You will be redirected to the payment page."
+          url: $inputs.paymentPageUrl
+          inputSchema:
+            type: object
+            required: [transaction_id, status]
+            properties:
+              transaction_id:
+                type: string
+              status:
+                type: string
+        successCriteria:
+          - condition: $interaction.payload#/status == "success"
+        outputs:
+          transactionId: $interaction.payload#/transaction_id

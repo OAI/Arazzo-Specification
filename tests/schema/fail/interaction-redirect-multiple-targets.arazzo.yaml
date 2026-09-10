@@ -1,0 +1,17 @@
+arazzo: 1.2.0
+info:
+  title: Redirect mode interaction with both operationId and url (mutually exclusive)
+  version: 1.0.0
+sourceDescriptions:
+  - name: authServer
+    url: https://auth.example.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: oauthFlow
+    steps:
+      - stepId: authorize
+        interaction:
+          mode: redirect
+          prompt: "Please authorize."
+          operationId: $sourceDescriptions.authServer.authorize
+          url: https://auth.example.com/authorize

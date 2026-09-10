@@ -1,0 +1,32 @@
+arazzo: 1.2.0
+info:
+  title: Acknowledge Interaction with inputSchema
+  version: 1.0.0
+sourceDescriptions:
+  - name: myApi
+    url: https://example.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: acknowledgeWorkflow
+    steps:
+      - stepId: acknowledgeStep
+        interaction:
+          prompt: "Do you confirm you have read and accepted the terms of service? Please also provide a brief reason."
+          mode: acknowledge
+          inputSchema:
+            type: object
+            required:
+              - acknowledged
+            properties:
+              acknowledged:
+                type: boolean
+                description: Confirmation that the user has read and accepted the terms.
+              reason:
+                type: string
+                description: A brief reason or note from the user regarding their acknowledgement.
+        outputs:
+          acknowledged: $interaction.payload#/acknowledged
+          reason: $interaction.payload#/reason
+    outputs:
+      confirmed: $steps.acknowledgeStep.outputs.acknowledged
+      confirmationReason: $steps.acknowledgeStep.outputs.reason          

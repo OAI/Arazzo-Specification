@@ -1,0 +1,151 @@
+openapi: 3.1.0
+info:
+  title: Change Management API
+  version: 1.0.0
+  description: >
+    API for managing deployment change requests, including validation, approval
+    recording, deployment execution, and cancellation.
+paths:
+  /changes/{changeId}/validate:
+    post:
+      operationId: validateChange
+      summary: Validate a change request and assess deployment risk
+      parameters:
+        - name: changeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - environment
+              properties:
+                environment:
+                  type: string
+                  description: Target deployment environment
+      responses:
+        '200':
+          description: Change validation result with risk assessment
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - riskLevel
+                  - summary
+                properties:
+                  riskLevel:
+                    type: string
+                    enum: [low, medium, high, critical]
+                  summary:
+                    type: string
+                    description: Human-readable summary of the change and its risk factors
+                  impactedServices:
+                    type: array
+                    items:
+                      type: string
+        '404':
+          description: Change request not found
+
+  /changes/{changeId}/approval-record:
+    post:
+      operationId: recordApprovalDecision
+      summary: Record an approval or rejection decision for audit purposes
+      parameters:
+        - name: changeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - decision
+                - decidedBy
+              properties:
+                decision:
+                  type: string
+                  enum: [approved, rejected, escalated, timed_out]
+                decidedBy:
+                  type: string
+                  description: Name or identifier of the person who made the decision
+                notes:
+                  type: string
+                  description: Optional notes accompanying the decision
+      responses:
+        '201':
+          description: Approval decision recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - recordId
+                  - timestamp
+                properties:
+                  recordId:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /changes/{changeId}/deploy:
+    post:
+      operationId: deployChange
+      summary: Execute a validated and approved change deployment
+      parameters:
+        - name: changeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Deployment accepted and queued
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - deploymentId
+                  - status
+                properties:
+                  deploymentId:
+                    type: string
+                  status:
+                    type: string
+                    enum: [queued, in_progress]
+        '409':
+          description: Change is not in a deployable state
+
+  /changes/{changeId}/cancel:
+    post:
+      operationId: cancelChange
+      summary: Cancel a change request
+      parameters:
+        - name: changeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for cancellation
+      responses:
+        '204':
+          description: Change cancelled successfully

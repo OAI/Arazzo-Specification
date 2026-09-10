@@ -1,0 +1,34 @@
+arazzo: 1.2.0
+info:
+  title: Redirect mode interaction using operationPath
+  version: 1.0.0
+sourceDescriptions:
+  - name: authServer
+    url: https://auth.example.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: oauthFlow
+    steps:
+      - stepId: authorize
+        timeout: PT5M
+        onTimeout:
+          name: auth-timeout
+          type: end
+        interaction:
+          mode: redirect
+          prompt: "Please authorize the application."
+          operationPath: "$sourceDescriptions.authServer#/paths/~1authorize/get"
+          inputSchema:
+            type: object
+            required: [code]
+            properties:
+              code:
+                type: string
+        outputs:
+          code: $interaction.payload#/code
+      - stepId: exchange-token
+        operationId: $sourceDescriptions.authServer.exchangeToken
+        parameters:
+          - name: code
+            in: query
+            value: $steps.authorize.outputs.code

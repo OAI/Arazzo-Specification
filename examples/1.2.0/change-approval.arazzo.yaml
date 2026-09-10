@@ -1,0 +1,200 @@
+arazzo: 1.2.0
+info:
+  title: Deployment Change Approval
+  version: 1.0.0
+  description: >
+    Demonstrates two actor-in-the-loop interaction patterns:
+
+    - Confirmation gate: a primary approver must explicitly approve a high-risk
+      deployment before it can proceed, with an 8-hour response window.
+
+    - Multi-level escalation: if the primary approver does not respond within
+      their window, approval responsibility escalates to a secondary approver
+      rather than failing the workflow.
+
+sourceDescriptions:
+  - name: changeAPI
+    url: ./change-management.openapi.yaml
+    type: openapi
+
+workflows:
+  - workflowId: deploymentApprovalWorkflow
+    summary: Validate, seek approval, and deploy a change request
+    description: >
+      Validates the change and computes a risk level, then asks a primary approver
+      to explicitly approve or reject. If the primary approver does not respond
+      within 8 hours, the request escalates to a secondary approver with a 4-hour
+      window. Approval routes to deployment; rejection or any timeout at the
+      secondary level routes to cancellation.
+    inputs:
+      type: object
+      required:
+        - changeId
+        - environment
+        - primaryApprover
+        - secondaryApprover
+      properties:
+        changeId:
+          type: string
+          description: Unique identifier of the change request
+        environment:
+          type: string
+          description: Target deployment environment (e.g. production, staging)
+        primaryApprover:
+          type: string
+          description: Name or identifier of the primary approver
+        secondaryApprover:
+          type: string
+          description: Name or identifier of the secondary approver (escalation target)
+
+    steps:
+      - stepId: validate-change
+        operationId: $sourceDescriptions.changeAPI.validateChange
+        parameters:
+          - name: changeId
+            in: path
+            value: $inputs.changeId
+        requestBody:
+          contentType: application/json
+          payload:
+            environment: $inputs.environment
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          riskLevel: $response.body#/riskLevel
+          summary: $response.body#/summary
+
+      # Confirmation gate:
+      # Primary approver has 8 hours to respond. No response escalates; explicit
+      # rejection ends the workflow via cancellation.
+
+      - stepId: request-primary-approval
+        interaction:
+          mode: form
+          prompt: >
+            Change **{$inputs.changeId}** is ready to deploy to `{$inputs.environment}`.
+            Risk level: {$steps.validate-change.outputs.riskLevel}.
+            {$steps.validate-change.outputs.summary}
+            Do you approve this deployment?
+          context:
+            changeId: $inputs.changeId
+            environment: $inputs.environment
+            riskLevel: $steps.validate-change.outputs.riskLevel
+            summary: $steps.validate-change.outputs.summary
+          inputSchema:
+            type: object
+            required:
+              - approved
+            properties:
+              approved:
+                type: boolean
+                description: Whether the deployment is approved
+              notes:
+                type: string
+                description: Optional notes from the approver
+        timeout: PT8H
+        onTimeout:
+          name: primary-timed-out
+          type: goto
+          stepId: escalate-to-secondary
+        onCancel:
+          name: primary-cancelled
+          type: goto
+          stepId: cancel-deployment                
+        successCriteria:
+          - condition: $interaction.payload#/approved == true
+        onSuccess:
+          - name: primary-approved
+            type: goto
+            stepId: execute-deployment
+        onFailure:
+          - name: primary-rejected
+            type: goto
+            stepId: cancel-deployment
+        outputs:
+          approved: $interaction.payload#/approved
+          notes: $interaction.payload#/notes
+
+      # Multi-level escalation:
+      # Reached only when the primary approver times out. Secondary approver has
+      # a shorter 4-hour window; any further timeout cancels the deployment.
+
+      - stepId: escalate-to-secondary
+        interaction:
+          mode: form
+          prompt: >
+            ESCALATION: Change **{$inputs.changeId}** targeting `{$inputs.environment}`
+            was not reviewed by {$inputs.primaryApprover} within 8 hours and has been
+            escalated to you. Risk level: {$steps.validate-change.outputs.riskLevel}.
+            {$steps.validate-change.outputs.summary}
+            Do you approve this deployment?
+          context:
+            changeId: $inputs.changeId
+            environment: $inputs.environment
+            riskLevel: $steps.validate-change.outputs.riskLevel
+            summary: $steps.validate-change.outputs.summary
+            primaryApprover: $inputs.primaryApprover
+          inputSchema:
+            type: object
+            required:
+              - approved
+            properties:
+              approved:
+                type: boolean
+                description: Whether the deployment is approved
+              notes:
+                type: string
+                description: Optional notes from the approver
+        timeout: PT4H
+        onTimeout:
+          name: secondary-timed-out
+          type: goto
+          stepId: cancel-deployment
+        onCancel:
+          name: secondary-cancelled
+          type: goto
+          stepId: cancel-deployment                
+        successCriteria:
+          - condition: $interaction.payload#/approved == true
+        onSuccess:
+          - name: secondary-approved
+            type: goto
+            stepId: execute-deployment
+        onFailure:
+          - name: secondary-rejected
+            type: goto
+            stepId: cancel-deployment
+        outputs:
+          approved: $interaction.payload#/approved
+          notes: $interaction.payload#/notes
+
+      - stepId: execute-deployment
+        operationId: $sourceDescriptions.changeAPI.deployChange
+        parameters:
+          - name: changeId
+            in: path
+            value: $inputs.changeId
+        successCriteria:
+          - condition: $statusCode == 202
+        onSuccess:
+          - name: deployment-initiated
+            type: end
+        outputs:
+          deploymentId: $response.body#/deploymentId
+
+      - stepId: cancel-deployment
+        operationId: $sourceDescriptions.changeAPI.cancelChange
+        parameters:
+          - name: changeId
+            in: path
+            value: $inputs.changeId
+        requestBody:
+          contentType: application/json
+          payload:
+            reason: Approval not granted within the required time window
+        onSuccess:
+          - name: deployment-cancelled
+            type: end
+
+    outputs:
+      deploymentId: $steps.execute-deployment.outputs.deploymentId            

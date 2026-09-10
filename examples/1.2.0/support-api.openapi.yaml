@@ -1,0 +1,166 @@
+openapi: 3.1.0
+info:
+  title: Support Triage API
+  version: 1.0.0
+  description: >
+    API for managing support ticket analysis, resolution, escalation, and closure.
+paths:
+  /tickets/{ticketId}/analyze:
+    post:
+      operationId: analyzeTicket
+      summary: Analyze a support ticket and produce candidate resolution options
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ticket analysis result with suggested resolutions
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - suggestedResolutions
+                  - confidence
+                properties:
+                  suggestedResolutions:
+                    type: array
+                    description: >
+                      Dynamically computed list of candidate resolutions. Presented
+                      to the support agent to select from.
+                    items:
+                      type: object
+                      required:
+                        - id
+                        - label
+                        - description
+                        - type
+                      properties:
+                        id:
+                          type: string
+                        label:
+                          type: string
+                        description:
+                          type: string
+                        type:
+                          type: string
+                          enum: [automated, partial, escalation]
+                  confidence:
+                    type: string
+                    enum: [high, medium, low]
+                    description: Confidence level of the analysis
+        '404':
+          description: Ticket not found
+
+  /tickets/{ticketId}/resolve:
+    post:
+      operationId: applyResolution
+      summary: Apply a selected resolution to a support ticket
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - resolutionId
+              properties:
+                resolutionId:
+                  type: string
+                  description: ID of the resolution to apply, from the analysis results
+                notes:
+                  type: string
+                  description: Optional notes from the support agent
+      responses:
+        '200':
+          description: Resolution applied; may be full or partial
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                  - resolvedItems
+                  - unresolvedItems
+                properties:
+                  status:
+                    type: string
+                    enum: [fully_resolved, partially_resolved]
+                  resolvedItems:
+                    type: array
+                    items:
+                      type: string
+                  unresolvedItems:
+                    type: array
+                    description: Items that could not be resolved automatically
+                    items:
+                      type: string
+
+  /tickets/{ticketId}/escalate:
+    post:
+      operationId: escalateTicket
+      summary: Escalate a support ticket to the engineering team
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                unresolvedItems:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Ticket escalated and assigned
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - escalationId
+                  - assignedTeam
+                properties:
+                  escalationId:
+                    type: string
+                  assignedTeam:
+                    type: string
+
+  /tickets/{ticketId}/close:
+    post:
+      operationId: closeTicket
+      summary: Close a resolved support ticket
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                resolutionSummary:
+                  type: string
+      responses:
+        '204':
+          description: Ticket closed successfully
