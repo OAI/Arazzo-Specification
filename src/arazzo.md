@@ -1441,11 +1441,16 @@ A form mode approval gate:
     stepId: cancel-deployment        
   successCriteria:
     - condition: $interaction.payload#/approved == true
+  onSuccess:
+    - name: initiate-the-deployment
+      type: goto
+      stepId: execute-deployment    
   onFailure:
     - type: end
   outputs:
     approved: $interaction.payload#/approved
     notes:    $interaction.payload#/notes
+
 ```
 
 A redirect mode OAuth authorization:
