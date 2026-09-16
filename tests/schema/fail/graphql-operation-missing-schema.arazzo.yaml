@@ -1,0 +1,14 @@
+arazzo: 1.2.0
+info:
+  title: GraphQL operation requires schema
+  version: 1.0.0
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ./schema.graphqls
+workflows:
+  - workflowId: invalidGraphql
+    steps:
+      - stepId: missingSchema
+        graphqlOperation:
+          operation: 'query GetBook { book { id } }'

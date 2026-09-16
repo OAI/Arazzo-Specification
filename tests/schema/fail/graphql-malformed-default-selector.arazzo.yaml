@@ -1,0 +1,21 @@
+arazzo: 1.2.0
+info:
+  title: GraphQL malformed default selector
+  version: 1.0.0
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ./schema.graphqls
+workflows:
+  - workflowId: lookupBook
+    steps:
+      - stepId: getBook
+        graphqlOperation:
+          schema: $sourceDescriptions.shopSchema
+          operation: 'query GetBook($id: ID!) { book(id: $id) { id } }'
+        parameters:
+          - name: id
+            in: variable
+            value:
+              context: $inputs.request
+              selector: $.bookId

@@ -341,7 +341,7 @@ An object storing a map between named description keys and location URLs to the 
 |-------------------------------|:--------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <a name="sourceName"></a>name | `string` | **REQUIRED**. A unique name for the source description. Tools and libraries MAY use the `name` to uniquely identify a source description, therefore, it is RECOMMENDED to follow common programming naming conventions. SHOULD conform to the regular expression `[A-Za-z0-9_\-]+`. |
 | <a name="sourceURL"></a>url   | `string` | **REQUIRED**. A URL to a source description to be used by a workflow. If a relative reference is used, it MUST be in the form of a URI-reference as defined by [RFC3986](https://tools.ietf.org/html/rfc3986#section-4.2).                                                          |
-| <a name="sourceType"></a>type | `string` | The type of source description. Possible values are `"openapi"` or `"asyncapi"` or `"arazzo"`.                                                                                                                                                                                      |
+| <a name="sourceType"></a>type | `string` | The type of source description. Possible values are `"openapi"` or `"asyncapi"` or `"arazzo"` or `"graphql"`.                                                                                                                                                                       |
 
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
@@ -353,6 +353,17 @@ name: petStoreDescription
 url: https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml
 type: openapi
 ```
+
+##### GraphQL Source Descriptions
+
+A `graphql` Source Description identifies a GraphQL source artifact. It MAY resolve to a schema or type-system source, or to an Executable Document. The `schema` or `operation` field in a `graphqlOperation` determines how the source is used; `type: graphql` alone does not distinguish these roles.
+
+Arazzo does not define:
+
+- schema composition, stitching, federation, or import conventions; or
+- GraphQL endpoint, discovery, transport, or client-construction mechanisms.
+
+These are implementation concerns. See the [GraphQL Specification](https://spec.graphql.org/September2025/) for the underlying language, type-system, and execution model.
 
 #### Workflow Object
 
@@ -371,7 +382,7 @@ Describes the steps to be taken across one or more APIs to achieve an objective.
 | <a name="workflowSuccessActions"></a>successActions | [[Success Action Object](#success-action-object) \| [Reusable Object](#reusable-object)] | A list of success actions that are applicable for all steps described under this workflow. These success actions can be overridden at the step level but cannot be removed there. If a Reusable Object is provided, it MUST link to success actions defined in the [components/successActions](#components-object) of the current Arazzo document. The list MUST NOT include duplicate success actions.                                                                                                                                                                              |
 | <a name="workflowFailureActions"></a>failureActions | [[Failure Action Object](#failure-action-object) \| [Reusable Object](#reusable-object)] | A list of failure actions that are applicable for all steps described under this workflow. These failure actions can be overridden at the step level but cannot be removed there. If a Reusable Object is provided, it MUST link to failure actions defined in the [components/failureActions](#components-object) of the current Arazzo document. The list MUST NOT include duplicate failure actions.                                                                                                                                                                              |
 | <a name="workflowOutputs"></a>outputs               |           Map[`string`, {expression} \| [Selector Object](#selector-object) ]            | A map between a friendly name and a dynamic output value defined using a [Runtime Expression](#runtime-expressions) or [Selector Object](#selector-object). The name MUST use keys that match the regular expression: `^[a-zA-Z0-9\.\-_]+$`.                                                                                                                                                                                                                                                                                                                                         |
-| <a name="workflowParameters"></a>parameters         |      [[Parameter Object](#parameter-object) \| [Reusable Object](#reusable-object)]      | A list of parameters that are applicable for all steps described under this workflow. These parameters can be overridden at the step level but cannot be removed there. Each parameter MUST be passed to an operation or workflow as referenced by `operationId`, `operationPath`, or `workflowId` as specified within each step. If a Reusable Object is provided, it MUST link to a parameter defined in the [components/parameters](#components-object) of the current Arazzo document. The list MUST NOT include duplicate parameters.                                           |
+| <a name="workflowParameters"></a>parameters         |      [[Parameter Object](#parameter-object) \| [Reusable Object](#reusable-object)]      | A list of parameters that are applicable for all steps described under this workflow. These parameters can be overridden at the step level but cannot be removed there. Each parameter MUST be passed to an operation or workflow as referenced by `operationId`, `operationPath`, `graphqlOperation`, or `workflowId` as specified within each step. If a Reusable Object is provided, it MUST link to a parameter defined in the [components/parameters](#components-object) of the current Arazzo document. The list MUST NOT include duplicate parameters.                       |
 
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
@@ -414,7 +425,7 @@ outputs:
 
 #### Step Object
 
-Describes a single workflow step which MAY be a call to an API operation ([OpenAPI Operation Object](https://spec.openapis.org/oas/latest.html#operation-object)), ([AysncAPI Operations Object](https://www.asyncapi.com/docs/reference/specification/latest#operationsObject)) or another [Workflow Object](#workflow-object).
+Describes a single workflow step which MAY be a call to an API operation ([OpenAPI Operation Object](https://spec.openapis.org/oas/latest.html#operation-object)), ([AysncAPI Operations Object](https://www.asyncapi.com/docs/reference/specification/latest#operationsObject)), ([GraphQL operation](https://spec.graphql.org/September2025/#sec-Language.Operations)) or another [Workflow Object](#workflow-object).
 
 ##### Fixed Fields
 
@@ -426,7 +437,8 @@ Describes a single workflow step which MAY be a call to an API operation ([OpenA
 | <a name="stepOperationPath"></a>operationPath     |                                         `string`                                         | A reference to a [Source Description Object](#source-description-object) combined with a [JSON Pointer](https://tools.ietf.org/html/rfc6901) to reference an operation. This field is mutually exclusive of the `operationId` and `workflowId` fields respectively. The operation being referenced MUST be described within one of the `sourceDescriptions` descriptions. A [Runtime Expression](#runtime-expressions) syntax MUST be used to identify the source description document. If the referenced operation has an `operationId` defined then the `operationId` SHOULD be preferred over the `operationPath`.                                                                                                                                                                                                                                                                                                                                    |
 | <a name="stepChannelPath"></a>channelPath         |                                         `string`                                         | A reference to a [Source Description Object](#source-description-object) combined with a [JSON Pointer](https://tools.ietf.org/html/rfc6901) to reference an event channel. This field is mutually exclusive of the `operationId` and `workflowId` fields respectively. The operation being referenced MUST be described within one of the `sourceDescriptions` descriptions. A [Runtime Expression](#runtime-expressions) syntax MUST be used to identify the source description document. If the referenced operation has an `operationId` defined then the `operationId` SHOULD be preferred over the `channelPath`.                                                                                                                                                                                                                                                                                                                                  |
 | <a name="stepWorkflowId"></a>workflowId           |                                         `string`                                         | The [workflowId](#fixed-fields-2) referencing an existing workflow within the Arazzo Description. If the referenced workflow is contained within an `arazzo` type `sourceDescription`, then the `workflowId` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g., `$sourceDescriptions.<name>.<workflowId>`) to avoid ambiguity or potential clashes. The field is mutually exclusive of the `operationId` and `operationPath` fields respectively.                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| <a name="stepParameters"></a>parameters           |      [[Parameter Object](#parameter-object) \| [Reusable Object](#reusable-object)]      | A list of parameters that MUST be passed to an operation or workflow as referenced by `operationId`, `operationPath`, or `workflowId`. If a parameter is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a parameter defined in the [components/parameters](#components-object) of the current Arazzo document. The list MUST NOT include duplicate parameters.                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| <a name="stepGraphql"></a>graphqlOperation        |                  [GraphQL Operation Object](#graphql-operation-object)                   | A [GraphQL Operation Object](#graphql-operation-object) defining the schema and operation for this Step, along with optional request extensions. GraphQL variable values are supplied using [Parameter Objects](#parameter-object). This field is mutually exclusive of `operationId`, `operationPath`, `channelPath`, and `workflowId`. See [GraphQL Operation Object](#graphql-operation-object) for source, selection, request and result behavior.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| <a name="stepParameters"></a>parameters           |      [[Parameter Object](#parameter-object) \| [Reusable Object](#reusable-object)]      | A list of parameters that MUST be passed to an operation or workflow as referenced by `operationId`, `operationPath`, `graphqlOperation`, or `workflowId`. If a parameter is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a parameter defined in the [components/parameters](#components-object) of the current Arazzo document. The list MUST NOT include duplicate parameters.                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | <a name="stepRequestBody"></a>requestBody         |                       [Request Body Object](#request-body-object)                        | The request body to pass to an operation as referenced by `operationId` or `operationPath`. The `requestBody` is fully supported in HTTP methods where the HTTP 1.1 specification [RFC9110](https://tools.ietf.org/html/rfc9110#section-9.3) explicitly defines semantics for "content" like request bodies, such as within POST, PUT, and PATCH methods. For methods where the HTTP specification provides less clarity—such as GET, HEAD, and DELETE—the use of `requestBody` is permitted but does not have well-defined semantics. In these cases, its use SHOULD be avoided if possible.                                                                                                                                                                                                                                                                                                                                                            |
 | <a name="stepSuccessCriteria"></a>successCriteria |                         [[Criterion Object](#criterion-object)]                          | A list of assertions to determine the success of the step. Each assertion is described using a [Criterion Object](#criterion-object). All assertions `MUST` be satisfied for the step to be deemed successful. If `successCriteria` is provided, it `MUST` contain at least one [Criterion Object](#criterion-object).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | <a name="stepOnSuccess"></a>onSuccess             | [[Success Action Object](#success-action-object) \| [Reusable Object](#reusable-object)] | An array of success action objects that specify what to do upon step success. If omitted, the next sequential step shall be executed as the default behavior. If multiple success actions have similar `criteria`, the first sequential action matching the criteria SHALL be the action executed. If a success action is already defined at the [Workflow](#workflow-object), the new definition will override it but can never remove it. If a Reusable Object is provided, it MUST link to a success action defined in the [components](#components-object) of the current Arazzo document. The list MUST NOT include duplicate success actions.                                                                                                                                                                                                                                                                                                      |
@@ -574,6 +586,130 @@ An async step example:
       orderId: $message.payload.orderId
 ```
 
+##### GraphQL Operation Object
+
+Describes the GraphQL request executed by a Step. It identifies the schema, an inline or externally referenced operation, and optional request extensions. GraphQL source text and execution semantics are defined by the [GraphQL Specification](https://spec.graphql.org/September2025/).
+
+As with other Arazzo Step types, execution-environment configuration MAY be required to bind the referenced API description to a concrete service endpoint. A GraphQL Step identifies the schema and executable operation, but does not identify a deployment. The endpoint, transport protocol, authentication, schema-discovery mechanism, and client-construction mechanism are outside the scope of this Specification. Tooling that executes GraphQL Steps MUST obtain the required binding information through implementation-defined configuration.
+
+###### Fixed Fields
+
+| Field Name                                                          |                    Type                     | Description                                                                                                                                                                                                                                                                                                                                              |
+|---------------------------------------------------------------------|:-------------------------------------------:|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <a name="graphqlOperationSchema"></a>schema                         |               `{expression}`                | **REQUIRED**. A whole Source Description reference in the form `$sourceDescriptions.<name>`. The referenced Source Description MUST have `type: graphql` and MUST resolve to a GraphQL schema definition language (SDL) document or type-system source from which the schema can be constructed. The reference MUST NOT contain a JSON Pointer fragment. |
+| <a name="graphqlOperationOperation"></a>operation                   |         `string` \| `{expression}`          | **REQUIRED**. Either inline GraphQL source text containing an [Executable Document](https://spec.graphql.org/September2025/#sec-Executable-Definitions) with exactly one operation definition, or an external operation reference in the form `$sourceDescriptions.<name>.<operationName>`. An inline document MAY also contain fragment definitions.    |
+| <a name="graphqlOperationExtensions"></a>extensions                 |                  `object`                   | An optional literal GraphQL request `extensions` map. Runtime Expressions in the map are evaluated before the GraphQL request is constructed. This field is mutually exclusive of `extensionsSelector`.                                                                                                                                                  |
+| <a name="graphqlOperationExtensionsSelector"></a>extensionsSelector |     [Selector Object](#selector-object)     | An optional [Selector Object](#selector-object) whose evaluated value supplies the GraphQL request `extensions` map. The evaluated value MUST be an object. This field is mutually exclusive of `extensions`.                                                                                                                                            |
+
+This object MAY be extended with [Specification Extensions](#specification-extensions).
+
+###### Source and Operation Rules
+
+The `graphqlOperation` field is mutually exclusive of `operationId`, `operationPath`, `channelPath`, and `workflowId`. It identifies the source artifacts needed to execute a GraphQL request.
+
+For a Source Description reference, tooling MUST resolve the named Source Description's `url` and interpret the resulting GraphQL source according to whether it is referenced by `schema` or `operation`.
+
+- `schema` MUST identify the whole GraphQL Source Description. The reference MUST use `$sourceDescriptions.<name>` and MUST NOT include a JSON Pointer fragment.
+- An inline `operation` MUST be GraphQL source text containing exactly one operation definition. It MAY also contain fragment definitions used by that operation. The operation MAY be named or anonymous.
+- An external `operation` reference MUST use `$sourceDescriptions.<name>.<operationName>`. The final segment MUST be a valid GraphQL Name and MUST identify a named operation in the referenced Executable Document. The external document MAY contain multiple operation definitions and fragments.
+- Source-aware validation MUST verify that each referenced Source Description has `type: graphql` and resolves to the source required by the field in which it is used.
+- GraphQL-aware tooling MUST parse the inline or referenced Executable Document, select the referenced external operation when applicable, and validate it against the resolved schema before execution. These checks are outside JSON Schema validation of the Arazzo document.
+- GraphQL documents MUST remain GraphQL source text. Arazzo Runtime Expressions MUST NOT be interpolated into document text.
+
+###### Operation Selection
+
+An inline `operation` selects its sole operation definition. An external `operation` selects the named operation identified by the final reference segment. If an inline document contains zero or multiple operation definitions, or if an external operation name does not exist in the referenced document, tooling MUST report a GraphQL request or validation error; the request error MUST fail the Step before execution.
+
+###### Variables and Request Extensions
+
+Runtime values are supplied as GraphQL variables using [Parameter Objects](#parameter-object) with `in: variable`. The parameter `name` is the GraphQL variable name without the leading `$`. A parameter `value` MAY be a literal, a [Runtime Expression](#runtime-expressions), or a [Selector Object](#selector-object). An object value with `valueMode: literal` is supplied as a literal GraphQL input object. When `value` is an object and `valueMode` is omitted, it is interpreted as a Selector Object. A Selector Object MUST be evaluated before the resulting value is supplied to GraphQL variable coercion. Variable values MAY be scalars, lists, input objects, or `null`. The [Request Body Object](#request-body-object) is not used to supply GraphQL variable values.
+
+If a variable parameter is omitted, the variable is omitted from the GraphQL request. This preserves any default defined by the GraphQL operation. A parameter whose value is `null` explicitly supplies GraphQL `null`; it is not equivalent to omission. See [Variables](https://spec.graphql.org/September2025/#sec-Language.Variables) and [Coercing Variable Values](https://spec.graphql.org/September2025/#sec-Coercing-Variable-Values).
+
+The optional `extensions` field supplies the GraphQL request `extensions` map directly. Values in the map MAY use existing Arazzo Runtime Expressions; those expressions are evaluated before the GraphQL request is constructed. Alternatively, `extensionsSelector` supplies a [Selector Object](#selector-object) that MUST be evaluated before the request is constructed, and its result MUST be an object. The `extensions` and `extensionsSelector` fields are mutually exclusive.
+
+The GraphQL Specification reserves the request `extensions` map for implementation-specific additional information. A transport specification, such as the [GraphQL over HTTP draft](https://graphql.github.io/graphql-over-http/draft/#sec-Request-Parameters), MAY define how the map is transmitted. Arazzo does not assign semantics to extension keys.
+
+###### Execution and Results
+
+GraphQL-aware tooling performs GraphQL parsing, validation, operation selection, variable coercion, and execution. Arazzo defines how the GraphQL request is represented in a Step and how its result is exposed; GraphQL defines the execution details.
+
+###### Queries and Mutations
+
+For query and mutation operations, `$response.body` exposes the GraphQL response map, including any `data`, `errors`, and `extensions` entries returned by GraphQL. GraphQL MAY return partial data together with `errors`, or a request-error result containing `errors` without `data`.
+
+GraphQL request errors, including parse, validation, operation-selection, and variable-coercion errors, MUST fail the Step. Execution errors returned in a GraphQL response do not automatically fail the Step. Authors MAY use existing `successCriteria` when workflow success depends on a particular GraphQL result; otherwise the existing generic Step semantics apply. See the GraphQL [response format](https://spec.graphql.org/September2025/#sec-Response-Format).
+
+###### Subscriptions
+
+The selected operation MAY be a subscription when its response stream is expected to complete naturally. A Step selecting a subscription MUST define `timeout`. Subscription setup can fail before a response stream is created due to parsing, validation, operation selection, or variable coercion; these GraphQL request errors MUST fail the Step. Once a stream is created, each event produces a GraphQL execution-result map. When the stream completes naturally within `timeout`, the Step completes and `$response.body` exposes the ordered sequence of received result maps, which MAY be empty. If an established stream terminates abnormally, the Step fails. An event containing GraphQL `errors` does not automatically fail the Step; authors MAY define applicable `successCriteria`.
+
+For a subscription, `timeout` bounds both setup and the response-stream lifetime. When the timeout expires, tooling MUST cancel or unsubscribe from the stream and the Step MUST fail. `timeout` is a failure bound, not a duration for which a tool must successfully consume events. Unbounded or effectively infinite subscriptions that do not naturally complete within `timeout` are outside the supported successful-execution model. Arazzo does not define a receive-until condition, successful early unsubscribe, or continuation of the workflow after such an unsubscribe. GraphQL subscription execution is defined by the [GraphQL Specification](https://spec.graphql.org/September2025/#sec-Subscription).
+
+##### GraphQL Operation Object Examples
+
+###### GraphQL Source Descriptions
+
+These examples use separate GraphQL Source Descriptions for the schema and the reusable Executable Document. The `schema` and `operation` fields establish how each source is used:
+
+```yaml
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ./schema.graphqls
+
+  - name: shopOperations
+    type: graphql
+    url: ./operations.graphql
+```
+
+###### Inline Query
+
+The inline Executable Document contains exactly one operation definition:
+
+```yaml
+graphqlOperation:
+  schema: $sourceDescriptions.shopSchema
+  operation: |
+    query GetBook($id: ID!) {
+      book(id: $id) {
+        id
+        title
+      }
+    }
+parameters:
+  - name: id
+    in: variable
+    value: $inputs.bookId
+```
+
+###### External Executable Document
+
+The final segment of the external reference selects `GetBook` from the referenced Executable Document:
+
+```yaml
+graphqlOperation:
+  schema: $sourceDescriptions.shopSchema
+  operation: $sourceDescriptions.shopOperations.GetBook
+```
+
+###### Nested Input Object
+
+A nested GraphQL input object is supplied as a variable value. The parameter name does not include the leading `$`:
+
+```yaml
+parameters:
+  - name: input
+    in: variable
+    valueMode: literal
+    value:
+      bookId: $inputs.bookId
+      quantity: 1
+      shipping:
+        city: $inputs.city
+        country: $inputs.country
+```
+
 #### Parameter Object
 
 Describes a single step parameter. A unique parameter is defined by the combination of a `name` and `in` fields. There are several possible locations specified by the `in` field:
@@ -583,14 +719,17 @@ Describes a single step parameter. A unique parameter is defined by the combinat
 - querystring - A parameter that treats the entire URL query string as a single value. This parameter location was introduced in [OpenAPI 3.2.0](https://spec.openapis.org/oas/v3.2.0.html) to support scenarios where the complete query string must be passed as a pre-formatted string rather than individual parameters. When a step references an operation that defines a querystring parameter, the value MUST match the media type format as expressed by the parameter's `content` field (e.g., `application/x-www-form-urlencoded`). The `querystring` location cannot coexist with `query` parameters in the same operation per OpenAPI constraints.
 - header - Custom headers that are expected as part of the request. Note that [RFC9110](https://tools.ietf.org/html/rfc9110#name-field-names) states field names (which includes header) are case-insensitive.
 - cookie - Used to pass a specific cookie value to the source API.
+- channel - Used to pass a parameter to an AsyncAPI channel.
+- variable - Used to pass a GraphQL variable value. This parameter MUST only be used for values supplied to a GraphQL operation. The parameter name is the GraphQL variable name without the leading `$`. GraphQL arguments remain in the Executable Document.
 
 ##### Fixed Fields
 
-| Field Name                          |                            Type                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-|-------------------------------------|:----------------------------------------------------------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| <a name="parameterName"></a> name   |                          `string`                          | **REQUIRED**. The name of the parameter. Parameter names are _case sensitive_.                                                                                                                                                                                                                                                                                                                                                                                          |
-| <a name="parameterIn"></a> in       |                          `string`                          | The location of the parameter. Possible values are `"path"`, `"query"`, `"querystring"`, `"header"`, or `"cookie"`. When the step, success action, or failure action in context specifies a `workflowId`, then all parameters map to workflow inputs. In all other scenarios (e.g., a step specifies an `operationId`), the `in` field MUST be specified.                                                                                                               |
-| <a name="parameterValue"></a> value | Any \| {expression} \| [Selector Object](#selector-object) | **REQUIRED**. The value to pass in the parameter. The value can be a constant, a [Runtime Expression](#runtime-expressions), or a [Selector Object](#selector-object) to be evaluated and passed to the referenced operation or workflow. For `querystring` parameters, the value MUST resolve to a string representing the complete query string (e.g., `"key1=value1&key2=value2"`). Runtime expressions can be embedded within the string value using `{}` notation. |
+| Field Name                                  |                            Type                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+|---------------------------------------------|:----------------------------------------------------------:|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <a name="parameterName"></a> name           |                          `string`                          | **REQUIRED**. The name of the parameter. Parameter names are _case sensitive_.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| <a name="parameterIn"></a> in               |                          `string`                          | The location of the parameter. Possible values are `"path"`, `"query"`, `"querystring"`, `"header"`, `"cookie"`, `"channel"`, or `"variable"`. When the step, success action, or failure action in context specifies a `workflowId`, then all parameters map to workflow inputs. In all other scenarios (e.g., a step specifies an `operationId`), the `in` field MUST be specified.                                                                                                                                                                                                                 |
+| <a name="parameterValueMode"></a> valueMode |                          `string`                          | Determines how `value` is interpreted. Possible values are `literal` and `selector`. When set to `literal`, `value` MAY be a string, boolean, array, number, `null`, or object. When set to `selector`, `value` MUST be a valid [Selector Object](#selector-object). When omitted, the default is `selector`; however, string, boolean, array, number, and `null` values are treated as literals without requiring `valueMode`.                                                                                                                                                                      |
+| <a name="parameterValue"></a> value         | Any \| {expression} \| [Selector Object](#selector-object) | **REQUIRED**. The value to pass in the parameter. The value can be a constant, a [Runtime Expression](#runtime-expressions), or a [Selector Object](#selector-object) to be evaluated and passed to the referenced operation or workflow. An object literal MUST specify `valueMode: literal`; an object supplied without `valueMode` MUST be a valid Selector Object. For `querystring` parameters, the value MUST resolve to a string representing the complete query string (e.g., `"key1=value1&key2=value2"`). Runtime expressions can be embedded within the string value using `{}` notation. |
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
@@ -621,6 +760,19 @@ This object MAY be extended with [Specification Extensions](#specification-exten
 - name: X-Api-Key
   in: header
   value: $inputs.x-api-key
+
+# GraphQL Variable Example
+- name: id
+  in: variable
+  value: $inputs.bookId
+
+# Literal Input Object Example
+- name: input
+  in: variable
+  valueMode: literal
+  value:
+    title: Arazzo for APIs
+    quantity: 1
 ```
 
 #### Success Action Object
@@ -1333,7 +1485,7 @@ An XPath example using older XPATH 3.0:
 
 ### Runtime Expressions
 
-A runtime expression allows values to be defined based on information that will be available within the HTTP message in an actual API call, or within objects serialized from the Arazzo document such as [workflows](#workflow-object) or [steps](#step-object).
+A runtime expression allows values to be defined based on information that will be available within a request, response, or message in an actual API call, or within objects serialized from the Arazzo document such as [workflows](#workflow-object) or [steps](#step-object).
 
 The runtime expression is defined by the following [ABNF](https://tools.ietf.org/html/rfc5234) syntax:
 
@@ -1380,10 +1532,11 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
   workflow-field-name = identifier
 
   ; Source descriptions expressions
-  source-reference = source-name "." source-reference-id
+  source-reference = source-name [ "." source-reference-id ]
   source-name = identifier-strict
   source-reference-id = 1*CHAR
       ; operationIds have no character restrictions in OpenAPI/AsyncAPI
+      ; An omitted source-reference-id references the whole Source Description, applicable to GrpahQL
       ; Resolution priority defined in spec text: (1) operationId/workflowId, (2) field names
 
   ; Components expressions
@@ -1466,6 +1619,7 @@ The `name` identifier is case-sensitive, whereas `token` is not.
 | Step output value            | `$steps.someStepId.outputs.pets`                                     | In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$steps.someStepId.outputs.pets#/0/id`) or the entire body.        |
 | Workflow output value        | `$outputs.bar` or `$workflows.foo.outputs.bar`                       | In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$workflows.foo.outputs.mappedResponse#/name`) or the entire body. |
 | Embedded expressions         | `https://{$inputs.host}/api/{$steps.create.outputs.id}/status`       | Multiple runtime expressions can be embedded within a single string value by wrapping each in curly braces.                                                                                      |
+| Whole source description     | `$sourceDescriptions.shopSchema`                                     | References the complete source represented by the named Source Description Object, rather than only its metadata fields.                                                                         |
 | Source description reference | `$sourceDescriptions.petstore.getPetById`                            | References an operationId or workflowId from the named source description. Resolution priority: (1) operationId/workflowId, (2) field names.                                                     |
 | Source description field     | `$sourceDescriptions.petstore.url`                                   | References a field from the Source Description Object. Resolved when no matching operationId/workflowId is found.                                                                                |
 | Components parameter         | `$components.parameters.foo`                                         | Accesses a foo parameter defined within the Components Object.                                                                                                                                   |
@@ -1483,9 +1637,11 @@ Whether a value is stored as a string or parsed structure depends on its content
 
 #### Source Description Expression Resolution
 
+The form `$sourceDescriptions.<name>` references the complete source represented by the named Source Description Object. GraphQL uses this form for the `schema` field.
+
 When using `$sourceDescriptions.<name>.<reference>`, the `<reference>` portion is resolved with the following priority:
 
-- **operationId or workflowId** - If the referenced source description is an OpenAPI description, `<reference>` is first matched against operationIds. If the source description is an Arazzo document, `<reference>` is matched against workflowIds.
+- **operationId, GraphQL operation, or workflowId** - If the referenced source description is an OpenAPI description, `<reference>` is first matched against operationIds. If it is a GraphQL Executable Document, `<reference>` is matched against operation names. If the source description is an Arazzo document, `<reference>` is matched against workflowIds.
 - **Source description field** - If no operationId/workflowId match is found, `<reference>` is matched against field names of the Source Description Object (e.g., `url`,
   `type`).
 
