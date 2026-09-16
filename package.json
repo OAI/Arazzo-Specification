@@ -38,13 +38,13 @@
     "dependencies": {
         "cheerio": "^1.2.0",
         "highlight.js": "^11.12.0",
-        "markdown-it": "^15.0.1",
-        "respec": "37.3.6",
+        "markdown-it": "^15.0.2",
+        "respec": "37.4.0",
         "yargs": "^18.1.0"
     },
     "devDependencies": {
         "markdownlint-cli2": "^0.23.2",
-        "yaml": "2.9.0",
+        "yaml": "2.9.1",
         "@hyperjump/json-schema": "^1.17.8",
         "c8": "^12.0.0",
         "vitest": "^5.0.0"
