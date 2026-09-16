@@ -1,0 +1,16 @@
+arazzo: 1.1.0
+info:
+  title: Criterion with explicit simple type and no context
+  version: 1.0.0
+sourceDescriptions:
+  - name: userAPI
+    url: https://example.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: simpleCriterionWorkflow
+    steps:
+      - stepId: getUsers
+        operationId: listUsers
+        successCriteria:
+          - condition: $statusCode == 200
+            type: simple

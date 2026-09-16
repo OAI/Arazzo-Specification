@@ -1,0 +1,16 @@
+arazzo: 1.1.0
+info:
+  title: Invalid criterion with regex type and no context
+  version: 1.0.0
+sourceDescriptions:
+  - name: userAPI
+    url: https://example.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: regexCriterionWorkflow
+    steps:
+      - stepId: getUsers
+        operationId: listUsers
+        successCriteria:
+          - condition: ^application/json
+            type: regex
