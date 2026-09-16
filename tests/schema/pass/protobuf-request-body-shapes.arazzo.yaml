@@ -1,0 +1,95 @@
+arazzo: 1.2.0
+info:
+  title: Protocol Buffer request scenarios
+  version: 1.0.0
+sourceDescriptions:
+  - name: rpcLibrary
+    type: protobuf
+    url: ./rpc-library.proto
+workflows:
+  - workflowId: defaultRequest
+    steps:
+      - stepId: ping
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/Ping
+        rpcProtocol: grpc
+        # A semantic validator resolves this omitted request to the default google.protobuf.Empty instance.
+  - workflowId: unaryRequest
+    steps:
+      - stepId: getBook
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        rpcProtocol: grpc
+        requestBody:
+          payload:
+            bookId: book-1
+          replacements:
+            - target: /bookId
+              value: book-2
+  - workflowId: getBookFromInputs
+    inputs:
+      type: object
+      properties:
+        bookId:
+          type: string
+        bearerToken:
+          type: string
+      required:
+        - bookId
+    steps:
+      - stepId: getBook
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        rpcProtocol: grpc
+        parameters:
+          - name: authorization
+            in: metadata
+            value: Bearer {$inputs.bearerToken}
+        requestBody:
+          payload:
+            bookId: $inputs.bookId
+  - workflowId: serverStreamRequest
+    steps:
+      - stepId: watch
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/WatchBooks
+        rpcProtocol: grpc
+        timeout: 30000
+        requestBody:
+          payload:
+            category: all
+        successCriteria:
+          - condition: $response.status#/code == 0
+        outputs:
+          updates: $response.body
+          firstUpdate: $response.body#/0/eventId
+  - workflowId: zeroMessageClientStream
+    steps:
+      - stepId: upload
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
+        rpcProtocol: grpc
+        requestBody: []
+  - workflowId: trailersOnlyError
+    steps:
+      - stepId: missingBook
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        rpcProtocol: grpc
+        requestBody:
+          payload:
+            bookId: missing
+        successCriteria:
+          - condition: $response.status#/code != 0
+        outputs:
+          code: $response.status#/code
+          message: $response.status#/message
+          details: $response.status#/details
+  - workflowId: bidirectionalStream
+    steps:
+      - stepId: exchangeEvents
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/ExchangeEvents
+        rpcProtocol: grpc
+        requestBody:
+          - payload:
+              type: START
+          - payload:
+              type: FINISH
+        successCriteria:
+          - condition: $response.status#/code == 0
+        outputs:
+          events: $response.body

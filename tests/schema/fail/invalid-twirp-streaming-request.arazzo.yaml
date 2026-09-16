@@ -1,0 +1,19 @@
+arazzo: 1.2.0
+info:
+  title: Invalid streaming request for Twirp
+  version: 1.0.0
+sourceDescriptions:
+  - name: rpcLibrary
+    type: protobuf
+    url: ./rpc-library.proto
+workflows:
+  - workflowId: invalidTwirpStream
+    steps:
+      - stepId: uploadChunks
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
+        rpcProtocol: twirp
+        requestBody:
+          - payload:
+              data: YQ==
+          - payload:
+              data: Yg==

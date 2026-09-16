@@ -1,0 +1,15 @@
+arazzo: 1.2.0
+info:
+  title: Invalid Protocol Buffer source-description type alias
+  version: 1.0.0
+sourceDescriptions:
+  - name: rpcLibrary
+    # Invalid: grpc is not a Protocol Buffer source-description type; use protobuf.
+    type: grpc
+    url: ./rpc-library.proto
+workflows:
+  - workflowId: invalid
+    steps:
+      - stepId: getBook
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        rpcProtocol: grpc

@@ -1,0 +1,17 @@
+arazzo: 1.2.0
+info:
+  title: Invalid empty gRPC streaming request item
+  version: 1.0.0
+sourceDescriptions:
+  - name: rpcLibrary
+    type: protobuf
+    url: ./rpc-library.proto
+workflows:
+  - workflowId: invalid
+    steps:
+      - stepId: upload
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
+        rpcProtocol: grpc
+        requestBody:
+          # Invalid: a gRPC streaming request item requires payload.
+          - {}
