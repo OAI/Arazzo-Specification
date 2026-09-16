@@ -1,0 +1,54 @@
+arazzo: 1.2.0
+info:
+  title: Form mode interaction with inputSchema, context, successCriteria, outputs
+  version: 1.0.0
+sourceDescriptions:
+  - name: deployAPI
+    url: https://deploy.example.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: deployApproval
+    steps:
+      - stepId: validate-change
+        operationId: $sourceDescriptions.deployAPI.validateChange
+        outputs:
+          riskLevel: $response.body#/riskLevel
+      - stepId: await-approval
+        timeout: PT8H
+        onTimeout:
+          name: timeout-to-cancel
+          type: goto
+          stepId: cancel-deployment
+        interaction:
+          prompt: "Change {$inputs.changeId} is ready to deploy. Risk level: {$steps.validate-change.outputs.riskLevel}. Approve?"
+          mode: form
+          context:
+            changeId: $inputs.changeId
+            riskLevel: $steps.validate-change.outputs.riskLevel
+          inputSchema:
+            type: object
+            required: [approved]
+            properties:
+              approved:
+                type: boolean
+              notes:
+                type: string
+        successCriteria:
+          - condition: $interaction.payload#/approved == true
+        onSuccess:
+          - name: approval-granted
+            type: goto
+            stepId: trigger-deployment
+        onFailure:
+          - name: reject-deployment
+            type: end
+        outputs:
+          approved: $interaction.payload#/approved
+          notes: $interaction.payload#/notes
+      - stepId: trigger-deployment
+        operationId: $sourceDescriptions.deployAPI.triggerDeployment
+        onSuccess:
+          - name: deployment-triggered
+            type: end
+      - stepId: cancel-deployment
+        operationId: $sourceDescriptions.deployAPI.cancelDeployment

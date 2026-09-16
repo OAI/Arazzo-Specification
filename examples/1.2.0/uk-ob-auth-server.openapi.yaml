@@ -1,0 +1,446 @@
+openapi: 3.1.0
+info:
+  title: UK Open Banking Authorization Server API (FAPI 1.0 Advanced)
+  version: 1.0.0
+  description: >
+    Authorization server endpoints for the UK Open Banking Read/Write API,
+    aligned to the Financial-grade API (FAPI) 1.0 Advanced Security Profile
+    and OpenID Connect Core.
+
+    Uses Pushed Authorization Requests (RFC 9126) with JWT Authorization
+    Requests (JAR, RFC 9101). The hybrid flow (response_type: code id_token)
+    returns an ID token as a detached signature over the authorization
+    response, protecting the code and state parameters via c_hash and s_hash
+    (FAPI 1.0 Advanced § 5.1.1).
+
+    The authorization request object is documented here as a plain JSON object
+    for tooling compatibility. Implementations MUST serialize it as a JWS
+    compact serialization (RFC 7515) signed with RS256 or PS256.
+
+    Client authentication uses private_key_jwt (RFC 7523) at both /par and
+    /token.
+paths:
+  /par:
+    post:
+      operationId: par
+      summary: Pushed Authorization Request endpoint
+      description: >
+        Submit a signed JWT authorization request (JAR) to the PAR endpoint
+        (RFC 9126). The request object carries all authorization parameters
+        including the OpenBanking intent ID embedded in the OIDC claims
+        request. Returns an opaque request_uri for use at /authorize.
+
+        Clients MUST authenticate using private_key_jwt (RFC 7523 § 2.2).
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PARRequestBody'
+      responses:
+        '201':
+          description: >
+            Authorization request accepted (RFC 9126 § 2.2). Body contains
+            the request_uri handle to present at the authorization endpoint.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PARResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+        '401':
+          description: Client authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+        '405':
+          description: Method not allowed
+        '413':
+          description: Request entity too large
+        '429':
+          description: Too many requests
+          headers:
+            Retry-After:
+              required: true
+              description: Number of seconds to wait before retrying
+              schema:
+                type: integer
+
+  /authorize:
+    get:
+      operationId: authorize
+      summary: OAuth 2.0 authorization endpoint (browser redirect)
+      description: >
+        Initiates the browser redirect. When used with PAR only client_id and
+        request_uri are required; all other parameters were bound server-side
+        at /par. On success the server redirects back to redirect_uri with
+        code, id_token, and state as query parameters.
+
+        The ID token acts as a detached signature (FAPI 1.0 Advanced § 5.1.1).
+        It contains s_hash (hash of state) and c_hash (hash of code), which
+        the client MUST verify after receiving the callback. The hash algorithm
+        is determined by the alg header of the ID token's JOSE header.
+      parameters:
+        - name: client_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The OAuth 2.0 client identifier
+        - name: request_uri
+          in: query
+          required: true
+          description: >
+            Opaque URI returned by /par referencing the pushed authorization
+            request. All authorization parameters are sourced from it.
+          schema:
+            type: string
+            pattern: '^urn:ietf:params:oauth:request_uri:'
+      responses:
+        '302':
+          description: >
+            Redirect to redirect_uri. On success the Location URL query string
+            includes code, id_token, and state. The id_token is a signed JWT
+            containing s_hash and c_hash protecting the state and code values
+            respectively. On failure, error and error_description are included
+            instead.
+          headers:
+            Location:
+              required: true
+              schema:
+                type: string
+                format: uri
+        '400':
+          description: >
+            Request could not be validated before issuing a redirect (e.g.
+            missing or unregistered client_id, invalid request_uri).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+
+  /token:
+    post:
+      operationId: token
+      summary: Exchange an authorization code for an access token
+      description: >
+        Exchanges an authorization code for access and ID tokens. Clients MUST
+        authenticate using private_key_jwt (same form as at /par).
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRequestBody'
+      responses:
+        '200':
+          description: Token response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          description: Invalid request or code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+        '401':
+          description: Client authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+
+components:
+  schemas:
+
+    OBIntentId:
+      type: object
+      description: >
+        OpenBanking intent ID claim, identifying the consent resource
+        (AccountAccessConsent or PaymentConsent) that the authorization
+        request is associated with.
+      required:
+        - value
+        - essential
+      properties:
+        value:
+          type: string
+          minLength: 1
+          description: >
+            Consent/intent ID returned by the ASPSP when the consent resource
+            was created (e.g. "aac-7f3a2b1c"). No fixed format is mandated
+            by OBIE.
+        essential:
+          type: boolean
+          const: true
+          description: MUST be true; the intent ID is essential for the request
+      additionalProperties: false
+
+    OBAcr:
+      type: object
+      description: Authentication Context Class Reference claim
+      required:
+        - essential
+        - values
+      properties:
+        essential:
+          type: boolean
+          const: true
+        values:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum:
+              - urn:openbanking:psd2:sca
+              - urn:openbanking:psd2:ca
+          description: >
+            urn:openbanking:psd2:sca — Strong Customer Authentication required.
+            urn:openbanking:psd2:ca — Customer Authentication (no SCA required).
+      additionalProperties: false
+
+    AuthorizationRequestObject:
+      type: object
+      description: >
+        JWT claims set for the signed authorization request object (JAR,
+        RFC 9101) used in the UK Open Banking hybrid flow. This schema
+        describes the JWT payload; implementations MUST serialize it as a
+        JWS compact serialization signed with RS256 or PS256.
+      required:
+        - iss
+        - aud
+        - exp
+        - iat
+        - client_id
+        - response_type
+        - redirect_uri
+        - scope
+        - state
+        - nonce
+        - claims
+      properties:
+        iss:
+          type: string
+          description: >
+            Client ID of the TPP, as registered with the ASPSP / OB Directory.
+        aud:
+          type: string
+          format: uri
+          description: Authorization server (ASPSP) issuer URL
+        exp:
+          type: integer
+          description: Unix timestamp expiry of the request object (RFC 7519 § 4.1.4)
+        iat:
+          type: integer
+          description: Issued-at time (RFC 7519 § 4.1.6)
+        jti:
+          type: string
+          description: Unique JWT ID for replay protection (RFC 7519 § 4.1.7)
+        client_id:
+          type: string
+          description: The OAuth 2.0 client identifier
+        response_type:
+          type: string
+          const: code id_token
+          description: >
+            Hybrid flow as required by FAPI 1.0 Advanced. The ID token in
+            the authorization response acts as a detached signature, carrying
+            s_hash and c_hash to bind the state and code to the AS's signature.
+        redirect_uri:
+          type: string
+          format: uri
+          description: Must match a URI registered for the client
+        scope:
+          type: string
+          pattern: '^openid( (accounts|payments|fundsconfirmations))+$'
+          description: >
+            Space-separated scopes. Must begin with "openid" followed by one
+            or more OB permission scopes (accounts, payments, fundsconfirmations).
+          example: openid accounts
+        state:
+          type: string
+          minLength: 1
+          description: >
+            Opaque CSRF protection value generated by the TPP. Echoed back
+            in the callback and protected by s_hash in the ID token.
+        nonce:
+          type: string
+          minLength: 1
+          description: >
+            String value used to associate the client session with the ID token
+            and to mitigate replay attacks.
+        response_mode:
+          type: string
+          enum: [query, fragment, form_post]
+          description: >
+            Controls how the authorization response parameters are returned.
+            MUST be set to "query" when the executor handles the callback
+            server-side (as in Arazzo redirect interactions), since fragment
+            parameters are browser-side only and not forwarded to the server.
+            Defaults to "fragment" for hybrid flows if omitted — which will
+            not work for server-side callback handling.
+          default: fragment
+        max_age:
+          type: integer
+          minimum: 0
+          description: Maximum Authentication Age (OpenID Connect Core)
+        claims:
+          type: object
+          description: >
+            OIDC claims request object. The id_token.openbanking_intent_id
+            claim binds the authorization to a previously created consent
+            resource.
+          required:
+            - id_token
+          properties:
+            id_token:
+              type: object
+              required:
+                - openbanking_intent_id
+              properties:
+                openbanking_intent_id:
+                  $ref: '#/components/schemas/OBIntentId'
+                acr:
+                  $ref: '#/components/schemas/OBAcr'
+              additionalProperties: false
+          additionalProperties: false
+      additionalProperties: false
+
+    PARRequestBody:
+      type: object
+      description: >
+        PAR request body (application/x-www-form-urlencoded). Carries the
+        signed authorization request object and private_key_jwt client
+        authentication credentials.
+      required:
+        - client_assertion_type
+        - client_assertion
+        - request
+      properties:
+        client_assertion_type:
+          type: string
+          const: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+          description: Client authentication type for private_key_jwt (RFC 7523 § 2.2)
+        client_assertion:
+          type: string
+          description: >
+            Signed JWT client assertion. MUST be signed with the TPP's private
+            key using RS256 or PS256.
+        request:
+          $ref: '#/components/schemas/AuthorizationRequestObject'
+          description: >
+            The authorization request object. Documented here as a plain JSON
+            object for tooling; MUST be transmitted as a JWS compact
+            serialization (RFC 7515) signed with RS256 or PS256.
+      additionalProperties: false
+
+    PARResponse:
+      type: object
+      required:
+        - request_uri
+        - expires_in
+      properties:
+        request_uri:
+          type: string
+          pattern: '^urn:ietf:params:oauth:request_uri:'
+          description: >
+            Opaque URI identifying the pushed authorization request
+            (urn:ietf:params:oauth:request_uri:<reference-value>).
+            Valid for expires_in seconds.
+          example: 'urn:ietf:params:oauth:request_uri:OsL1Z3VqIxAT9R77wB7KCw'
+        expires_in:
+          type: integer
+          description: Lifetime in seconds of the request_uri
+          example: 60
+      additionalProperties: false
+
+    TokenRequestBody:
+      type: object
+      required:
+        - grant_type
+        - code
+        - redirect_uri
+        - client_id
+        - client_assertion_type
+        - client_assertion
+      properties:
+        grant_type:
+          type: string
+          const: authorization_code
+        code:
+          type: string
+          description: The authorization code received from the authorization endpoint
+        redirect_uri:
+          type: string
+          format: uri
+          description: MUST match the redirect_uri in the authorization request object
+        client_id:
+          type: string
+        client_assertion_type:
+          type: string
+          const: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        client_assertion:
+          type: string
+          description: Signed JWT client assertion (same form as used at /par)
+      additionalProperties: false
+
+    TokenResponse:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - id_token
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+        expires_in:
+          type: integer
+          description: Lifetime in seconds of the access token
+        id_token:
+          type: string
+          description: >
+            Signed ID token (JWS compact serialization). Contains standard
+            OIDC claims (sub, iss, aud, exp, iat, nonce) and the OpenBanking
+            intent ID (openbanking_intent_id). The client MUST validate the
+            signature and claims before using the access token.
+        refresh_token:
+          type: string
+        scope:
+          type: string
+      additionalProperties: false
+
+    OAuthError:
+      type: object
+      description: OAuth 2.0 error response (RFC 6749 § 5.2)
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          enum:
+            - invalid_request
+            - invalid_client
+            - invalid_grant
+            - unauthorized_client
+            - unsupported_grant_type
+            - unsupported_response_type
+            - invalid_scope
+            - server_error
+          description: Single ASCII error code from the OAuth 2.0 error registry
+        error_description:
+          type: string
+          description: Human-readable text providing additional information about the error
+        error_uri:
+          type: string
+          format: uri
+          description: URI of a web page with information about the error
+      additionalProperties: false

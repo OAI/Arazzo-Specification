@@ -1,0 +1,16 @@
+arazzo: 1.2.0
+info:
+  title: Redirect Interaction Missing inputSchema
+  version: 1.0.0
+sourceDescriptions:
+  - name: myApi
+    url: https://example.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: redirectWorkflow
+    steps:
+      - stepId: redirectStep
+        interaction:
+          prompt: "Please visit the following URL to complete the authentication flow."
+          mode: redirect
+          url: https://auth.example.com/authorize?client_id=abc123

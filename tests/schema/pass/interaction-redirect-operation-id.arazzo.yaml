@@ -1,0 +1,42 @@
+arazzo: 1.2.0
+info:
+  title: Redirect mode interaction using operationId
+  version: 1.0.0
+sourceDescriptions:
+  - name: authServer
+    url: https://auth.example.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: oauthFlow
+    steps:
+      - stepId: authorize
+        timeout: PT5M
+        onTimeout:
+          name: auth-timeout
+          type: end
+        interaction:
+          mode: redirect
+          prompt: "You will be redirected to the authorization server. Please log in and grant access."
+          operationId: $sourceDescriptions.authServer.authorize
+          parameters:
+            - name: response_type
+              in: query
+              value: code
+            - name: client_id
+              in: query
+              value: $inputs.clientId
+            - name: state
+              in: query
+              value: $inputs.state
+          inputSchema:
+            type: object
+            required: [code, state]
+            properties:
+              code:
+                type: string
+              state:
+                type: string
+        successCriteria:
+          - condition: $interaction.payload#/state == $inputs.state
+        outputs:
+          code: $interaction.payload#/code
