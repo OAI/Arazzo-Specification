@@ -1,0 +1,145 @@
+arazzo: 1.2.0
+info:
+  title: Hybrid Order Fulfillment
+  version: 1.0.0
+  description: >
+    Demonstrates a hybrid REST + SOAP workflow. A modern OpenAPI-described retail
+    API handles product lookup and order creation, while a legacy SOAP/WSDL
+    fulfillment service checks inventory availability and dispatches the order.
+    Outputs from REST steps are chained into SOAP steps and vice versa.
+
+sourceDescriptions:
+  - name: retailAPI
+    url: ./retail-api.openapi.yaml
+    type: openapi
+  - name: fulfillmentService
+    url: ./fulfillment-service.wsdl
+    type: wsdl
+
+workflows:
+  - workflowId: order-fulfillment
+    summary: Look up a product, verify stock via SOAP, place the order, then dispatch via SOAP
+    inputs:
+      type: object
+      properties:
+        productId:
+          type: string
+        customerId:
+          type: string
+        quantity:
+          type: integer
+
+    steps:
+      # Step 1 — REST: retrieve product details from the OpenAPI-described retail API
+      - stepId: get-product
+        operationId: $sourceDescriptions.retailAPI.getProduct
+        parameters:
+          - name: productId
+            in: path
+            value: $inputs.productId
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          productName: $response.body#/name
+          productSku: $response.body#/sku
+          unitPrice: $response.body#/price
+
+      # Step 2 — SOAP: check inventory availability from the legacy fulfillment service
+      - stepId: check-inventory
+        operationName: $sourceDescriptions.fulfillmentService.CheckInventory
+        dependsOn:
+          - get-product
+        parameters:
+          - name: Content-Type
+            in: header
+            value: "text/xml"
+          - name: SOAPAction
+            in: header
+            value: "http://legacy.example.com/fulfillment/CheckInventory"
+        requestBody:
+          contentType: text/xml
+          payload: |
+            <?xml version="1.0" encoding="UTF-8"?>
+            <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                           xmlns:tns="http://legacy.example.com/fulfillment">
+              <soap:Body>
+                <tns:CheckInventory>
+                  <tns:ProductId>{$steps.get-product.outputs.productSku}</tns:ProductId>
+                  <tns:RequestedQuantity>{$inputs.quantity}</tns:RequestedQuantity>
+                </tns:CheckInventory>
+              </soap:Body>
+            </soap:Envelope>
+        successCriteria:
+          - condition: $statusCode == 200
+          - context: $response.body
+            condition: //CheckInventoryResponse/Available[text()='true']
+            type:
+              type: xpath
+              version: xpath-31
+        outputs:
+          availableStock:
+            context: $response.body
+            selector: //CheckInventoryResponse/AvailableQuantity
+            type: xpath
+
+      # Step 3 — REST: create the order via the OpenAPI-described retail API,
+      # using the product details from step 1
+      - stepId: create-order
+        operationId: $sourceDescriptions.retailAPI.createOrder
+        dependsOn:
+          - check-inventory
+        requestBody:
+          contentType: application/json
+          payload:
+            customerId: $inputs.customerId
+            productId: $inputs.productId
+            quantity: $inputs.quantity
+            unitPrice: $steps.get-product.outputs.unitPrice
+        successCriteria:
+          - condition: $statusCode == 201
+        outputs:
+          orderId: $response.body#/orderId
+          orderStatus: $response.body#/status
+
+      # Step 4 — SOAP: dispatch the order via the legacy fulfillment service,
+      # using the order ID returned by step 3
+      - stepId: dispatch-order
+        operationName: $sourceDescriptions.fulfillmentService.DispatchOrder
+        dependsOn:
+          - create-order
+        parameters:
+          - name: Content-Type
+            in: header
+            value: "text/xml"
+          - name: SOAPAction
+            in: header
+            value: "http://legacy.example.com/fulfillment/DispatchOrder"
+        requestBody:
+          contentType: text/xml
+          payload: |
+            <?xml version="1.0" encoding="UTF-8"?>
+            <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                           xmlns:tns="http://legacy.example.com/fulfillment">
+              <soap:Body>
+                <tns:DispatchOrder>
+                  <tns:OrderId>{$steps.create-order.outputs.orderId}</tns:OrderId>
+                  <tns:CustomerId>{$inputs.customerId}</tns:CustomerId>
+                </tns:DispatchOrder>
+              </soap:Body>
+            </soap:Envelope>
+        successCriteria:
+          - condition: $statusCode == 200
+          - context: $response.body
+            condition: //DispatchOrderResponse/TrackingNumber
+            type:
+              type: xpath
+              version: xpath-31
+        outputs:
+          trackingNumber:
+            context: $response.body
+            selector: //DispatchOrderResponse/TrackingNumber
+            type: xpath
+          estimatedDelivery:
+            context: $response.body
+            selector: //DispatchOrderResponse/EstimatedDelivery
+            type: xpath

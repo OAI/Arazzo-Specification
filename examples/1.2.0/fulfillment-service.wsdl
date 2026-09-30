@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions
+    name="FulfillmentService"
+    targetNamespace="http://legacy.example.com/fulfillment"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+    xmlns:tns="http://legacy.example.com/fulfillment"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://legacy.example.com/fulfillment">
+
+      <!-- CheckInventory -->
+      <xsd:element name="CheckInventory">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="ProductId"         type="xsd:string"/>
+            <xsd:element name="RequestedQuantity" type="xsd:integer"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="CheckInventoryResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="Available"         type="xsd:boolean"/>
+            <xsd:element name="AvailableQuantity" type="xsd:integer"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <!-- DispatchOrder -->
+      <xsd:element name="DispatchOrder">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="OrderId"    type="xsd:string"/>
+            <xsd:element name="CustomerId" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="DispatchOrderResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="TrackingNumber"    type="xsd:string"/>
+            <xsd:element name="EstimatedDelivery" type="xsd:date"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+    </xsd:schema>
+  </wsdl:types>
+
+  <!-- Messages -->
+  <wsdl:message name="CheckInventoryRequest">
+    <wsdl:part name="parameters" element="tns:CheckInventory"/>
+  </wsdl:message>
+  <wsdl:message name="CheckInventoryResponse">
+    <wsdl:part name="parameters" element="tns:CheckInventoryResponse"/>
+  </wsdl:message>
+
+  <wsdl:message name="DispatchOrderRequest">
+    <wsdl:part name="parameters" element="tns:DispatchOrder"/>
+  </wsdl:message>
+  <wsdl:message name="DispatchOrderResponse">
+    <wsdl:part name="parameters" element="tns:DispatchOrderResponse"/>
+  </wsdl:message>
+
+  <!-- Port Type -->
+  <wsdl:portType name="FulfillmentServicePortType">
+    <wsdl:operation name="CheckInventory">
+      <wsdl:input  message="tns:CheckInventoryRequest"/>
+      <wsdl:output message="tns:CheckInventoryResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="DispatchOrder">
+      <wsdl:input  message="tns:DispatchOrderRequest"/>
+      <wsdl:output message="tns:DispatchOrderResponse"/>
+    </wsdl:operation>
+  </wsdl:portType>
+
+  <!-- Binding -->
+  <wsdl:binding name="FulfillmentServiceBinding" type="tns:FulfillmentServicePortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="CheckInventory">
+      <soap:operation soapAction="http://legacy.example.com/fulfillment/CheckInventory"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DispatchOrder">
+      <soap:operation soapAction="http://legacy.example.com/fulfillment/DispatchOrder"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+
+  <!-- Service -->
+  <wsdl:service name="FulfillmentService">
+    <wsdl:port name="FulfillmentServicePort" binding="tns:FulfillmentServiceBinding">
+      <soap:address location="https://legacy.example.com/fulfillment"/>
+    </wsdl:port>
+  </wsdl:service>
+
+</wsdl:definitions>
