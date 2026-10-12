@@ -45,7 +45,7 @@
     "devDependencies": {
         "markdownlint-cli2": "^0.23.3",
         "yaml": "2.9.1",
-        "@hyperjump/json-schema": "^1.17.8",
+        "@hyperjump/json-schema": "^1.18.0",
         "c8": "^12.0.0",
         "vitest": "^5.0.2"
     }
