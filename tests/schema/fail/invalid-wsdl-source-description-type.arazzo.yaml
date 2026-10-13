@@ -1,0 +1,13 @@
+arazzo: 1.2.0
+info:
+  title: Invalid source description type for SOAP service
+  version: 1.0.0
+sourceDescriptions:
+  - name: customerService
+    url: https://example.com/customer-service?wsdl
+    type: soap
+workflows:
+  - workflowId: basicWorkflow
+    steps:
+      - stepId: listCustomers
+        operationId: ListCustomers

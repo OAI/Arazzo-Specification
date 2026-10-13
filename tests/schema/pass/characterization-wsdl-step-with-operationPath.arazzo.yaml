@@ -1,0 +1,25 @@
+arazzo: 1.2.0
+info:
+  title: Characterization — wsdl step with operationPath (known schema limitation)
+  version: 1.0.0
+  description: >
+    INTENTIONAL FALSE POSITIVE — documents a known gap in the JSON Schema validation.
+
+    The Arazzo Specification prose states that operationPath MUST NOT be used when
+    the referenced sourceDescription is of type "wsdl". However, the JSON Schema
+    cannot enforce this constraint because doing so would require resolving the
+    sourceDescription type at validation time.
+
+    This document is therefore schema-valid (it matches the openapi-step-object
+    branch of the oneOf) even though it violates the specification. Conformance
+    tooling and implementations are responsible for enforcing this rule. The
+    specification prose is the authoritative source of truth.
+sourceDescriptions:
+  - name: customerService
+    url: https://example.com/customer-service?wsdl
+    type: wsdl
+workflows:
+  - workflowId: basicWorkflow
+    steps:
+      - stepId: listCustomers
+        operationPath: $sourceDescriptions.customerService#/paths/~1ListCustomers

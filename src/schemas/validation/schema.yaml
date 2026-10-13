@@ -83,6 +83,7 @@ $defs:
           - arazzo
           - openapi
           - asyncapi
+          - wsdl
     required:
       - name
       - url
@@ -162,9 +163,10 @@ $defs:
     $comment: https://spec.openapis.org/arazzo/v1.1#step-object'
     description: |-
       Describes a single workflow step which MAY be a call to an
-      API operation (OpenAPI Operation Object or AsyncAPI Operation Object or another Workflow Object)
+      API operation (OpenAPI Operation Object or AsyncAPI Operation Object or a WSDL Operation Object or another Workflow Object)
     oneOf:
       - $ref: '#/$defs/openapi-step-object'
+      - $ref: '#/$defs/wsdl-step-object'
       - $ref: '#/$defs/asyncapi-step-object'
       - $ref: '#/$defs/workflow-step-object'
   step-object-base:
@@ -264,6 +266,20 @@ $defs:
               - operationPath
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
+  wsdl-step-object:
+    allOf:
+      - $ref: '#/$defs/step-object-base'
+      - type: object
+        properties:
+          operationName:
+            description: The name of an existing, resolvable WSDL operation, as defined within a WSDL source description
+            type: string
+          parameters:
+            $ref: '#/$defs/operation-step-parameters'
+        required:
+          - operationName
+    $ref: '#/$defs/specification-extensions'
+    unevaluatedProperties: false
   asyncapi-step-object:
     allOf:
       - $ref: '#/$defs/step-object-base'
@@ -327,7 +343,7 @@ $defs:
     unevaluatedProperties: false
   request-body-object:
     $comment: https://spec.openapis.org/arazzo/v1.1#request-body-object
-    description: The request body to pass to an operation as referenced by operationId or operationPath or channelPath
+    description: The request body to pass to an operation as referenced by operationId, operationName, operationPath, or channelPath
     type: object
     properties:
       contentType:
