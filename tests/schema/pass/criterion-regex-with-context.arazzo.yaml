@@ -1,0 +1,17 @@
+arazzo: 1.1.0
+info:
+  title: Criterion with regex type and context
+  version: 1.0.0
+sourceDescriptions:
+  - name: userAPI
+    url: https://example.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: regexCriterionWorkflow
+    steps:
+      - stepId: getUsers
+        operationId: listUsers
+        successCriteria:
+          - context: $response.header.Content-Type
+            condition: ^application/json
+            type: regex
