@@ -51,6 +51,7 @@ The Arazzo ecosystem is growing with various tools to help you work with Arazzo 
 - **[Redocly CLI](https://github.com/Redocly/redocly-cli)** - An all-in-one API documentation utility for working with OpenAPI, AsyncAPI, and Arazzo.
 - **[Spectral](https://stoplight.io/spectral)** - Flexible OpenAPI/AsyncAPI/Arazzo linter for API governance and style guides.
 - **[Speakeasy OpenAPI](https://github.com/speakeasy-api/openapi)** - OSS packages and CLI tools for validation, bundling, and working with Arazzo, OpenAPI, and Overlay documents.
+- **[@usearazzo/validator](https://usearazzo.com/docs/validator/)** - Validator and linter for Arazzo 1.0.0, 1.0.1, and 1.1.0 documents. Semantic validation, semantic linting, and opt-in JSON Schema validation, reported as LSP diagnostics.
 
 ### Parsers and Resolvers
 
@@ -58,6 +59,8 @@ The Arazzo ecosystem is growing with various tools to help you work with Arazzo 
 - **[Arazzo Resolver](https://github.com/jentic/jentic-arazzo-tools/tree/main/packages/jentic-arazzo-resolver)** - TypeScript/JavaScript resolver and dereferencer for Arazzo and OpenAPI documents.
 - **[Arazzo Runtime Expression](https://github.com/swaggerexpert/arazzo-runtime-expression)** - Arazzo Runtime Expressions parser, validator and extractor.
 - **[Itarazzo](https://github.com/leidenheit/itarazzo-library)** - Library to parse, validate and execute an Arazzo specification.
+- **[@usearazzo/parser](https://usearazzo.com/docs/parser/)** - TypeScript/JavaScript parser for Arazzo 1.0.0, 1.0.1, and 1.1.0 documents, runtime expressions, and criterion conditions, with source maps and a tolerant mode.
+- **[@usearazzo/resolver](https://usearazzo.com/docs/resolver/)** - TypeScript/JavaScript resolver for Arazzo and OpenAPI documents: bundle, dereference, or list every document the references reach.
 
 ### Workflow Execution and Testing
 
