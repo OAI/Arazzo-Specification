@@ -583,13 +583,14 @@ Describes a single step parameter. A unique parameter is defined by the combinat
 - querystring - A parameter that treats the entire URL query string as a single value. This parameter location was introduced in [OpenAPI 3.2.0](https://spec.openapis.org/oas/v3.2.0.html) to support scenarios where the complete query string must be passed as a pre-formatted string rather than individual parameters. When a step references an operation that defines a querystring parameter, the value MUST match the media type format as expressed by the parameter's `content` field (e.g., `application/x-www-form-urlencoded`). The `querystring` location cannot coexist with `query` parameters in the same operation per OpenAPI constraints.
 - header - Custom headers that are expected as part of the request. Note that [RFC9110](https://tools.ietf.org/html/rfc9110#name-field-names) states field names (which includes header) are case-insensitive.
 - cookie - Used to pass a specific cookie value to the source API.
+- channel - Used only for steps that reference AsyncAPI operations, to supply a parameter value for the channel address when sending or receiving messages. The parameter's `name` MUST match a parameter defined in the referenced channel's `parameters` map, and its `value` is substituted for the corresponding `{name}` placeholder in the channel address. For example, in `orders/{orderId}`, the channel parameter is `orderId`.
 
 ##### Fixed Fields
 
 | Field Name                          |                            Type                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 |-------------------------------------|:----------------------------------------------------------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <a name="parameterName"></a> name   |                          `string`                          | **REQUIRED**. The name of the parameter. Parameter names are _case sensitive_.                                                                                                                                                                                                                                                                                                                                                                                          |
-| <a name="parameterIn"></a> in       |                          `string`                          | The location of the parameter. Possible values are `"path"`, `"query"`, `"querystring"`, `"header"`, or `"cookie"`. When the step, success action, or failure action in context specifies a `workflowId`, then all parameters map to workflow inputs. In all other scenarios (e.g., a step specifies an `operationId`), the `in` field MUST be specified.                                                                                                               |
+| <a name="parameterIn"></a> in       |                          `string`                          | The location of the parameter. Possible values are `"path"`, `"query"`, `"querystring"`, `"header"`, `"cookie"`, or `"channel"`. The `"channel"` location applies only to AsyncAPI channel parameters. When the step, success action, or failure action in context specifies a `workflowId`, then all parameters map to workflow inputs. In all other scenarios (e.g., a step specifies an `operationId`), the `in` field MUST be specified.                            |
 | <a name="parameterValue"></a> value | Any \| {expression} \| [Selector Object](#selector-object) | **REQUIRED**. The value to pass in the parameter. The value can be a constant, a [Runtime Expression](#runtime-expressions), or a [Selector Object](#selector-object) to be evaluated and passed to the referenced operation or workflow. For `querystring` parameters, the value MUST resolve to a string representing the complete query string (e.g., `"key1=value1&key2=value2"`). Runtime expressions can be embedded within the string value using `{}` notation. |
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
@@ -621,6 +622,11 @@ This object MAY be extended with [Specification Extensions](#specification-exten
 - name: X-Api-Key
   in: header
   value: $inputs.x-api-key
+
+# Channel Example (AsyncAPI channel address: orders/{orderId})
+- name: orderId
+  in: channel
+  value: $inputs.orderId
 ```
 
 #### Success Action Object
