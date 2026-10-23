@@ -1,0 +1,50 @@
+arazzo: 1.1.0
+info:
+  title: Reusable parameters accept integer values
+  version: 1.0.0
+sourceDescriptions:
+  - name: api
+    url: https://example.com/openapi.yaml
+    type: openapi
+  - name: events
+    url: https://example.com/asyncapi.yaml
+    type: asyncapi
+components:
+  parameters:
+    operationValue:
+      name: value
+      in: header
+      value: 1
+    workflowValue:
+      name: value
+      value: 1
+workflows:
+  - workflowId: parent
+    parameters:
+      - reference: $components.parameters.operationValue
+        value: 0
+    steps:
+      - stepId: openapi
+        operationId: $sourceDescriptions.api.send
+        parameters:
+          - reference: $components.parameters.operationValue
+            value: 0
+      - stepId: asyncapi
+        operationId: $sourceDescriptions.events.send
+        action: send
+        parameters:
+          - reference: $components.parameters.operationValue
+            value: 0
+      - stepId: workflow
+        workflowId: child
+        parameters:
+          - reference: $components.parameters.workflowValue
+            value: 0
+  - workflowId: child
+    inputs:
+      type: object
+      properties:
+        value: {}
+    steps:
+      - stepId: send
+        operationId: $sourceDescriptions.api.send

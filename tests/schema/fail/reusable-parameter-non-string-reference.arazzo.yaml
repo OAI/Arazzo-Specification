@@ -1,0 +1,16 @@
+arazzo: 1.1.0
+info:
+  title: A reusable parameter reference must still be a string
+  version: 1.0.0
+sourceDescriptions:
+  - name: api
+    url: https://example.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: invalid
+    steps:
+      - stepId: send
+        operationId: $sourceDescriptions.api.send
+        parameters:
+          - reference: 1
+            value: null
