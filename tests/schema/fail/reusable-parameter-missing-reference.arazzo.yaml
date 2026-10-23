@@ -1,0 +1,15 @@
+arazzo: 1.1.0
+info:
+  title: A reusable parameter value does not replace the required reference
+  version: 1.0.0
+sourceDescriptions:
+  - name: api
+    url: https://example.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: invalid
+    steps:
+      - stepId: send
+        operationId: $sourceDescriptions.api.send
+        parameters:
+          - value: { nested: [1, false, null] }
