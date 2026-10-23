@@ -616,8 +616,14 @@ $defs:
         description: >
           The value to set at the location defined by the target. May be a literal,
           a runtime expression string, or a selector object.
-        oneOf:
-          - type: string
+        anyOf:
+          - type:
+              - string
+              - boolean
+              - object
+              - array
+              - number
+              - 'null'
           - $ref: '#/$defs/selector-object'
     required:
       - target

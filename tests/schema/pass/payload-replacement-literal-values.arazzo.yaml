@@ -1,0 +1,44 @@
+arazzo: 1.1.0
+info:
+  title: Payload Replacement Literal Values
+  version: 1.1.0
+sourceDescriptions:
+  - name: example
+    url: https://example.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: replaceWorkflow
+    steps:
+      - stepId: updateItem
+        operationId: updateItem
+        requestBody:
+          contentType: application/json
+          replacements:
+            - target: /count
+              value: 42
+            - target: /price
+              value: 12.5
+            - target: /enabled
+              value: true
+            - target: /disabled
+              value: false
+            - target: /items
+              value:
+                - 1
+                - two
+                - null
+                - nested: true
+            - target: /metadata
+              value:
+                label: example
+                count: 42
+            - target: /emptyArray
+              value: []
+            - target: /emptyObject
+              value: {}
+            - target: /optional
+              value: null
+            - target: /status
+              value: completed
+            - target: /id
+              value: $inputs.itemId
