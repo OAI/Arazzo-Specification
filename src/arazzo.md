@@ -1361,7 +1361,7 @@ This object MAY be extended with [Specification Extensions](#specification-exten
 
 **`form`** (default)
 
-The executor presents `prompt` and any `context` entries to the actor and collects a structured response. The actor's response MUST conform to `inputSchema`. The response is accessible via `$interaction.payload`. If the actor's response fails `inputSchema` validation, behaviour is implementation-defined; executors MAY re-prompt the actor or treat the validation failure as step failure. Use this mode for approvals, confirmations, multi-choice selections, data entry, and AI-agent elicitation.
+The executor presents `prompt` and any `context` entries to the actor and collects a structured response. The actor's response MUST conform to `inputSchema`. The response is accessible via `$interaction.payload`. If the actor's response fails `inputSchema` validation, executors SHOULD reject the response, surface the validation errors to the actor, and keep the interaction open. The workflow does not advance until a conforming response is received, the step times out, or the actor cancels. Use this mode for approvals, confirmations, multi-choice selections, data entry, and AI-agent elicitation.
 
 **`redirect`**
 
@@ -1401,7 +1401,7 @@ These expressions are valid within the `outputs`, `successCriteria`, and the `cr
 * For `redirect` mode, the executor resolves the target URL from `operationId`, `operationPath`, or the literal `url` field, and issues the redirect to the actor's client. Resolving an operation reference to its URL does not constitute invoking that operation; the referenced operation's API endpoint is not called. A dynamic URL may be expressed by using a [Runtime Expression](#runtime-expressions) as the value of `url`.
 * An interaction step that receives a valid actor response (one that conforms to `inputSchema` when provided) proceeds to `successCriteria` evaluation. If no `successCriteria` is specified, receipt of any valid actor response (conforming to `inputSchema` when provided) is treated as step success.
 * If the actor explicitly cancels, the step-level `onCancel` actions are evaluated. If no `onCancel` is defined the step fails and `onFailure` actions apply.
-* If the step `timeout` expires before actor input is received, `onTimeout` actions are evaluated. If no `onTimeout` is defined the step fails and `onFailure` actions apply.
+* If the step `timeout` expires before actor input is received, `onTimeout` actions are evaluated. If no `onTimeout` is defined the step fails and `onFailure` actions apply. When actor input and a `timeout` expiry are concurrent, exactly one outcome MUST be applied; both MUST NOT execute for the same interaction instance.
 
 ##### Reusable Interaction Objects
 
@@ -1409,13 +1409,15 @@ Interaction Objects MAY be stored in the `interactions` map of the [Components O
 
 ##### Resumption and Workflow State
 
-When an interaction step suspends, the executor must preserve sufficient state to resume the workflow when actor input arrives. For short-lived interactions (seconds to minutes) an in-memory hold may be sufficient. For long-lived interactions (hours to days) executors SHOULD use a durable storage mechanism.
+When an interaction step suspends, the executor must preserve sufficient state to resume the workflow when actor input arrives. For short-lived interactions (seconds to minutes) an in-memory hold may be sufficient. For long-lived interactions (hours to days) executors SHOULD use a durable storage mechanism. Executors that use durable storage SHOULD persist the suspended state before presenting the interaction to the actor or initiating the redirect.
 
 The standardized name for the resume token is **`workflowState`**. Executors SHOULD use this field name consistently, regardless of transport, so that tooling, documentation, and consumers share a common vocabulary. The content of `workflowState` is opaque and executor-defined; this specification does not constrain its format or encoding.
 
 Executors MUST protect `workflowState` against forgery and tampering using a cryptographic integrity mechanism such as HMAC-SHA256 ([RFC2104](https://tools.ietf.org/html/rfc2104), [RFC7518](https://tools.ietf.org/html/rfc7518)) or authenticated encryption (AEAD). The token MUST NOT expose sensitive workflow state in cleartext. See [RFC 6749 §10.12](https://www.rfc-editor.org/rfc/rfc6749#section-10.12) for analogous guidance on the OAuth 2.0 `state` parameter.
 
 How `workflowState` is transmitted depends on the interaction mode. For `redirect` mode, executors SHOULD embed `workflowState` as a query parameter in the `redirect_uri` at the point the step suspends, so that it is returned verbatim when the actor's client completes the redirect. Because `workflowState` is generated at suspension time and cannot be known by the document author, it cannot be declared in the `parameters` array; the executor injects it when constructing the redirect URL. For `form` and `acknowledge` modes, the mechanism for delivering `workflowState` to the notification or presentation layer is implementation-defined; common approaches include an outbound webhook payload or a push notification reference.
+
+Each interaction instance SHOULD use a fresh `workflowState` value. A `workflowState` value from a prior instance of the same step (for example from an earlier retry attempt) SHOULD be treated as invalid.
 
 The storage mechanism, callback registration, and resumption protocol are not defined by this specification. Executor implementations are responsible for defining and documenting these contracts with their consumers.
 
