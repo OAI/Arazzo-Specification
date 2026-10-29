@@ -625,7 +625,7 @@ This object MAY be extended with [Specification Extensions](#specification-exten
 
 #### Success Action Object
 
-A single success action which describes an action to take upon success of a workflow step. There are two possible values for the `type` field:
+A single success action which describes an action to take upon success of a workflow step. A unique success action is defined by its `name`. There are two possible values for the `type` field:
 
 - end - The workflow ends, and context returns to the caller with applicable outputs
 - goto - A one-way transfer of workflow control to the specified label (either a `workflowId` or `stepId`)
@@ -658,7 +658,7 @@ criteria:
 
 #### Failure Action Object
 
-A single failure action which describes an action to take upon failure of a workflow step. There are three possible values for the `type` field:
+A single failure action which describes an action to take upon failure of a workflow step. A unique failure action is defined by its `name`. There are three possible values for the `type` field:
 
 - end - The workflow ends, and context returns to the caller with applicable outputs
 - retry - The current step will be retried. The retry will be constrained by the `retryAfter` and `retryLimit` fields. If a `stepId` or `workflowId` are specified, then the reference is executed and the context is returned, after which the current step is retried.
