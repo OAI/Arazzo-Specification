@@ -1,0 +1,50 @@
+arazzo: 1.1.0
+info:
+  title: Reusable parameters accept array values
+  version: 1.0.0
+sourceDescriptions:
+  - name: api
+    url: https://example.com/openapi.yaml
+    type: openapi
+  - name: events
+    url: https://example.com/asyncapi.yaml
+    type: asyncapi
+components:
+  parameters:
+    operationValue:
+      name: value
+      in: header
+      value: []
+    workflowValue:
+      name: value
+      value: []
+workflows:
+  - workflowId: parent
+    parameters:
+      - reference: $components.parameters.operationValue
+        value: ["text", 1, true, null, { nested: [false] }]
+    steps:
+      - stepId: openapi
+        operationId: $sourceDescriptions.api.send
+        parameters:
+          - reference: $components.parameters.operationValue
+            value: ["text", 1, true, null, { nested: [false] }]
+      - stepId: asyncapi
+        operationId: $sourceDescriptions.events.send
+        action: send
+        parameters:
+          - reference: $components.parameters.operationValue
+            value: ["text", 1, true, null, { nested: [false] }]
+      - stepId: workflow
+        workflowId: child
+        parameters:
+          - reference: $components.parameters.workflowValue
+            value: ["text", 1, true, null, { nested: [false] }]
+  - workflowId: child
+    inputs:
+      type: object
+      properties:
+        value: {}
+    steps:
+      - stepId: send
+        operationId: $sourceDescriptions.api.send

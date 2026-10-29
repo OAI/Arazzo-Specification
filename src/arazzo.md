@@ -803,7 +803,7 @@ A simple object to allow referencing of objects contained within the [Components
 | Field Name                                      |      Type      | Description                                                                                        |
 |-------------------------------------------------|:--------------:|----------------------------------------------------------------------------------------------------|
 | <a name="reusableObjectReference"></a>reference | `{expression}` | **REQUIRED**. A [Runtime Expression](#runtime-expressions) used to reference the desired object.   |
-| <a name="reusableObjectValue"></a>value         |    `string`    | Sets a value of the referenced parameter. This is only applicable for parameter object references. |
+| <a name="reusableObjectValue"></a>value         |      Any       | Sets a value of the referenced parameter. This is only applicable for parameter object references. |
 
 This object cannot be extended with additional properties and any properties added MUST be ignored.
 
