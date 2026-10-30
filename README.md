@@ -68,6 +68,7 @@ The Arazzo ecosystem is growing with various tools to help you work with Arazzo 
 - **[Arazzo Runner](https://github.com/jentic/arazzo-engine/tree/main/runner)** - A workflow execution engine that processes and executes API workflows defined in the Arazzo format and individual API calls defined in OpenAPI specifications.
 - **[Respect CLI](https://redocly.com/respect-cli)** - A tool to run OpenAPI Arazzo workflows, identify gaps in schemas, status codes, and content types, and evaluate success criteria—all in one simple command
 - **[Specmatic](https://specmatic.io/)** - Simplified Authoring, Generation, Mocking, and Testing of Arazzo Workflows.
+- **[ezu](https://github.com/mpenet/ezu)** - A command line for any HTTP API that publishes an OpenAPI 3 description. Ezu also can also be used to validate and run workflows defined with Arazzo. 
 
 ### Converters
 
