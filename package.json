@@ -39,7 +39,7 @@
         "cheerio": "^1.2.0",
         "highlight.js": "^11.12.0",
         "markdown-it": "^15.0.3",
-        "respec": "37.4.1",
+        "respec": "37.5.0",
         "yargs": "^18.2.0"
     },
     "devDependencies": {
@@ -47,6 +47,6 @@
         "yaml": "2.9.1",
         "@hyperjump/json-schema": "^1.18.0",
         "c8": "^12.0.0",
-        "vitest": "^5.0.5"
+        "vitest": "^5.1.0"
     }
 }
