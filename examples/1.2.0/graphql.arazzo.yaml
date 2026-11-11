@@ -69,7 +69,7 @@ workflows:
                 city: $inputs.city
                 country: $inputs.country
   - workflowId: collectBookUpdates
-    description: Collects updates from a finite stream that the server completes naturally within the configured timeout.
+    description: Replays up to ten existing book updates in a category.
     inputs:
       type: object
       properties:
@@ -77,12 +77,11 @@ workflows:
           type: string
     steps:
       - stepId: collectBookUpdates
-        description: The selected subscription is expected to complete naturally; an unbounded stream will time out and fail this step.
         graphqlOperation:
           schema: $sourceDescriptions.shopSchema
           operation: |
-            subscription BookUpdated($category: String!) {
-              bookUpdated(category: $category) {
+            subscription ReplayBookUpdates($category: String!) {
+              replayBookUpdates(category: $category, limit: 10) {
                 id
                 title
               }

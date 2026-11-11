@@ -8,7 +8,12 @@ type Mutation {
 }
 
 type Subscription {
-  bookUpdated(category: String!): Book
+  """
+  Replays up to limit updates from a snapshot of existing updates in the category.
+  The resolver completes after replaying the snapshot, even if it contains fewer
+  than limit updates or no updates.
+  """
+  replayBookUpdates(category: String!, limit: Int!): Book!
 }
 
 type Book {
