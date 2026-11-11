@@ -1,0 +1,19 @@
+arazzo: 1.2.0
+info:
+  title: GraphQL step cannot use requestBody
+  version: 1.0.0
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ./schema.graphqls
+workflows:
+  - workflowId: invalidGraphql
+    steps:
+      - stepId: listBooks
+        graphqlOperation:
+          schema: $sourceDescriptions.shopSchema
+          operation: 'query ListBooks { books { id } }'
+        requestBody:
+          contentType: application/json
+          payload:
+            query: 'query ListBooks { books { id } }'

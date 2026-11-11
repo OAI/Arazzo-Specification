@@ -1,0 +1,36 @@
+arazzo: 1.2.0
+info:
+  title: Selector Object structure in GraphQL variable and extensions contexts
+  version: 1.0.0
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ./schema.graphqls
+workflows:
+  - workflowId: lookupBook
+    inputs:
+      type: object
+      properties:
+        request:
+          type: object
+          properties:
+            bookId:
+              type: string
+            extensions:
+              type: object
+    steps:
+      - stepId: getBook
+        graphqlOperation:
+          schema: $sourceDescriptions.shopSchema
+          operation: 'query GetBook($id: ID!) { book(id: $id) { id } }'
+          extensionsSelector:
+            context: $inputs.request
+            selector: $.extensions
+            type: jsonpath
+        parameters:
+          - name: id
+            in: variable
+            value:
+              context: $inputs.request
+              selector: $.bookId
+              type: jsonpath

@@ -1,0 +1,33 @@
+type Query {
+  book(id: ID!): Book
+  books: [Book!]!
+}
+
+type Mutation {
+  updateBook(input: UpdateBookInput!): Book
+}
+
+type Subscription {
+  """
+  Replays up to limit updates from a snapshot of existing updates in the category.
+  The resolver completes after replaying the snapshot, even if it contains fewer
+  than limit updates or no updates.
+  """
+  replayBookUpdates(category: String!, limit: Int!): Book!
+}
+
+type Book {
+  id: ID!
+  title: String!
+}
+
+input UpdateBookInput {
+  bookId: ID!
+  quantity: Int!
+  shipping: ShippingInput!
+}
+
+input ShippingInput {
+  city: String!
+  country: String!
+}
