@@ -695,6 +695,8 @@ The GraphQL Specification reserves the request `extensions` map for implementati
 
 GraphQL-aware tooling performs GraphQL parsing, validation, operation selection, variable coercion, and execution. Arazzo defines how the GraphQL request is represented in a Step and how its result is exposed; GraphQL defines the execution details.
 
+When a GraphQL Step is executed over HTTP, `$url` and `$method` expose the HTTP request URL and method. `$statusCode` and `$response.header.<name>` expose the corresponding HTTP response status code and header values when available. These expressions are undefined for non-HTTP transports. GraphQL request and execution errors follow the rules below.
+
 ###### Queries and Mutations
 
 For query and mutation operations, `$response.body` exposes the GraphQL response map, including any `data`, `errors`, and `extensions` entries returned by GraphQL. GraphQL MAY return partial data together with `errors`, or a request-error result containing `errors` without `data`.
