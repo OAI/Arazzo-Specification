@@ -653,7 +653,7 @@ An async step example:
 
 Describes the GraphQL request executed by a Step. It identifies the schema, an inline or externally referenced operation, and optional request extensions. GraphQL source text and execution semantics are defined by the [GraphQL Specification](https://spec.graphql.org/September2025/).
 
-As with other Arazzo Step types, execution-environment configuration MAY be required to bind the referenced API description to a concrete service endpoint. A GraphQL Step identifies the schema and executable operation, but does not identify a deployment. The endpoint, transport protocol, authentication, schema-discovery mechanism, and client-construction mechanism are outside the scope of this Specification. Tooling that executes GraphQL Steps MUST obtain the required binding information through implementation-defined configuration.
+A GraphQL Step identifies the schema and executable operation. Tooling that executes the Step MUST obtain the service endpoint and any required transport and authentication settings from implementation-defined execution configuration. A URL used for schema introspection does not establish the execution endpoint.
 
 ##### Fixed Fields
 
