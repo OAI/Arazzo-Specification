@@ -33,6 +33,6 @@ workflows:
             payload:
               data: Yg==
         successCriteria:
-          - condition: $response.status#/code == "resource_exhausted"
+          - condition: $response.status#/code == 'resource_exhausted'
         outputs:
           operationCost: $response.trailingMetadata.operation-cost

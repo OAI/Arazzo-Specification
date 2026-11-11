@@ -89,6 +89,6 @@ workflows:
             payload:
               type: found
         successCriteria:
-          - condition: $response.body#/0/type == "acknowledged"
+          - condition: $response.body#/0/type == 'acknowledged'
         outputs:
           errorMessage: $response.status#/message

@@ -72,6 +72,6 @@ workflows:
           payload:
             bookId: missing
         successCriteria:
-          - condition: $response.status#/code == "not_found"
+          - condition: $response.status#/code == 'not_found'
         outputs:
           errorMessage: $response.status#/message
