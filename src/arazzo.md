@@ -668,7 +668,7 @@ A GraphQL Step MUST NOT include `requestBody`. Tooling constructs the request fr
 
 For a Source Description reference, tooling MUST resolve the named Source Description's `url` and interpret the resulting GraphQL source according to whether it is referenced by `schema` or `operation`.
 
-- `schema` MUST identify the whole GraphQL Source Description. The reference MUST use `$sourceDescriptions.<name>` and MUST NOT include a JSON Pointer fragment.
+- `schema` MUST use the `graphql-schema-reference` syntax defined in [Runtime Expressions](#runtime-expressions) to identify the whole GraphQL Source Description. This form is specific to `graphqlOperation.schema`.
 - An inline `operation` MUST be GraphQL source text containing exactly one operation definition. It MAY also contain fragment definitions used by that operation. The operation MAY be named or anonymous.
 - An external `operation` reference MUST use `$sourceDescriptions.<name>.<graphqlOperationName>`. The final segment MUST be a valid GraphQL Name and MUST identify a named operation in the referenced Executable Document. The external document MAY contain multiple operation definitions and fragments.
 - Source-aware validation MUST verify that each referenced Source Description has `type: graphql` and resolves to the source required by the field in which it is used.
@@ -1593,13 +1593,15 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
   workflow-field-name = identifier
 
   ; Source descriptions expressions
-  source-reference = source-name [ "." source-reference-id ]
+  source-reference = source-name "." source-reference-id
   source-name = identifier-strict
   source-reference-id = 1*CHAR
       ; operationIds have no character restrictions in OpenAPI/AsyncAPI
-      ; An omitted source-reference-id references the whole Source Description, applicable to GraphQL
       ; WSDL operation names conform to the XML NCNames
       ; Resolution priority defined in spec text: (1) operationId/workflowId/wsdl:operationName/graphql:operationName, (2) field names
+
+  ; Whole-source reference used only by graphqlOperation.schema
+  graphql-schema-reference = "$sourceDescriptions." source-name
 
   ; Components expressions
   components-reference = component-type "." component-name
@@ -1681,7 +1683,6 @@ The `name` identifier is case-sensitive, whereas `token` is not.
 | Step output value            | `$steps.someStepId.outputs.pets`                                     | In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$steps.someStepId.outputs.pets#/0/id`) or the entire body.        |
 | Workflow output value        | `$outputs.bar` or `$workflows.foo.outputs.bar`                       | In situations where the output named property return payloads, references may be made to portions of the response body (e.g., `$workflows.foo.outputs.mappedResponse#/name`) or the entire body. |
 | Embedded expressions         | `https://{$inputs.host}/api/{$steps.create.outputs.id}/status`       | Multiple runtime expressions can be embedded within a single string value by wrapping each in curly braces.                                                                                      |
-| Whole source description     | `$sourceDescriptions.shopSchema`                                     | References the complete source represented by the named Source Description Object, rather than only its metadata fields.                                                                         |
 | Source description reference | `$sourceDescriptions.petstore.getPetById`                            | References an operationId or workflowId from the named source description. Resolution priority: (1) operationId/workflowId, (2) field names.                                                     |
 | Source description field     | `$sourceDescriptions.petstore.url`                                   | References a field from the Source Description Object. Resolved when no matching operationId/workflowId is found.                                                                                |
 | Components parameter         | `$components.parameters.foo`                                         | Accesses a foo parameter defined within the Components Object.                                                                                                                                   |
@@ -1698,8 +1699,6 @@ Expressions can be embedded into string values by surrounding the expression wit
 Whether a value is stored as a string or parsed structure depends on its content type. JSON responses and inputs are typically parsed into structures, while XML and plain text are typically stored as strings. When embedding a parsed structure into a non-JSON payload format, the resulting JSON serialization may not match the target format's expected structure.
 
 #### Source Description Expression Resolution
-
-The form `$sourceDescriptions.<name>` references the complete source represented by the named Source Description Object. GraphQL uses this form for the `schema` field.
 
 When using `$sourceDescriptions.<name>.<reference>`, the `<reference>` portion is resolved with the following priority:
 
