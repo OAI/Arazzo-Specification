@@ -356,9 +356,9 @@ $defs:
       - $ref: '#/$defs/twirp-step-object'
       - $ref: '#/$defs/connect-step-object'
   rpc-method-reference:
-    description: A source-qualified RPC method identifier from a Protocol Buffer service declaration using $sourceDescriptions.<source>.<fully-qualified-service>/<method> format
+    description: An RPC method identifier from a Protocol Buffer service declaration. The $sourceDescriptions.<source>. prefix may be omitted when there is exactly one protobuf Source Description
     type: string
-    pattern: '^\$sourceDescriptions\.[A-Za-z0-9_-]+(?:\.[A-Za-z_][A-Za-z0-9_]*)+/[A-Za-z_][A-Za-z0-9_]*$'
+    pattern: '^(?:\$sourceDescriptions\.[A-Za-z0-9_-]+\.)?[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*/[A-Za-z_][A-Za-z0-9_]*$'
   grpc-step-object:
     allOf:
       - $ref: '#/$defs/step-object-base'

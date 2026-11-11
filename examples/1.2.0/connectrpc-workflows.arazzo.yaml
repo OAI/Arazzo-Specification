@@ -75,3 +75,20 @@ workflows:
           - condition: $response.status#/code == 'not_found'
         outputs:
           errorMessage: $response.status#/message
+
+  - workflowId: acceptExpectedConnectStreamError
+    summary: Accept a terminal not_found error when the requested category does not exist
+    steps:
+      - stepId: watchMissingCategory
+        rpcMethod: org.v1.Library/WatchBooks
+        rpcProtocol: connect
+        timeout: 30000
+        requestBody:
+          contentType: application/connect+proto
+          payload:
+            category: missing-category
+        successCriteria:
+          - condition: $response.status#/code == 'not_found'
+        outputs:
+          updates: $response.body
+          errorMessage: $response.status#/message

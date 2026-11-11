@@ -1,13 +1,13 @@
 arazzo: 1.2.0
 info:
-  title: Invalid RPC method without a source description reference
+  title: RPC method infers the sole Protobuf source
   version: 1.0.0
 sourceDescriptions:
   - name: rpcLibrary
     type: protobuf
     url: ./rpc-library.proto
 workflows:
-  - workflowId: invalidRpcMethod
+  - workflowId: lookupBook
     steps:
       - stepId: getBook
         rpcMethod: org.v1.Library/GetBook
