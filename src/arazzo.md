@@ -1722,7 +1722,7 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
   request-source = ( header-reference / query-reference / path-reference / body-reference / payload-reference / request-metadata-reference )
 
   ; Response sources
-  response-source = ( header-reference / body-reference / payload-reference / status-reference / response-metadata-reference )
+  response-source = ( header-reference / query-reference / path-reference / body-reference / payload-reference / status-reference / response-metadata-reference )
 
   ; Message sources
   message-source = ( header-reference / query-reference / path-reference / body-reference / payload-reference )
