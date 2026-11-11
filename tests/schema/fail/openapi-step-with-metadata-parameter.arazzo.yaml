@@ -1,0 +1,17 @@
+arazzo: 1.2.0
+info:
+  title: OpenAPI step with an invalid RPC metadata parameter
+  version: 1.0.0
+sourceDescriptions:
+  - name: library
+    type: openapi
+    url: ./openapi.yaml
+workflows:
+  - workflowId: lookupBook
+    steps:
+      - stepId: getBook
+        operationId: getBook
+        parameters:
+          - name: authorization
+            in: metadata
+            value: Bearer example-token

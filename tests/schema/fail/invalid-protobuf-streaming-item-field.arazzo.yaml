@@ -1,0 +1,19 @@
+arazzo: 1.2.0
+info:
+  title: Invalid gRPC streaming request-item field
+  version: 1.0.0
+sourceDescriptions:
+  - name: rpcLibrary
+    type: protobuf
+    url: ./rpc-library.proto
+workflows:
+  - workflowId: invalid
+    steps:
+      - stepId: session
+        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
+        rpcProtocol: grpc
+        requestBody:
+          - payload:
+              type: START
+            # Invalid: streaming request items only allow Request Body Object fields.
+            notAStreamingRequestField: true

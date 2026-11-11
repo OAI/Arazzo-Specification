@@ -1,0 +1,18 @@
+arazzo: 1.2.0
+info:
+  title: gRPC-Web step with an invalid header parameter
+  version: 1.0.0
+sourceDescriptions:
+  - name: library
+    type: protobuf
+    url: ./rpc-library.proto
+workflows:
+  - workflowId: lookupBook
+    steps:
+      - stepId: getBook
+        rpcMethod: $sourceDescriptions.library.org.v1.Library/GetBook
+        rpcProtocol: grpc-web
+        parameters:
+          - name: authorization
+            in: header
+            value: Bearer example-token
