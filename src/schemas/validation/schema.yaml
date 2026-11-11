@@ -347,7 +347,7 @@ $defs:
         type: string
         pattern: '^\$sourceDescriptions\.[A-Za-z0-9_-]+$'
       operation:
-        description: Inline GraphQL source text containing an Executable Document with exactly one operation definition, or an external operation reference in the form $sourceDescriptions.<name>.<operationName>
+        description: Inline GraphQL source text containing an Executable Document with exactly one operation definition, or an external operation reference in the form $sourceDescriptions.<name>.<graphqlOperationName>
         type: string
       extensions:
         description: An optional literal GraphQL request extensions map. Runtime Expressions in the map are evaluated before the request is constructed
