@@ -681,6 +681,8 @@ An inline `operation` selects its sole operation definition. An external `operat
 
 ###### Variables and Request Extensions
 
+Every parameter applied to a GraphQL Step MUST have `in: variable`. Tooling MUST check this after resolving Reusable Objects and applying workflow-level parameters to the Step.
+
 Runtime values are supplied as GraphQL variables using [Parameter Objects](#parameter-object) with `in: variable`. The parameter `name` is the GraphQL variable name without the leading `$`. A parameter `value` MAY be a literal, a [Runtime Expression](#runtime-expressions), or a [Selector Object](#selector-object). An object value with `valueMode: literal` is supplied as a literal GraphQL input object. When `value` is an object and `valueMode` is omitted, it is interpreted as a Selector Object. A Selector Object MUST be evaluated before the resulting value is supplied to GraphQL variable coercion. Variable values MAY be scalars, lists, input objects, or `null`. The [Request Body Object](#request-body-object) is not used to supply GraphQL variable values.
 
 If a variable parameter is omitted, the variable is omitted from the GraphQL request. This preserves any default defined by the GraphQL operation. A parameter whose value is `null` explicitly supplies GraphQL `null`; it is not equivalent to omission. See [Variables](https://spec.graphql.org/September2025/#sec-Language.Variables) and [Coercing Variable Values](https://spec.graphql.org/September2025/#sec-Coercing-Variable-Values).

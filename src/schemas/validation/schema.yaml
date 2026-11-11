@@ -246,6 +246,10 @@ $defs:
         - $ref: '#/$defs/parameter-object'
           required:
             - in
+          properties:
+            in:
+              not:
+                const: variable
   openapi-step-object:
     allOf:
       - $ref: '#/$defs/step-object-base'
@@ -338,7 +342,15 @@ $defs:
           graphqlOperation:
             $ref: '#/$defs/graphql-operation-object'
           parameters:
-            $ref: '#/$defs/operation-step-parameters'
+            items:
+              oneOf:
+                - $ref: '#/$defs/reusable-object'
+                - $ref: '#/$defs/parameter-object'
+                  required:
+                    - in
+                  properties:
+                    in:
+                      const: variable
         required:
           - graphqlOperation
     $ref: '#/$defs/specification-extensions'
