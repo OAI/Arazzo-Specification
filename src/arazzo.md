@@ -482,7 +482,7 @@ service Library {
 }
 ```
 
-identifies the RPC method `org.v1.Library/GetBook`. A source-qualified reference and its protocol discriminator are written as:
+identifies the RPC method `org.v1.Library/GetBook`. The `rpcMethod` field MUST use `$sourceDescriptions.` followed by an `rpc-method-reference` as defined in [Runtime Expressions](#runtime-expressions). A bare method identifier such as `org.v1.Library/GetBook` MUST NOT be used as the value of `rpcMethod`.
 
 ```yaml
 rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
@@ -1759,8 +1759,13 @@ The runtime expression is defined by the following [ABNF](https://tools.ietf.org
   source-reference-id = 1*CHAR
       ; operationIds have no character restrictions in OpenAPI/AsyncAPI
       ; WSDL operation names conform to the XML NCNames
-      ; RPC method identifiers use <fully-qualified-service-name>/<method-name>
       ; Resolution priority defined in spec text: (1) operationId/workflowId/wsdl:operationName/rpcMethod, (2) field names
+
+  ; RPC method references after the "$sourceDescriptions." prefix
+  rpc-method-reference = source-name "." full-service-name "/" method-name
+  full-service-name = protobuf-identifier *( "." protobuf-identifier )
+  method-name = protobuf-identifier
+  protobuf-identifier = ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" )
 
   ; Components expressions
   components-reference = component-type "." component-name
@@ -1871,7 +1876,7 @@ Whether a value is stored as a string or parsed structure depends on its content
 When using `$sourceDescriptions.<name>.<reference>`, the `<reference>` portion is resolved with the following priority:
 
 - **operationId or workflowId** - If the referenced source description is an OpenAPI description, `<reference>` is first matched against operationIds. If the source description is an Arazzo document, `<reference>` is matched against workflowIds. If the source description is a WSDL document, `<reference>` is matched against the `name` attribute of `wsdl:operation` elements within the WSDL `portType` definitions ([WSDL 1.1](https://www.w3.org/TR/wsdl.html)) or `interface` definitions ([WSDL 2.0](https://www.w3.org/TR/wsdl20/)).
-- **rpcMethod** - If the referenced source description is a Protocol Buffer description, `<reference>` is matched against the fully-qualified RPC identifier `<fully-qualified-service-name>/<method-name>`.
+- **RPC method** - If the referenced source is a Protocol Buffer description and `<name>.<reference>` matches `rpc-method-reference`, look up `<reference>` as a fully qualified RPC method identifier in that source.
 - **Source description field** - If no operationId/workflowId/wsdl:operationName/rpcMethod match is found, `<reference>` is matched against field names of the Source Description Object (e.g., `url`,
   `type`).
 
