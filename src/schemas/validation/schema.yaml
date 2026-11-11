@@ -202,8 +202,6 @@ $defs:
         type: array
         uniqueItems: true
         items: true
-      requestBody:
-        $ref: '#/$defs/request-body-object'
       successCriteria:
         description: A list of assertions to determine the success of the step
         type: array
@@ -253,6 +251,8 @@ $defs:
       - $ref: '#/$defs/step-object-base'
       - type: object
         properties:
+          requestBody:
+            $ref: '#/$defs/request-body-object'
           operationId:
             description: The name of an existing, resolvable operation, as defined with a unique operationId and existing within one of the sourceDescriptions
             type: string
@@ -273,6 +273,8 @@ $defs:
       - $ref: '#/$defs/step-object-base'
       - type: object
         properties:
+          requestBody:
+            $ref: '#/$defs/request-body-object'
           operationName:
             description: The name of an existing, resolvable WSDL operation, as defined within a WSDL source description
             type: string
@@ -287,6 +289,8 @@ $defs:
       - $ref: '#/$defs/step-object-base'
       - type: object
         properties:
+          requestBody:
+            $ref: '#/$defs/request-body-object'
           operationId:
             description: The name of an existing, resolvable operation, as defined with a unique operationId and existing within one of the sourceDescriptions
             type: string
@@ -369,6 +373,8 @@ $defs:
       - $ref: '#/$defs/step-object-base'
       - type: object
         properties:
+          requestBody:
+            $ref: '#/$defs/request-body-object'
           workflowId:
             description: The workflowId referencing an existing workflow within the Arazzo description
             $ref: '#workflowId'

@@ -664,6 +664,8 @@ This object MAY be extended with [Specification Extensions](#specification-exten
 
 The `graphqlOperation` field is mutually exclusive of `operationId`, `operationName`, `operationPath`, `channelPath`, and `workflowId`. It identifies the source artifacts needed to execute a GraphQL request.
 
+A GraphQL Step MUST NOT include `requestBody`. Tooling constructs the request from the selected operation, variable parameters, and any request extensions.
+
 For a Source Description reference, tooling MUST resolve the named Source Description's `url` and interpret the resulting GraphQL source according to whether it is referenced by `schema` or `operation`.
 
 - `schema` MUST identify the whole GraphQL Source Description. The reference MUST use `$sourceDescriptions.<name>` and MUST NOT include a JSON Pointer fragment.
