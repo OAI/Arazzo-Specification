@@ -297,7 +297,7 @@ workflows:
     timeout: 6000
     action: receive
     outputs:
-      orderId: $message.payload.orderId
+      orderId: $message.payload#/orderId
   outputs:
       orderId: $steps.confirmPetPurchaseStep.outputs.orderId
 ```
@@ -571,7 +571,10 @@ An async step example:
     - placeOrder
   timeout: 6000
   outputs:
-      orderId: $message.payload.orderId
+      orderId:
+          context: $message.payload
+          selector: $.orderId
+          type: jsonpath
 ```
 
 #### Parameter Object
