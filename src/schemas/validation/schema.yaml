@@ -16,7 +16,7 @@ properties:
   info:
     $ref: '#/$defs/info'
   sourceDescriptions:
-    description: A list of source descriptions such as Arazzo, OpenAPI, AsyncAPI, or Protocol Buffer source descriptions
+    description: A list of source descriptions such as Arazzo, OpenAPI, AsyncAPI, WSDL or Protocol Buffer source descriptions
     type: array
     uniqueItems: true
     minItems: 1
@@ -64,7 +64,7 @@ $defs:
   source-description-object:
     $comment: https://spec.openapis.org/arazzo/v1.1#source-description-object
     description: |-
-      Describes a source description (such as an OpenAPI, AsyncAPI, or Protocol Buffer source description)
+      Describes a source description (such as an OpenAPI, AsyncAPI, WSDL or Protocol Buffer source description)
       that will be referenced by one or more workflows described within
       an Arazzo description
     type: object
@@ -164,7 +164,7 @@ $defs:
     $comment: https://spec.openapis.org/arazzo/v1.1#step-object'
     description: |-
       Describes a single workflow step which MAY be a call to an
-      API operation (OpenAPI Operation Object or AsyncAPI Operation Object or WSDL Operation Object), an RPC method from a Protocol Buffer service declaration, or another Workflow Object
+      API operation (OpenAPI Operation Object or AsyncAPI Operation Object or WSDL Operation Object, an RPC method from a Protocol Buffer service declaration, or another Workflow Object)
     oneOf:
       - $ref: '#/$defs/openapi-step-object'
       - $ref: '#/$defs/wsdl-step-object'
@@ -198,7 +198,7 @@ $defs:
             - type: string
               pattern: ^\$sourceDescriptions\.[^.]+\.[^.]+\.steps\.[^.]+$
       parameters:
-        description: A list of parameters that MUST be passed to an operation, RPC method, or workflow as referenced by operationId, operationPath, channelPath, rpcMethod or workflowId
+        description: A list of parameters that MUST be passed to an operation, RPC method, or workflow as referenced by operationId, operationPath, channelPath, operationName, rpcMethod or workflowId
         type: array
         uniqueItems: true
         items: true
