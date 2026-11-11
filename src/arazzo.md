@@ -711,7 +711,7 @@ For a subscription, `timeout` bounds both setup and the response-stream lifetime
 
 ##### GraphQL Operation Object Examples
 
-###### GraphQL Source Descriptions
+###### Example Source Descriptions
 
 These examples use separate GraphQL Source Descriptions for the schema and the reusable Executable Document. The `schema` and `operation` fields establish how each source is used:
 
