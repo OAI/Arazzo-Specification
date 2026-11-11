@@ -369,8 +369,15 @@ $defs:
           - $ref: '#/$defs/expression-type-object'
     required:
       - condition
-    dependentRequired:
-      type:
+    if:
+      required:
+        - type
+      properties:
+        type:
+          not:
+            const: simple
+    then:
+      required:
         - context
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
