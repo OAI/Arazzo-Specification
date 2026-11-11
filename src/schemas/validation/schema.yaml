@@ -237,7 +237,7 @@ $defs:
               - $ref: '#/$defs/selector-object'
     required:
       - stepId
-  operation-step-parameters:
+  operation-step-parameter-list:
     type: array
     uniqueItems: true
     items:
@@ -246,6 +246,25 @@ $defs:
         - $ref: '#/$defs/parameter-object'
           required:
             - in
+  operation-step-parameters:
+    $ref: '#/$defs/operation-step-parameter-list'
+    items:
+      properties:
+        in:
+          not:
+            const: metadata
+  operation-step-parameters-with-metadata:
+    $ref: '#/$defs/operation-step-parameter-list'
+    items:
+      properties:
+        in:
+          const: metadata
+  twirp-step-parameters:
+    $ref: '#/$defs/operation-step-parameter-list'
+    items:
+      properties:
+        in:
+          const: header
   openapi-step-object:
     allOf:
       - $ref: '#/$defs/step-object-base'
@@ -351,7 +370,7 @@ $defs:
             description: The RPC protocol and execution semantics used to invoke rpcMethod
             const: grpc
           parameters:
-            $ref: '#/$defs/operation-step-parameters'
+            $ref: '#/$defs/operation-step-parameters-with-metadata'
           requestBody:
             $ref: '#/$defs/grpc-request-body'
         required:
@@ -370,7 +389,7 @@ $defs:
             description: The RPC protocol and execution semantics used to invoke rpcMethod
             const: grpc-web
           parameters:
-            $ref: '#/$defs/operation-step-parameters'
+            $ref: '#/$defs/operation-step-parameters-with-metadata'
           requestBody:
             $ref: '#/$defs/grpc-web-request-body-object'
         required:
@@ -389,7 +408,7 @@ $defs:
             description: The RPC protocol and execution semantics used to invoke rpcMethod
             const: twirp
           parameters:
-            $ref: '#/$defs/operation-step-parameters'
+            $ref: '#/$defs/twirp-step-parameters'
           requestBody:
             $ref: '#/$defs/twirp-request-body-object'
         required:
@@ -408,7 +427,7 @@ $defs:
             description: The RPC protocol and execution semantics used to invoke rpcMethod
             const: connect
           parameters:
-            $ref: '#/$defs/operation-step-parameters'
+            $ref: '#/$defs/operation-step-parameters-with-metadata'
           requestBody:
             $ref: '#/$defs/connect-request-body'
         required:

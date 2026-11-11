@@ -935,7 +935,9 @@ Describes a single step parameter. A unique parameter is defined by the combinat
 - querystring - A parameter that treats the entire URL query string as a single value. This parameter location was introduced in [OpenAPI 3.2.0](https://spec.openapis.org/oas/v3.2.0.html) to support scenarios where the complete query string must be passed as a pre-formatted string rather than individual parameters. When a step references an operation that defines a querystring parameter, the value MUST match the media type format as expressed by the parameter's `content` field (e.g., `application/x-www-form-urlencoded`). The `querystring` location cannot coexist with `query` parameters in the same operation per OpenAPI constraints.
 - header - Custom headers that are expected as part of the request. Note that [RFC9110](https://tools.ietf.org/html/rfc9110#name-field-names) states field names (which includes header) are case-insensitive.
 - cookie - Used to pass a specific cookie value to the source API.
-- metadata - Protocol-defined RPC metadata. For `grpc`, see [gRPC metadata](https://grpc.io/docs/guides/metadata/). For `grpc-web`, see [gRPC-Web request metadata](https://github.com/grpc/grpc-web#how-it-works). For `connect`, see [Connect leading metadata](https://connectrpc.com/docs/protocol/#unary-request). This location is not defined for `twirp`.
+- metadata - Protocol-defined RPC metadata. Parameters with this location MUST only be applied to RPC Steps using `grpc`, `grpc-web`, or `connect`. See [gRPC metadata](https://grpc.io/docs/guides/metadata/), [gRPC-Web request metadata](https://github.com/grpc/grpc-web#how-it-works), and [Connect leading metadata](https://connectrpc.com/docs/protocol/#unary-request).
+
+Parameters applied to an RPC Step MUST use `in: metadata` for `grpc`, `grpc-web`, and `connect`, or `in: header` for `twirp`. Tooling MUST check the parameter location after resolving Reusable Objects and applying workflow-level parameters to the Step.
 
 ##### Fixed Fields
 
@@ -1859,7 +1861,9 @@ The `name` identifier is case-sensitive, whereas `token` is not.
 | Components parameter         | `$components.parameters.foo`                                         | Accesses a foo parameter defined within the Components Object.                                                                                                                                                         |
 | Components action            | `$components.successActions.bar` or `$components.failureActions.baz` | Accesses a success or failure action defined within the Components Object.                                                                                                                                             |
 
-The `status-reference`, `request-metadata-reference`, and `response-metadata-reference` runtime expression productions are defined only for RPC Steps. Their use for OpenAPI, AsyncAPI, and Workflow Steps is undefined.
+The `status-reference` runtime expression production is defined only for RPC Steps.
+
+Tooling MUST validate `$request.metadata.<name>`, `$response.metadata.<name>`, and `$response.trailingMetadata.<name>` against the Step that supplies the request or response context. These expressions MUST only be used for RPC Steps using `grpc`, `grpc-web`, or `connect`, and only where the selected protocol and call form define the corresponding metadata.
 
 Runtime expressions preserve the type of the referenced value.
 Expressions can be embedded into string values by surrounding the expression with `{}` curly braces. When a runtime expression is embedded in this manner, the following rules apply based on the value type:
