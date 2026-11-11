@@ -36,6 +36,7 @@ The Arazzo Specification can articulate these workflows in a human-readable and 
     - [Source Description Object](#source-description-object)
     - [Workflow Object](#workflow-object)
     - [Step Object](#step-object)
+    - [GraphQL Operation Object](#graphql-operation-object)
     - [Parameter Object](#parameter-object)
     - [Success Action Object](#success-action-object)
     - [Failure Action Object](#failure-action-object)
@@ -648,13 +649,13 @@ An async step example:
       orderId: $message.payload.orderId
 ```
 
-##### GraphQL Operation Object
+#### GraphQL Operation Object
 
 Describes the GraphQL request executed by a Step. It identifies the schema, an inline or externally referenced operation, and optional request extensions. GraphQL source text and execution semantics are defined by the [GraphQL Specification](https://spec.graphql.org/September2025/).
 
 As with other Arazzo Step types, execution-environment configuration MAY be required to bind the referenced API description to a concrete service endpoint. A GraphQL Step identifies the schema and executable operation, but does not identify a deployment. The endpoint, transport protocol, authentication, schema-discovery mechanism, and client-construction mechanism are outside the scope of this Specification. Tooling that executes GraphQL Steps MUST obtain the required binding information through implementation-defined configuration.
 
-###### Fixed Fields
+##### Fixed Fields
 
 | Field Name                                                          |                    Type                     | Description                                                                                                                                                                                                                                                                                                                                              |
 |---------------------------------------------------------------------|:-------------------------------------------:|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -665,7 +666,7 @@ As with other Arazzo Step types, execution-environment configuration MAY be requ
 
 This object MAY be extended with [Specification Extensions](#specification-extensions).
 
-###### Source and Operation Rules
+##### Source and Operation Rules
 
 The `graphqlOperation` field is mutually exclusive of `operationId`, `operationName`, `operationPath`, `channelPath`, and `workflowId`. It identifies the source artifacts needed to execute a GraphQL request.
 
@@ -680,11 +681,11 @@ For a Source Description reference, tooling MUST resolve the named Source Descri
 - GraphQL-aware tooling MUST parse the inline or referenced Executable Document, select the referenced external operation when applicable, and validate it against the resolved schema before execution. These checks are outside JSON Schema validation of the Arazzo document.
 - GraphQL documents MUST remain GraphQL source text. Arazzo Runtime Expressions MUST NOT be interpolated into document text.
 
-###### Operation Selection
+##### Operation Selection
 
 An inline `operation` selects its sole operation definition. An external `operation` selects the named operation identified by the final reference segment. If an inline document contains zero or multiple operation definitions, or if an external operation name does not exist in the referenced document, tooling MUST report a GraphQL request or validation error; the request error MUST fail the Step before execution.
 
-###### Variables and Request Extensions
+##### Variables and Request Extensions
 
 Every parameter applied to a GraphQL Step MUST have `in: variable`. Tooling MUST check this after resolving Reusable Objects and applying workflow-level parameters to the Step.
 
@@ -696,7 +697,7 @@ The optional `extensions` field supplies the GraphQL request `extensions` map di
 
 The GraphQL Specification reserves the request `extensions` map for implementation-specific additional information. A transport specification, such as the [GraphQL over HTTP draft](https://graphql.github.io/graphql-over-http/draft/#sec-Request-Parameters), MAY define how the map is transmitted. Arazzo does not assign semantics to extension keys.
 
-###### Execution and Results
+##### Execution and Results
 
 GraphQL-aware tooling performs GraphQL parsing, validation, operation selection, variable coercion, and execution. Arazzo defines how the GraphQL request is represented in a Step and how its result is exposed; GraphQL defines the execution details.
 
