@@ -1,0 +1,21 @@
+arazzo: 1.2.0
+info:
+  title: GraphQL operation infers the only schema source
+  version: 1.0.0
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ./schema.graphqls
+  - name: shopOperations
+    type: graphql
+    url: ./operations.graphql
+workflows:
+  - workflowId: lookupBook
+    steps:
+      - stepId: getBook
+        graphqlOperation:
+          operation: $sourceDescriptions.shopOperations.GetBook
+        parameters:
+          - name: id
+            in: variable
+            value: book-123

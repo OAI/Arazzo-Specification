@@ -359,7 +359,7 @@ $defs:
     type: object
     properties:
       schema:
-        description: A whole Source Description reference in the form $sourceDescriptions.<name> identifying a GraphQL schema or type-system source from which the schema can be constructed
+        description: A whole Source Description reference in the form $sourceDescriptions.<name> identifying a GraphQL schema or type-system source from which the schema can be constructed. If omitted, tooling must resolve exactly one GraphQL schema source
         type: string
         pattern: '^\$sourceDescriptions\.[A-Za-z0-9_-]+$'
       operation:
@@ -372,7 +372,6 @@ $defs:
         description: An optional Selector Object whose evaluated value supplies the GraphQL request extensions map and MUST be an object
         $ref: '#/$defs/selector-object'
     required:
-      - schema
       - operation
     not:
       required:
