@@ -48,7 +48,7 @@ workflows:
           type: string
         country:
           type: string
-        operationHash:
+        requestId:
           type: string
     steps:
       - stepId: updateBook
@@ -56,9 +56,8 @@ workflows:
           schema: $sourceDescriptions.shopSchema
           operation: $sourceDescriptions.shopOperations.UpdateBook
           extensions:
-            persistedQuery:
-              version: 1
-              sha256Hash: $inputs.operationHash
+            tracing:
+              requestId: $inputs.requestId
         parameters:
           - name: input
             in: variable
