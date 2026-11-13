@@ -64,9 +64,9 @@ $defs:
   source-description-object:
     $comment: https://spec.openapis.org/arazzo/v1.1#source-description-object
     description: |-
-      Describes a source description (such as an OpenAPI, AsyncAPI, WSDL or Protocol Buffer source description)
-      that will be referenced by one or more workflows described within
-      an Arazzo description
+      Describes a source description (such as an OpenAPI, AsyncAPI, WSDL, GraphQL, Protocol Buffer,
+      or Arazzo description) that will be referenced by one or more workflows
+      described within an Arazzo description
     type: object
     properties:
       name:
@@ -85,6 +85,7 @@ $defs:
           - asyncapi
           - wsdl
           - protobuf
+          - graphql
     required:
       - name
       - url
@@ -164,12 +165,13 @@ $defs:
     $comment: https://spec.openapis.org/arazzo/v1.1#step-object'
     description: |-
       Describes a single workflow step which MAY be a call to an
-      API operation (OpenAPI Operation Object or AsyncAPI Operation Object or WSDL Operation Object, an RPC method from a Protocol Buffer service declaration, or another Workflow Object)
+      API operation (OpenAPI, AsyncAPI, WSDL, or GraphQL), an RPC method from a Protocol Buffer service declaration, or another Workflow Object
     oneOf:
       - $ref: '#/$defs/openapi-step-object'
       - $ref: '#/$defs/wsdl-step-object'
       - $ref: '#/$defs/asyncapi-step-object'
       - $ref: '#/$defs/rpc-step-object'
+      - $ref: '#/$defs/graphql-step-object'
       - $ref: '#/$defs/workflow-step-object'
   step-object-base:
     type: object
@@ -198,7 +200,7 @@ $defs:
             - type: string
               pattern: ^\$sourceDescriptions\.[^.]+\.[^.]+\.steps\.[^.]+$
       parameters:
-        description: A list of parameters that MUST be passed to an operation, RPC method, or workflow as referenced by operationId, operationPath, channelPath, operationName, rpcMethod or workflowId
+        description: A list of parameters that MUST be passed to an operation, RPC method, or workflow as referenced by operationId, operationPath, channelPath, operationName, rpcMethod, graphqlOperation, or workflowId
         type: array
         uniqueItems: true
         items: true
@@ -252,7 +254,7 @@ $defs:
       properties:
         in:
           not:
-            const: metadata
+            enum: [metadata, variable]
   operation-step-parameters-with-metadata:
     $ref: '#/$defs/operation-step-parameter-list'
     items:
@@ -433,6 +435,51 @@ $defs:
         required:
           - rpcMethod
           - rpcProtocol
+    $ref: '#/$defs/specification-extensions'
+    unevaluatedProperties: false
+  graphql-step-object:
+    allOf:
+      - $ref: '#/$defs/step-object-base'
+      - type: object
+        properties:
+          graphqlOperation:
+            $ref: '#/$defs/graphql-operation-object'
+          parameters:
+            items:
+              oneOf:
+                - $ref: '#/$defs/reusable-object'
+                - $ref: '#/$defs/parameter-object'
+                  required:
+                    - in
+                  properties:
+                    in:
+                      const: variable
+        required:
+          - graphqlOperation
+    $ref: '#/$defs/specification-extensions'
+    unevaluatedProperties: false
+  graphql-operation-object:
+    type: object
+    properties:
+      schema:
+        description: A whole Source Description reference in the form $sourceDescriptions.<name> identifying a GraphQL schema or type-system source from which the schema can be constructed. If omitted, tooling must resolve exactly one GraphQL schema source
+        type: string
+        pattern: '^\$sourceDescriptions\.[A-Za-z0-9_-]+$'
+      operation:
+        description: Inline GraphQL source text containing an Executable Document with exactly one operation definition, or an external operation reference in the form $sourceDescriptions.<name>.<graphqlOperationName>
+        type: string
+      extensions:
+        description: An optional literal GraphQL request extensions map. Runtime Expressions in the map are evaluated before the request is constructed
+        type: object
+      extensionsSelector:
+        description: An optional Selector Object whose evaluated value supplies the GraphQL request extensions map and MUST be an object
+        $ref: '#/$defs/selector-object'
+    required:
+      - operation
+    not:
+      required:
+        - extensions
+        - extensionsSelector
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
   workflow-step-object:
@@ -774,16 +821,49 @@ $defs:
           - cookie
           - channel
           - metadata
+          - variable
+      valueMode:
+        description: Determines how an object-valued value is interpreted. Literal treats the object as a literal parameter value. Selector treats it as a Selector Object. When omitted for an object-valued value, the value is interpreted as a Selector Object
+        enum:
+          - literal
+          - selector
+        default: selector
       value:
         description: The value to pass in the parameter
-        oneOf:
-         - type:
-            - string
-            - boolean
-            - array
-            - number
-            - 'null'
-         - $ref: '#/$defs/selector-object'
+    oneOf:
+      - properties:
+          value:
+            oneOf:
+              - type:
+                - string
+                - boolean
+                - array
+                - number
+                - 'null'
+              - $ref: '#/$defs/selector-object'
+        not:
+          required:
+            - valueMode
+      - properties:
+          valueMode:
+            const: literal
+          value:
+            type:
+              - string
+              - boolean
+              - array
+              - number
+              - 'null'
+              - object
+        required:
+          - valueMode
+      - properties:
+          valueMode:
+            const: selector
+          value:
+            $ref: '#/$defs/selector-object'
+        required:
+          - valueMode
     required:
       - name
       - value

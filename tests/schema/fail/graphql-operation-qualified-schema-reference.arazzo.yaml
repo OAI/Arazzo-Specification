@@ -1,0 +1,15 @@
+arazzo: 1.2.0
+info:
+  title: GraphQL schema reference cannot include a member
+  version: 1.0.0
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ./schema.graphqls
+workflows:
+  - workflowId: invalidGraphql
+    steps:
+      - stepId: qualifiedSchemaReference
+        graphqlOperation:
+          schema: $sourceDescriptions.shopSchema.url
+          operation: 'query GetBook { book { id } }'

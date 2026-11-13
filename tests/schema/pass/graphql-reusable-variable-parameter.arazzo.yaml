@@ -1,0 +1,36 @@
+arazzo: 1.2.0
+info:
+  title: GraphQL reusable variable parameter
+  version: 1.0.0
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ./schema.graphqls
+components:
+  parameters:
+    bookId:
+      name: id
+      in: variable
+      value: default-book
+workflows:
+  - workflowId: lookupBook
+    inputs:
+      type: object
+      properties:
+        bookId:
+          type: string
+    steps:
+      - stepId: getBook
+        graphqlOperation:
+          schema: $sourceDescriptions.shopSchema
+          operation: |
+            query ($id: ID!) {
+              book(id: $id) {
+                id
+              }
+            }
+        parameters:
+          - reference: $components.parameters.bookId
+            value: $inputs.bookId
+        outputs:
+          bookId: $response.body#/data/book/id
