@@ -20,6 +20,7 @@ workflows:
         - bookId
     steps:
       - stepId: getBook
+        type: rpc
         description: Invoke a unary Protocol Buffer RPC using Twirp
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
         rpcProtocol: twirp
@@ -42,6 +43,7 @@ workflows:
     summary: Treat a Twirp not_found error as an expected workflow outcome
     steps:
       - stepId: missingBook
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
         rpcProtocol: twirp
         requestBody:

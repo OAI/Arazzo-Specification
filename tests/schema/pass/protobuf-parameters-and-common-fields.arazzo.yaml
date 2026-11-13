@@ -26,6 +26,7 @@ workflows:
             - id
     steps:
       - stepId: prepare
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/Ping
         rpcProtocol: grpc
         timeout: 1000

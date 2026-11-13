@@ -24,6 +24,7 @@ workflows:
           type: string
     steps:
       - stepId: updateBook
+        type: graphql
         graphqlOperation:
           schema: $sourceDescriptions.shopSchema
           operation: $sourceDescriptions.shopOperations.UpdateBook

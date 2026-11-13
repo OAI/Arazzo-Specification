@@ -10,6 +10,7 @@ workflows:
   - workflowId: listBooksOverHttp
     steps:
       - stepId: listBooks
+        type: graphql
         description: This step assumes an HTTP transport binding.
         graphqlOperation:
           schema: $sourceDescriptions.shopSchema

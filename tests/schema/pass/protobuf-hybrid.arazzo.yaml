@@ -19,6 +19,7 @@ workflows:
             in: path
             value: 1
       - stepId: upload
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
         rpcProtocol: grpc
         parameters:

@@ -471,6 +471,7 @@ Describes a single workflow step which MAY be a call to an API operation ([OpenA
 |---------------------------------------------------|:----------------------------------------------------------------------------------------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <a name="stepDescription"></a>description         |                                         `string`                                         | A description of the step. [CommonMark syntax](https://spec.commonmark.org/) MAY be used for rich text representation.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | <a name="stepId"></a>stepId                       |                                         `string`                                         | **REQUIRED**. Unique string to represent the step. The `stepId` MUST be unique amongst all steps described in the workflow. The `stepId` value is **case-sensitive**. Tools and libraries MAY use the `stepId` to uniquely identify a workflow step, therefore, it is RECOMMENDED to follow common programming naming conventions. SHOULD conform to the regular expression `[A-Za-z0-9_\-]+`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| <a name="stepType"></a>type                       |                                         `string`                                         | The Step kind. Use `openapi` for OpenAPI Steps, `asyncapi` for AsyncAPI Steps, `soap` for WSDL/SOAP Steps, `rpc` for Protocol Buffer RPC Steps, `graphql` for GraphQL Steps, and `workflow` for workflow Steps. WSDL/SOAP, RPC, and GraphQL Steps MUST specify `type`. OpenAPI, AsyncAPI, and workflow Steps MAY omit it. When omitted, tooling infers the kind from the Step fields.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | <a name="stepOperationId"></a>operationId         |                                         `string`                                         | The name of an existing, resolvable operation, as defined with a unique `operationId` and existing within one of the `sourceDescriptions`. The referenced operation will be invoked by this workflow step. If multiple (non `arazzo` type) `sourceDescriptions` are defined, then the `operationId` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g., `$sourceDescriptions.<name>.<operationId>`) to avoid ambiguity or potential clashes. This field is mutually exclusive of the `operationPath`, `operationName`, `rpcMethod`, `graphqlOperation`, and `workflowId` fields respectively. This field MUST NOT be used to reference a `wsdl`, `protobuf`, or `graphql` source description.                                                                                                                                                                                                                                 |
 | <a name="stepOperationName"></a>operationName     |                                         `string`                                         | The name of an existing, resolvable WSDL operation, as defined within a `wsdl` type source description. The value MUST match the `name` attribute of a `wsdl:operation` element within the WSDL document's `portType` (WSDL 1.1) or `interface` (WSDL 2.0) definition. If multiple `wsdl` type `sourceDescriptions` are defined, then the `operationName` MUST be specified using a [Runtime Expression](#runtime-expressions) (e.g., `$sourceDescriptions.<name>.<operationName>`) to avoid ambiguity or potential clashes. This field is mutually exclusive of the `operationId`, `operationPath`, `channelPath`, `rpcMethod`, `graphqlOperation`, and `workflowId` fields respectively.                                                                                                                                                                                                                                                            |
 | <a name="stepOperationPath"></a>operationPath     |                                         `string`                                         | A reference to a [Source Description Object](#source-description-object) combined with a [JSON Pointer](https://tools.ietf.org/html/rfc6901) to reference an operation. This field is mutually exclusive of the `operationId`, `rpcMethod`, `graphqlOperation`, and `workflowId` fields. The operation being referenced MUST be described within one of the `sourceDescriptions` descriptions. A [Runtime Expression](#runtime-expressions) syntax MUST be used to identify the source description document. If the referenced OpenAPI operation has an `operationId` defined then the `operationId` SHOULD be preferred over the `operationPath`. This field MUST NOT be used to reference a `wsdl`, `protobuf`, or `graphql` source description.                                                                                                                                                                                                    |
@@ -511,6 +512,7 @@ service Library {
 identifies the RPC method `org.v1.Library/GetBook`. The `rpcMethod` field MUST match the `rpc-method` syntax defined in [Runtime Expressions](#runtime-expressions). When it contains a bare method identifier, tooling MUST select the sole `protobuf` Source Description before resolving the method. If there are multiple `protobuf` sources, `rpcMethod` MUST name the source explicitly. Source-aware validation MUST fail the Step before execution if a bare method identifier cannot be bound to exactly one `protobuf` source.
 
 ```yaml
+type: rpc
 rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
 rpcProtocol: grpc
 ```
@@ -779,11 +781,38 @@ outputs:
     rateLimit: $response.header.X-Rate-Limit
 ```
 
+A SOAP 1.1 Step using the `customerService` WSDL Source Description:
+
+```yaml
+- stepId: listCustomers
+  type: soap
+  operationName: $sourceDescriptions.customerService.ListCustomers
+  parameters:
+    - name: Content-Type
+      in: header
+      value: text/xml
+    - name: SOAPAction
+      in: header
+      value: '"http://example.com/customer-service/ListCustomers"'
+  requestBody:
+    contentType: text/xml
+    payload: |
+      <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                     xmlns:tns="http://example.com/customer-service">
+        <soap:Body>
+          <tns:ListCustomers/>
+        </soap:Body>
+      </soap:Envelope>
+  successCriteria:
+    - condition: $statusCode == 200
+```
+
 A gRPC unary step example:
 
 ```yaml
 - stepId: getBook
   description: retrieve a book using a unary gRPC method
+  type: rpc
   rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
   rpcProtocol: grpc
   parameters:
@@ -803,6 +832,7 @@ A gRPC bidirectional streaming Step example:
 
 ```yaml
 - stepId: exchangeEvents
+  type: rpc
   rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/ExchangeEvents
   rpcProtocol: grpc
   requestBody:
@@ -820,6 +850,7 @@ A gRPC-Web server-streaming Step example:
 
 ```yaml
 - stepId: watchBooksInBrowser
+  type: rpc
   rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/WatchBooks
   rpcProtocol: grpc-web
   parameters:
@@ -841,6 +872,7 @@ A Twirp unary Step example:
 
 ```yaml
 - stepId: getBookWithTwirp
+  type: rpc
   rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
   rpcProtocol: twirp
   parameters:
@@ -861,6 +893,7 @@ A Connect RPC client-streaming Step example:
 
 ```yaml
 - stepId: uploadChunksWithConnect
+  type: rpc
   rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
   rpcProtocol: connect
   parameters:
@@ -1043,6 +1076,7 @@ sourceDescriptions:
 The inline Executable Document contains exactly one operation definition:
 
 ```yaml
+type: graphql
 graphqlOperation:
   schema: $sourceDescriptions.shopSchema
   operation: |
@@ -1063,6 +1097,7 @@ parameters:
 The final segment of the external reference selects `GetBook` from the referenced Executable Document:
 
 ```yaml
+type: graphql
 graphqlOperation:
   schema: $sourceDescriptions.shopSchema
   operation: $sourceDescriptions.shopOperations.GetBook

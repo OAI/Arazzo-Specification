@@ -10,6 +10,7 @@ workflows:
   - workflowId: lookupBook
     steps:
       - stepId: getBook
+        type: graphql
         graphqlOperation:
           schema: $sourceDescriptions.shopSchema
           operation: 'query GetBook { book { id } }'

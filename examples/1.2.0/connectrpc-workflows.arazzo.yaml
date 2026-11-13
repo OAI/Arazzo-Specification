@@ -20,6 +20,7 @@ workflows:
         - bookId
     steps:
       - stepId: getBook
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
         rpcProtocol: connect
         parameters:
@@ -42,6 +43,7 @@ workflows:
     summary: Upload an authored stream using Connect RPC
     steps:
       - stepId: uploadChunks
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
         rpcProtocol: connect
         requestBody:
@@ -65,6 +67,7 @@ workflows:
     summary: Treat a Connect not_found error as an expected workflow outcome
     steps:
       - stepId: missingBook
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
         rpcProtocol: connect
         requestBody:
@@ -80,6 +83,7 @@ workflows:
     summary: Accept a terminal not_found error when the requested category does not exist
     steps:
       - stepId: watchMissingCategory
+        type: rpc
         rpcMethod: org.v1.Library/WatchBooks
         rpcProtocol: connect
         timeout: 30000

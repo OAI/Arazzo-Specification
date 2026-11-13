@@ -10,6 +10,7 @@ workflows:
   - workflowId: invalid
     steps:
       - stepId: session
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
         rpcProtocol: grpc
         requestBody:

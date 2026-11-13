@@ -10,6 +10,7 @@ workflows:
   - workflowId: uploadChunks
     steps:
       - stepId: upload
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
         rpcProtocol: grpc
         requestBody:

@@ -19,6 +19,7 @@ workflows:
         - bookId
     steps:
       - stepId: getBook
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
         rpcProtocol: grpc
         parameters:
@@ -39,6 +40,7 @@ workflows:
   - workflowId: pingWithDefaultRequest
     steps:
       - stepId: ping
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/Ping
         rpcProtocol: grpc
         # Omitted requestBody invokes google.protobuf.Empty's default instance.
@@ -50,6 +52,7 @@ workflows:
   - workflowId: observeTrailersOnlyError
     steps:
       - stepId: missingBook
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
         rpcProtocol: grpc
         requestBody:
@@ -66,6 +69,7 @@ workflows:
   - workflowId: watchBooks
     steps:
       - stepId: watch
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/WatchBooks
         rpcProtocol: grpc
         timeout: 30000
@@ -81,6 +85,7 @@ workflows:
   - workflowId: watchBooksWithNoMessages
     steps:
       - stepId: watch
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/WatchBooks
         rpcProtocol: grpc
         requestBody:
@@ -95,6 +100,7 @@ workflows:
   - workflowId: uploadChunks
     steps:
       - stepId: upload
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
         rpcProtocol: grpc
         requestBody:
@@ -116,6 +122,7 @@ workflows:
   - workflowId: uploadNoChunks
     steps:
       - stepId: upload
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
         rpcProtocol: grpc
         # Zero request messages are legal; [] means immediate half-close.
@@ -126,6 +133,7 @@ workflows:
   - workflowId: subscriptionRequiresTerminalStatus
     steps:
       - stepId: subscribe
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/Subscribe
         rpcProtocol: grpc
         timeout: 60000
@@ -141,6 +149,7 @@ workflows:
   - workflowId: exchangeEvents
     steps:
       - stepId: exchangeEvents
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/ExchangeEvents
         rpcProtocol: grpc
         requestBody:

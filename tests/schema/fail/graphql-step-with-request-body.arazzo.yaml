@@ -10,6 +10,7 @@ workflows:
   - workflowId: invalidGraphql
     steps:
       - stepId: listBooks
+        type: graphql
         graphqlOperation:
           schema: $sourceDescriptions.shopSchema
           operation: 'query ListBooks { books { id } }'

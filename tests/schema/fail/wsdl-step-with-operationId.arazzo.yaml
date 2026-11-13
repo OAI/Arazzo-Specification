@@ -20,5 +20,6 @@ workflows:
   - workflowId: basicWorkflow
     steps:
       - stepId: listCustomers
+        type: soap
         operationId: ListCustomers
         operationName: ListCustomers

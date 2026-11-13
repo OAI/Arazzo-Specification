@@ -10,12 +10,14 @@ workflows:
   - workflowId: defaultRequest
     steps:
       - stepId: ping
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/Ping
         rpcProtocol: grpc
         # A semantic validator resolves this omitted request to the default google.protobuf.Empty instance.
   - workflowId: unaryRequest
     steps:
       - stepId: getBook
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
         rpcProtocol: grpc
         requestBody:
@@ -36,6 +38,7 @@ workflows:
         - bookId
     steps:
       - stepId: getBook
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
         rpcProtocol: grpc
         parameters:
@@ -48,6 +51,7 @@ workflows:
   - workflowId: serverStreamRequest
     steps:
       - stepId: watch
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/WatchBooks
         rpcProtocol: grpc
         timeout: 30000
@@ -62,12 +66,14 @@ workflows:
   - workflowId: zeroMessageClientStream
     steps:
       - stepId: upload
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
         rpcProtocol: grpc
         requestBody: []
   - workflowId: trailersOnlyError
     steps:
       - stepId: missingBook
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
         rpcProtocol: grpc
         requestBody:
@@ -82,6 +88,7 @@ workflows:
   - workflowId: bidirectionalStream
     steps:
       - stepId: exchangeEvents
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/ExchangeEvents
         rpcProtocol: grpc
         requestBody:

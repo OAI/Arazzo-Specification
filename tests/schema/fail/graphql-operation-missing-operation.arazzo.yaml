@@ -10,5 +10,6 @@ workflows:
   - workflowId: invalidGraphql
     steps:
       - stepId: missingDocument
+        type: graphql
         graphqlOperation:
           schema: $sourceDescriptions.shopSchema

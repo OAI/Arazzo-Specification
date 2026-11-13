@@ -10,6 +10,7 @@ workflows:
   - workflowId: invalidGrpcWebStream
     steps:
       - stepId: uploadChunks
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
         rpcProtocol: grpc-web
         requestBody:

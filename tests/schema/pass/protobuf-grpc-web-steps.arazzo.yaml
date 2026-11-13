@@ -10,6 +10,7 @@ workflows:
   - workflowId: grpcWebCalls
     steps:
       - stepId: getBook
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
         rpcProtocol: grpc-web
         parameters:
@@ -23,6 +24,7 @@ workflows:
         successCriteria:
           - condition: $response.status#/code == 0
       - stepId: watchBooks
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/WatchBooks
         rpcProtocol: grpc-web
         requestBody:

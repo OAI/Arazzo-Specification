@@ -20,6 +20,7 @@ workflows:
         - bookId
     steps:
       - stepId: getBook
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
         rpcProtocol: grpc-web
         parameters:
@@ -40,6 +41,7 @@ workflows:
     summary: Receive book updates using gRPC-Web server streaming
     steps:
       - stepId: watchBooks
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/WatchBooks
         rpcProtocol: grpc-web
         timeout: 30000

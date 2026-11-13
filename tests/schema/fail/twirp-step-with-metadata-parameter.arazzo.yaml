@@ -10,6 +10,7 @@ workflows:
   - workflowId: lookupBook
     steps:
       - stepId: getBook
+        type: rpc
         rpcMethod: $sourceDescriptions.library.org.v1.Library/GetBook
         rpcProtocol: twirp
         parameters:

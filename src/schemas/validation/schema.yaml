@@ -271,6 +271,8 @@ $defs:
       - $ref: '#/$defs/step-object-base'
       - type: object
         properties:
+          type:
+            const: openapi
           requestBody:
             $ref: '#/$defs/request-body-object'
           operationId:
@@ -293,6 +295,8 @@ $defs:
       - $ref: '#/$defs/step-object-base'
       - type: object
         properties:
+          type:
+            const: soap
           requestBody:
             $ref: '#/$defs/request-body-object'
           operationName:
@@ -301,6 +305,7 @@ $defs:
           parameters:
             $ref: '#/$defs/operation-step-parameters'
         required:
+          - type
           - operationName
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
@@ -309,6 +314,8 @@ $defs:
       - $ref: '#/$defs/step-object-base'
       - type: object
         properties:
+          type:
+            const: asyncapi
           requestBody:
             $ref: '#/$defs/request-body-object'
           operationId:
@@ -365,6 +372,8 @@ $defs:
       - $ref: '#/$defs/step-object-base'
       - type: object
         properties:
+          type:
+            const: rpc
           rpcMethod:
             $ref: '#/$defs/rpc-method-reference'
           rpcProtocol:
@@ -375,6 +384,7 @@ $defs:
           requestBody:
             $ref: '#/$defs/grpc-request-body'
         required:
+          - type
           - rpcMethod
           - rpcProtocol
     $ref: '#/$defs/specification-extensions'
@@ -384,6 +394,8 @@ $defs:
       - $ref: '#/$defs/step-object-base'
       - type: object
         properties:
+          type:
+            const: rpc
           rpcMethod:
             $ref: '#/$defs/rpc-method-reference'
           rpcProtocol:
@@ -394,6 +406,7 @@ $defs:
           requestBody:
             $ref: '#/$defs/grpc-web-request-body-object'
         required:
+          - type
           - rpcMethod
           - rpcProtocol
     $ref: '#/$defs/specification-extensions'
@@ -403,6 +416,8 @@ $defs:
       - $ref: '#/$defs/step-object-base'
       - type: object
         properties:
+          type:
+            const: rpc
           rpcMethod:
             $ref: '#/$defs/rpc-method-reference'
           rpcProtocol:
@@ -413,6 +428,7 @@ $defs:
           requestBody:
             $ref: '#/$defs/twirp-request-body-object'
         required:
+          - type
           - rpcMethod
           - rpcProtocol
     $ref: '#/$defs/specification-extensions'
@@ -422,6 +438,8 @@ $defs:
       - $ref: '#/$defs/step-object-base'
       - type: object
         properties:
+          type:
+            const: rpc
           rpcMethod:
             $ref: '#/$defs/rpc-method-reference'
           rpcProtocol:
@@ -432,6 +450,7 @@ $defs:
           requestBody:
             $ref: '#/$defs/connect-request-body'
         required:
+          - type
           - rpcMethod
           - rpcProtocol
     $ref: '#/$defs/specification-extensions'
@@ -441,6 +460,8 @@ $defs:
       - $ref: '#/$defs/step-object-base'
       - type: object
         properties:
+          type:
+            const: graphql
           graphqlOperation:
             $ref: '#/$defs/graphql-operation-object'
           parameters:
@@ -454,6 +475,7 @@ $defs:
                     in:
                       const: variable
         required:
+          - type
           - graphqlOperation
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
@@ -486,6 +508,8 @@ $defs:
       - $ref: '#/$defs/step-object-base'
       - type: object
         properties:
+          type:
+            const: workflow
           requestBody:
             $ref: '#/$defs/request-body-object'
           workflowId:

@@ -10,6 +10,7 @@ workflows:
   - workflowId: invalidGraphql
     steps:
       - stepId: fragmentedSchemaReference
+        type: graphql
         graphqlOperation:
           schema: $sourceDescriptions.shopSchema#/types
           operation: 'query GetBook { book { id } }'

@@ -10,6 +10,7 @@ workflows:
   - workflowId: connectRpcCalls
     steps:
       - stepId: getBook
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
         rpcProtocol: connect
         parameters:
@@ -23,6 +24,7 @@ workflows:
         successCriteria:
           - condition: $statusCode == 200
       - stepId: uploadChunks
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
         rpcProtocol: connect
         requestBody:

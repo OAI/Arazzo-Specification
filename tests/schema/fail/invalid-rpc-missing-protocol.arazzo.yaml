@@ -10,4 +10,5 @@ workflows:
   - workflowId: invalidRpcStep
     steps:
       - stepId: getBook
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook

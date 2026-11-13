@@ -33,6 +33,7 @@ workflows:
         outputs:
           petId: $response.body#/id
       - stepId: uploadPetRecord
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
         rpcProtocol: grpc
         parameters:
@@ -49,6 +50,7 @@ workflows:
         outputs:
           uploadId: $response.body#/uploadId
       - stepId: watchRelatedBooksInBrowser
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/WatchBooks
         rpcProtocol: grpc-web
         parameters:
@@ -64,6 +66,7 @@ workflows:
         outputs:
           updates: $response.body
       - stepId: getBookWithTwirp
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
         rpcProtocol: twirp
         parameters:
@@ -79,6 +82,7 @@ workflows:
         outputs:
           book: $response.body
       - stepId: exchangeEventsWithConnect
+        type: rpc
         rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/ExchangeEvents
         rpcProtocol: connect
         requestBody:

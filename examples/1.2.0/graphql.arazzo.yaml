@@ -20,6 +20,7 @@ workflows:
           type: string
     steps:
       - stepId: getBook
+        type: graphql
         graphqlOperation:
           schema: $sourceDescriptions.shopSchema
           operation: |
@@ -52,6 +53,7 @@ workflows:
           type: string
     steps:
       - stepId: updateBook
+        type: graphql
         graphqlOperation:
           schema: $sourceDescriptions.shopSchema
           operation: $sourceDescriptions.shopOperations.UpdateBook
@@ -77,6 +79,7 @@ workflows:
           type: string
     steps:
       - stepId: collectBookUpdates
+        type: graphql
         graphqlOperation:
           schema: $sourceDescriptions.shopSchema
           operation: |

@@ -10,6 +10,7 @@ workflows:
   - workflowId: updateBook
     steps:
       - stepId: updateBook
+        type: graphql
         graphqlOperation:
           schema: $sourceDescriptions.shopSchema
           operation: 'mutation UpdateBook($input: BookInput!) { updateBook(input: $input) { id } }'

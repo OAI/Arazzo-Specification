@@ -13,6 +13,7 @@ workflows:
   - workflowId: lookupBook
     steps:
       - stepId: getBook
+        type: graphql
         graphqlOperation:
           operation: $sourceDescriptions.shopOperations.GetBook
         parameters:
