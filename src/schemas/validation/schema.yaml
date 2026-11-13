@@ -16,7 +16,7 @@ properties:
   info:
     $ref: '#/$defs/info'
   sourceDescriptions:
-    description: A list of source descriptions such as Arazzo, OpenAPI, AsyncAPI, WSDL or Protocol Buffer source descriptions
+    description: A list of Arazzo, OpenAPI, AsyncAPI, WSDL, Protocol Buffer, or GraphQL source descriptions
     type: array
     uniqueItems: true
     minItems: 1
@@ -64,9 +64,8 @@ $defs:
   source-description-object:
     $comment: https://spec.openapis.org/arazzo/v1.1#source-description-object
     description: |-
-      Describes a source description (such as an OpenAPI, AsyncAPI, WSDL, GraphQL, Protocol Buffer,
-      or Arazzo description) that will be referenced by one or more workflows
-      described within an Arazzo description
+      Describes an OpenAPI, AsyncAPI, WSDL, Protocol Buffer, GraphQL, or Arazzo source
+      referenced by one or more workflows in an Arazzo description
     type: object
     properties:
       name:
@@ -165,7 +164,7 @@ $defs:
     $comment: https://spec.openapis.org/arazzo/v1.1#step-object'
     description: |-
       Describes a single workflow step which MAY be a call to an
-      API operation (OpenAPI, AsyncAPI, WSDL, or GraphQL), an RPC method from a Protocol Buffer service declaration, or another Workflow Object
+      OpenAPI, AsyncAPI, or WSDL operation, an RPC method from a Protocol Buffer service declaration, a GraphQL operation, or another Workflow Object
     oneOf:
       - $ref: '#/$defs/openapi-step-object'
       - $ref: '#/$defs/wsdl-step-object'
