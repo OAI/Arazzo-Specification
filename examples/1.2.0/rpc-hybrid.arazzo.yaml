@@ -34,8 +34,8 @@ workflows:
           petId: $response.body#/id
       - stepId: uploadPetRecord
         type: rpc
-        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
-        rpcProtocol: grpc
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
+        protocol: grpc
         parameters:
           - name: x-workflow-token
             in: metadata
@@ -51,8 +51,8 @@ workflows:
           uploadId: $response.body#/uploadId
       - stepId: watchRelatedBooksInBrowser
         type: rpc
-        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/WatchBooks
-        rpcProtocol: grpc-web
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/WatchBooks
+        protocol: grpc-web
         parameters:
           - name: x-workflow-token
             in: metadata
@@ -67,8 +67,8 @@ workflows:
           updates: $response.body
       - stepId: getBookWithTwirp
         type: rpc
-        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
-        rpcProtocol: twirp
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        protocol: twirp
         parameters:
           - name: authorization
             in: header
@@ -83,8 +83,8 @@ workflows:
           book: $response.body
       - stepId: exchangeEventsWithConnect
         type: rpc
-        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/ExchangeEvents
-        rpcProtocol: connect
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/ExchangeEvents
+        protocol: connect
         requestBody:
           - contentType: application/connect+proto
             payload:

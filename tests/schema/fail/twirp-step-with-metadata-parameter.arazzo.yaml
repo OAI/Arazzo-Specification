@@ -11,8 +11,8 @@ workflows:
     steps:
       - stepId: getBook
         type: rpc
-        rpcMethod: $sourceDescriptions.library.org.v1.Library/GetBook
-        rpcProtocol: twirp
+        method: $sourceDescriptions.library.org.v1.Library/GetBook
+        protocol: twirp
         parameters:
           - name: authorization
             in: metadata

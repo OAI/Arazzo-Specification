@@ -12,9 +12,9 @@ workflows:
       - stepId: listBooks
         type: graphql
         description: This step assumes an HTTP transport binding.
-        graphqlOperation:
+        operation:
           schema: $sourceDescriptions.shopSchema
-          operation: 'query ListBooks { books { id } }'
+          document: 'query ListBooks { books { id } }'
         successCriteria:
           - condition: $statusCode == 200
         outputs:

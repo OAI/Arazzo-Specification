@@ -11,7 +11,7 @@ workflows:
     steps:
       - stepId: unknownField
         type: graphql
-        graphqlOperation:
+        operation:
           schema: $sourceDescriptions.shopSchema
-          operation: 'query GetBook { book { id } }'
+          document: 'query GetBook { book { id } }'
           endpoint: https://example.com/graphql

@@ -27,8 +27,8 @@ workflows:
     steps:
       - stepId: prepare
         type: rpc
-        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/Ping
-        rpcProtocol: grpc
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/Ping
+        protocol: grpc
         timeout: 1000
         parameters:
           - reference: $components.parameters.authorization

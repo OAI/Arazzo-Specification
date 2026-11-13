@@ -14,9 +14,9 @@ workflows:
     steps:
       - stepId: findBook
         type: graphql
-        graphqlOperation:
+        operation:
           schema: $sourceDescriptions.shopSchema
-          operation: 'query GetBook($id: ID!) { book(id: $id) { id } }'
+          document: 'query GetBook($id: ID!) { book(id: $id) { id } }'
         parameters:
           - name: id
             in: variable
@@ -25,8 +25,8 @@ workflows:
           bookId: $response.body#/data/book/id
       - stepId: getBook
         type: rpc
-        rpcProtocol: grpc
-        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        protocol: grpc
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
         parameters:
           - name: x-request-id
             in: metadata

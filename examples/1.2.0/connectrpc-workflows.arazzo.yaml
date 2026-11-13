@@ -21,8 +21,8 @@ workflows:
     steps:
       - stepId: getBook
         type: rpc
-        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
-        rpcProtocol: connect
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        protocol: connect
         parameters:
           - name: authorization
             in: metadata
@@ -44,8 +44,8 @@ workflows:
     steps:
       - stepId: uploadChunks
         type: rpc
-        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
-        rpcProtocol: connect
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
+        protocol: connect
         requestBody:
           - contentType: application/connect+proto
             payload:
@@ -68,8 +68,8 @@ workflows:
     steps:
       - stepId: missingBook
         type: rpc
-        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
-        rpcProtocol: connect
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        protocol: connect
         requestBody:
           contentType: application/proto
           payload:
@@ -84,8 +84,8 @@ workflows:
     steps:
       - stepId: watchMissingCategory
         type: rpc
-        rpcMethod: org.v1.Library/WatchBooks
-        rpcProtocol: connect
+        method: org.v1.Library/WatchBooks
+        protocol: connect
         timeout: 30000
         requestBody:
           contentType: application/connect+proto

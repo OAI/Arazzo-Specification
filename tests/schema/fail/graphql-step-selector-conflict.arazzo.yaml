@@ -12,6 +12,6 @@ workflows:
       - stepId: selectorConflict
         type: graphql
         operationId: listBooks
-        graphqlOperation:
+        operation:
           schema: $sourceDescriptions.shopSchema
-          operation: 'query ListBooks { books { id } }'
+          document: 'query ListBooks { books { id } }'

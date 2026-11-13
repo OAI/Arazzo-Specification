@@ -11,9 +11,9 @@ workflows:
     steps:
       - stepId: getBook
         type: graphql
-        graphqlOperation:
+        operation:
           schema: $sourceDescriptions.shopSchema
-          operation: 'query GetBook { book { id } }'
+          document: 'query GetBook { book { id } }'
           extensionsSelector:
             context: $inputs.request
             selector: $.extensions

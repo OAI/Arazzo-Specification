@@ -11,8 +11,8 @@ workflows:
     steps:
       - stepId: session
         type: rpc
-        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
-        rpcProtocol: grpc
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
+        protocol: grpc
         requestBody:
           - payload:
               type: START

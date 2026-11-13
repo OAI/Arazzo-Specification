@@ -11,8 +11,8 @@ workflows:
     steps:
       - stepId: getBook
         type: rpc
-        rpcMethod: $sourceDescriptions.library.org.v1.Library/GetBook
-        rpcProtocol: connect
+        method: $sourceDescriptions.library.org.v1.Library/GetBook
+        protocol: connect
         parameters:
           - name: authorization
             in: header

@@ -11,8 +11,8 @@ workflows:
     steps:
       - stepId: getBook
         type: rpc
-        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
-        rpcProtocol: connect
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        protocol: connect
         requestBody:
           contentType: application/protobuf
           payload:

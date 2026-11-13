@@ -199,7 +199,7 @@ $defs:
             - type: string
               pattern: ^\$sourceDescriptions\.[^.]+\.[^.]+\.steps\.[^.]+$
       parameters:
-        description: A list of parameters that MUST be passed to an operation, RPC method, or workflow as referenced by operationId, operationPath, channelPath, operationName, rpcMethod, graphqlOperation, or workflowId
+        description: A list of parameters that MUST be passed to an operation, RPC method, or workflow as referenced by operationId, operationPath, channelPath, operationName, method, operation, or workflowId
         type: array
         uniqueItems: true
         items: true
@@ -374,10 +374,10 @@ $defs:
         properties:
           type:
             const: rpc
-          rpcMethod:
+          method:
             $ref: '#/$defs/rpc-method-reference'
-          rpcProtocol:
-            description: The RPC protocol and execution semantics used to invoke rpcMethod
+          protocol:
+            description: The RPC protocol and execution semantics used to invoke method
             const: grpc
           parameters:
             $ref: '#/$defs/operation-step-parameters-with-metadata'
@@ -385,8 +385,8 @@ $defs:
             $ref: '#/$defs/grpc-request-body'
         required:
           - type
-          - rpcMethod
-          - rpcProtocol
+          - method
+          - protocol
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
   grpc-web-step-object:
@@ -396,10 +396,10 @@ $defs:
         properties:
           type:
             const: rpc
-          rpcMethod:
+          method:
             $ref: '#/$defs/rpc-method-reference'
-          rpcProtocol:
-            description: The RPC protocol and execution semantics used to invoke rpcMethod
+          protocol:
+            description: The RPC protocol and execution semantics used to invoke method
             const: grpc-web
           parameters:
             $ref: '#/$defs/operation-step-parameters-with-metadata'
@@ -407,8 +407,8 @@ $defs:
             $ref: '#/$defs/grpc-web-request-body-object'
         required:
           - type
-          - rpcMethod
-          - rpcProtocol
+          - method
+          - protocol
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
   twirp-step-object:
@@ -418,10 +418,10 @@ $defs:
         properties:
           type:
             const: rpc
-          rpcMethod:
+          method:
             $ref: '#/$defs/rpc-method-reference'
-          rpcProtocol:
-            description: The RPC protocol and execution semantics used to invoke rpcMethod
+          protocol:
+            description: The RPC protocol and execution semantics used to invoke method
             const: twirp
           parameters:
             $ref: '#/$defs/twirp-step-parameters'
@@ -429,8 +429,8 @@ $defs:
             $ref: '#/$defs/twirp-request-body-object'
         required:
           - type
-          - rpcMethod
-          - rpcProtocol
+          - method
+          - protocol
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
   connect-step-object:
@@ -440,10 +440,10 @@ $defs:
         properties:
           type:
             const: rpc
-          rpcMethod:
+          method:
             $ref: '#/$defs/rpc-method-reference'
-          rpcProtocol:
-            description: The RPC protocol and execution semantics used to invoke rpcMethod
+          protocol:
+            description: The RPC protocol and execution semantics used to invoke method
             const: connect
           parameters:
             $ref: '#/$defs/operation-step-parameters-with-metadata'
@@ -451,8 +451,8 @@ $defs:
             $ref: '#/$defs/connect-request-body'
         required:
           - type
-          - rpcMethod
-          - rpcProtocol
+          - method
+          - protocol
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
   graphql-step-object:
@@ -462,7 +462,7 @@ $defs:
         properties:
           type:
             const: graphql
-          graphqlOperation:
+          operation:
             $ref: '#/$defs/graphql-operation-object'
           parameters:
             items:
@@ -476,7 +476,7 @@ $defs:
                       const: variable
         required:
           - type
-          - graphqlOperation
+          - operation
     $ref: '#/$defs/specification-extensions'
     unevaluatedProperties: false
   graphql-operation-object:
@@ -486,7 +486,7 @@ $defs:
         description: A whole Source Description reference in the form $sourceDescriptions.<name> identifying a GraphQL schema or type-system source from which the schema can be constructed. If omitted, tooling must resolve exactly one GraphQL schema source
         type: string
         pattern: '^\$sourceDescriptions\.[A-Za-z0-9_-]+$'
-      operation:
+      document:
         description: Inline GraphQL source text containing an Executable Document with exactly one operation definition, or an external operation reference in the form $sourceDescriptions.<name>.<graphqlOperationName>
         type: string
       extensions:
@@ -496,7 +496,7 @@ $defs:
         description: An optional Selector Object whose evaluated value supplies the GraphQL request extensions map and MUST be an object
         $ref: '#/$defs/selector-object'
     required:
-      - operation
+      - document
     not:
       required:
         - extensions
@@ -526,7 +526,7 @@ $defs:
     unevaluatedProperties: false
   request-body-object:
     $comment: https://spec.openapis.org/arazzo/v1.1#request-body-object
-    description: The request body or message content to pass to an operation or RPC method as referenced by operationId, operationName, operationPath, channelPath or rpcMethod
+    description: The request body or message content to pass to an operation or RPC method as referenced by operationId, operationName, operationPath, channelPath or method
     type: object
     properties:
       contentType:

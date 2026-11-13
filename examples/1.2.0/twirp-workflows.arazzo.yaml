@@ -22,8 +22,8 @@ workflows:
       - stepId: getBook
         type: rpc
         description: Invoke a unary Protocol Buffer RPC using Twirp
-        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
-        rpcProtocol: twirp
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        protocol: twirp
         parameters:
           - name: authorization
             in: header
@@ -44,8 +44,8 @@ workflows:
     steps:
       - stepId: missingBook
         type: rpc
-        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
-        rpcProtocol: twirp
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        protocol: twirp
         requestBody:
           contentType: application/json
           payload:

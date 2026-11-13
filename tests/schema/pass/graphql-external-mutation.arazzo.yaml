@@ -25,9 +25,9 @@ workflows:
     steps:
       - stepId: updateBook
         type: graphql
-        graphqlOperation:
+        operation:
           schema: $sourceDescriptions.shopSchema
-          operation: $sourceDescriptions.shopOperations.UpdateBook
+          document: $sourceDescriptions.shopOperations.UpdateBook
           extensions:
             tracing:
               requestId: $inputs.requestId

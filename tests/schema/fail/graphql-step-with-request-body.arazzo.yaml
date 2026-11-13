@@ -11,9 +11,9 @@ workflows:
     steps:
       - stepId: listBooks
         type: graphql
-        graphqlOperation:
+        operation:
           schema: $sourceDescriptions.shopSchema
-          operation: 'query ListBooks { books { id } }'
+          document: 'query ListBooks { books { id } }'
         requestBody:
           contentType: application/json
           payload:

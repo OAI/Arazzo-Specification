@@ -11,7 +11,7 @@ workflows:
     steps:
       - stepId: getBook
         type: rpc
-        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
-        rpcProtocol: grpc
-        # Invalid: rpcMethod and operationPath are mutually exclusive.
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        protocol: grpc
+        # Invalid: method and operationPath are mutually exclusive.
         operationPath: $sourceDescriptions.rpcLibrary#/services/WorkflowDemo/GetBook

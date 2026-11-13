@@ -11,6 +11,6 @@ workflows:
     steps:
       - stepId: fragmentedSchemaReference
         type: graphql
-        graphqlOperation:
+        operation:
           schema: $sourceDescriptions.shopSchema#/types
-          operation: 'query GetBook { book { id } }'
+          document: 'query GetBook { book { id } }'

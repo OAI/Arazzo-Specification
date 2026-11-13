@@ -11,8 +11,8 @@ workflows:
     steps:
       - stepId: uploadChunks
         type: rpc
-        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
-        rpcProtocol: twirp
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
+        protocol: twirp
         requestBody:
           - payload:
               data: YQ==

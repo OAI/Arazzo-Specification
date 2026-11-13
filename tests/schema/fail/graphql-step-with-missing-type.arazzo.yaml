@@ -17,9 +17,9 @@ workflows:
           type: string
     steps:
       - stepId: getBook
-        graphqlOperation:
+        operation:
           schema: $sourceDescriptions.shopSchema
-          operation: |
+          document: |
             query GetBook($id: ID!) {
               book(id: $id) {
                 id

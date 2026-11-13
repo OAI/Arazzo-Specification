@@ -11,5 +11,5 @@ workflows:
     steps:
       - stepId: getBook
         type: rpc
-        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/Get-Book
-        rpcProtocol: connect
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/Get-Book
+        protocol: connect

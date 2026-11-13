@@ -10,5 +10,5 @@ workflows:
   - workflowId: lookupBook
     steps:
       - stepId: getBook
-        rpcMethod: org.v1.Library/GetBook
-        rpcProtocol: grpc
+        method: org.v1.Library/GetBook
+        protocol: grpc

@@ -11,8 +11,8 @@ workflows:
     steps:
       - stepId: uploadChunks
         type: rpc
-        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
-        rpcProtocol: grpc-web
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
+        protocol: grpc-web
         requestBody:
           - payload:
               data: YQ==

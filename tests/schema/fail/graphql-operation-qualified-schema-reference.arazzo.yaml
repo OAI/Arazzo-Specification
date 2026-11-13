@@ -11,6 +11,6 @@ workflows:
     steps:
       - stepId: qualifiedSchemaReference
         type: graphql
-        graphqlOperation:
+        operation:
           schema: $sourceDescriptions.shopSchema.url
-          operation: 'query GetBook { book { id } }'
+          document: 'query GetBook { book { id } }'

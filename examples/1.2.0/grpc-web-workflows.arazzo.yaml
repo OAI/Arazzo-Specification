@@ -21,8 +21,8 @@ workflows:
     steps:
       - stepId: getBook
         type: rpc
-        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
-        rpcProtocol: grpc-web
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        protocol: grpc-web
         parameters:
           - name: authorization
             in: metadata
@@ -42,8 +42,8 @@ workflows:
     steps:
       - stepId: watchBooks
         type: rpc
-        rpcMethod: $sourceDescriptions.rpcLibrary.org.v1.Library/WatchBooks
-        rpcProtocol: grpc-web
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/WatchBooks
+        protocol: grpc-web
         timeout: 30000
         requestBody:
           contentType: application/grpc-web-text+proto

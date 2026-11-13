@@ -21,9 +21,9 @@ workflows:
     steps:
       - stepId: getBook
         type: graphql
-        graphqlOperation:
+        operation:
           schema: $sourceDescriptions.shopSchema
-          operation: |
+          document: |
             query GetBook($id: ID!) {
               book(id: $id) {
                 id
@@ -54,9 +54,9 @@ workflows:
     steps:
       - stepId: updateBook
         type: graphql
-        graphqlOperation:
+        operation:
           schema: $sourceDescriptions.shopSchema
-          operation: $sourceDescriptions.shopOperations.UpdateBook
+          document: $sourceDescriptions.shopOperations.UpdateBook
           extensions:
             tracing:
               requestId: $inputs.requestId
@@ -80,9 +80,9 @@ workflows:
     steps:
       - stepId: collectBookUpdates
         type: graphql
-        graphqlOperation:
+        operation:
           schema: $sourceDescriptions.shopSchema
-          operation: |
+          document: |
             subscription ReplayBookUpdates($category: String!) {
               replayBookUpdates(category: $category, limit: 10) {
                 id

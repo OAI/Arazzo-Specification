@@ -11,4 +11,4 @@ workflows:
     steps:
       - stepId: getBook
         type: rpc
-        rpcProtocol: grpc
+        protocol: grpc
