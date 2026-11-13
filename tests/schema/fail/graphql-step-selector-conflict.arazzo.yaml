@@ -1,0 +1,17 @@
+arazzo: 1.2.0
+info:
+  title: GraphQL step cannot use another selector
+  version: 1.0.0
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ./schema.graphqls
+workflows:
+  - workflowId: invalidGraphql
+    steps:
+      - stepId: selectorConflict
+        type: graphql
+        operationId: listBooks
+        operation:
+          schema: $sourceDescriptions.shopSchema
+          document: 'query ListBooks { books { id } }'

@@ -1,0 +1,98 @@
+arazzo: 1.2.0
+info:
+  title: GraphQL book workflows
+  version: 1.0.0
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ./schema.graphqls
+  - name: shopOperations
+    type: graphql
+    url: ./operations.graphql
+workflows:
+  - workflowId: lookupBook
+    inputs:
+      type: object
+      properties:
+        bookId:
+          type: string
+        requestId:
+          type: string
+    steps:
+      - stepId: getBook
+        type: graphql
+        operation:
+          schema: $sourceDescriptions.shopSchema
+          document: |
+            query GetBook($id: ID!) {
+              book(id: $id) {
+                id
+                title
+              }
+            }
+          extensions:
+            tracing:
+              requestId: $inputs.requestId
+        parameters:
+          - name: id
+            in: variable
+            value: $inputs.bookId
+        outputs:
+          title: $response.body#/data/book/title
+  - workflowId: updateBook
+    inputs:
+      type: object
+      properties:
+        bookId:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+        requestId:
+          type: string
+    steps:
+      - stepId: updateBook
+        type: graphql
+        operation:
+          schema: $sourceDescriptions.shopSchema
+          document: $sourceDescriptions.shopOperations.UpdateBook
+          extensions:
+            tracing:
+              requestId: $inputs.requestId
+        parameters:
+          - name: input
+            in: variable
+            valueMode: literal
+            value:
+              bookId: $inputs.bookId
+              quantity: 1
+              shipping:
+                city: $inputs.city
+                country: $inputs.country
+  - workflowId: collectBookUpdates
+    description: Replays up to ten existing book updates in a category.
+    inputs:
+      type: object
+      properties:
+        category:
+          type: string
+    steps:
+      - stepId: collectBookUpdates
+        type: graphql
+        operation:
+          schema: $sourceDescriptions.shopSchema
+          document: |
+            subscription ReplayBookUpdates($category: String!) {
+              replayBookUpdates(category: $category, limit: 10) {
+                id
+                title
+              }
+            }
+        parameters:
+          - name: category
+            in: variable
+            value: $inputs.category
+        timeout: 60000
+        outputs:
+          events: $response.body

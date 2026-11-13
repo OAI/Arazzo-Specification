@@ -1,0 +1,36 @@
+arazzo: 1.2.0
+info:
+  title: GraphQL and gRPC in one workflow
+  version: 1.0.0
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ../../../examples/1.2.0/schema.graphqls
+  - name: rpcLibrary
+    type: protobuf
+    url: ../../../examples/1.2.0/rpc-library.proto
+workflows:
+  - workflowId: lookUpBook
+    steps:
+      - stepId: findBook
+        type: graphql
+        operation:
+          schema: $sourceDescriptions.shopSchema
+          document: 'query GetBook($id: ID!) { book(id: $id) { id } }'
+        parameters:
+          - name: id
+            in: variable
+            value: book-123
+        outputs:
+          bookId: $response.body#/data/book/id
+      - stepId: getBook
+        type: rpc
+        protocol: grpc
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        parameters:
+          - name: x-request-id
+            in: metadata
+            value: book-lookup
+        requestBody:
+          payload:
+            bookId: $steps.findBook.outputs.bookId

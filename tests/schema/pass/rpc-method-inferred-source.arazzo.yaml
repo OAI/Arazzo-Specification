@@ -1,0 +1,15 @@
+arazzo: 1.2.0
+info:
+  title: RPC method infers the sole Protobuf source
+  version: 1.0.0
+sourceDescriptions:
+  - name: rpcLibrary
+    type: protobuf
+    url: ./rpc-library.proto
+workflows:
+  - workflowId: lookupBook
+    steps:
+      - stepId: getBook
+        type: rpc
+        method: org.v1.Library/GetBook
+        protocol: grpc

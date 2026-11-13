@@ -1,0 +1,17 @@
+arazzo: 1.2.0
+info:
+  title: Invalid gRPC Step operationPath
+  version: 1.0.0
+sourceDescriptions:
+  - name: rpcLibrary
+    type: protobuf
+    url: ./rpc-library.proto
+workflows:
+  - workflowId: invalid
+    steps:
+      - stepId: getBook
+        type: rpc
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/GetBook
+        protocol: grpc
+        # Invalid: method and operationPath are mutually exclusive.
+        operationPath: $sourceDescriptions.rpcLibrary#/services/WorkflowDemo/GetBook

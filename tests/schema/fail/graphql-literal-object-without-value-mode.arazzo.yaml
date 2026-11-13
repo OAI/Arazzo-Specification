@@ -1,0 +1,21 @@
+arazzo: 1.2.0
+info:
+  title: GraphQL literal object without value mode
+  version: 1.0.0
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ./schema.graphqls
+workflows:
+  - workflowId: updateBook
+    steps:
+      - stepId: updateBook
+        type: graphql
+        operation:
+          schema: $sourceDescriptions.shopSchema
+          document: 'mutation UpdateBook($input: BookInput!) { updateBook(input: $input) { id } }'
+        parameters:
+          - name: input
+            in: variable
+            value:
+              bookId: book-123

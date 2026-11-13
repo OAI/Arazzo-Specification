@@ -1,0 +1,15 @@
+arazzo: 1.2.0
+info:
+  title: Invalid RPC method with a malformed method name
+  version: 1.0.0
+sourceDescriptions:
+  - name: rpcLibrary
+    type: protobuf
+    url: ./rpc-library.proto
+workflows:
+  - workflowId: invalidRpcMethod
+    steps:
+      - stepId: getBook
+        type: rpc
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/Get-Book
+        protocol: connect

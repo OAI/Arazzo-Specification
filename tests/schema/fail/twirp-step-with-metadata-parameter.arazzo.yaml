@@ -1,0 +1,19 @@
+arazzo: 1.2.0
+info:
+  title: Twirp step with an invalid RPC metadata parameter
+  version: 1.0.0
+sourceDescriptions:
+  - name: library
+    type: protobuf
+    url: ./rpc-library.proto
+workflows:
+  - workflowId: lookupBook
+    steps:
+      - stepId: getBook
+        type: rpc
+        method: $sourceDescriptions.library.org.v1.Library/GetBook
+        protocol: twirp
+        parameters:
+          - name: authorization
+            in: metadata
+            value: Bearer example-token

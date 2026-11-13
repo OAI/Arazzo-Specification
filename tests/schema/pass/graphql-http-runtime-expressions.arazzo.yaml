@@ -1,0 +1,24 @@
+arazzo: 1.2.0
+info:
+  title: GraphQL HTTP runtime expressions
+  version: 1.0.0
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ./schema.graphqls
+workflows:
+  - workflowId: listBooksOverHttp
+    steps:
+      - stepId: listBooks
+        type: graphql
+        description: This step assumes an HTTP transport binding.
+        operation:
+          schema: $sourceDescriptions.shopSchema
+          document: 'query ListBooks { books { id } }'
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          requestUrl: $url
+          requestMethod: $method
+          contentType: $response.header.content-type
+          books: $response.body#/data/books

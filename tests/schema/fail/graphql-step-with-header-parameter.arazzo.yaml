@@ -1,0 +1,20 @@
+arazzo: 1.2.0
+info:
+  title: GraphQL step with an invalid header parameter
+  version: 1.0.0
+sourceDescriptions:
+  - name: shopSchema
+    type: graphql
+    url: ./schema.graphqls
+workflows:
+  - workflowId: lookupBook
+    steps:
+      - stepId: getBook
+        type: graphql
+        operation:
+          schema: $sourceDescriptions.shopSchema
+          document: 'query GetBook($id: ID!) { book(id: $id) { id } }'
+        parameters:
+          - name: id
+            in: header
+            value: book-123

@@ -11,3 +11,4 @@ deploy-preview/
 history
 Gemfile.lock
 coverage/
+.DS_Store

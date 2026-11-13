@@ -1,0 +1,64 @@
+openapi: 3.0.3
+
+info:
+  title: Warehouse Service API
+  version: 1.0.0
+  description: A service for managing product inventory levels in the warehouse.
+  contact:
+    name: Specmatic
+    url: https://specmatic.io
+    email: devs@specmatic.io
+
+servers:
+  - url: http://localhost:3003
+    description: Local development server
+  - url: http://host.docker.internal:3003
+    description: Local development server
+
+tags:
+  - name: Inventory
+
+paths:
+  /inventory:
+    put:
+      summary: Update product inventory
+      description: Updates the inventory count for a specific product associated with an order.
+      operationId: reserveInventory
+      tags:
+        - Inventory
+      parameters:
+        - name: orderId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Inventory successfully updated.
+        "400":
+          description: Invalid request. Usually due to negative inventory counts or malformed Ids.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Product or Order not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: "INVALID_INVENTORY_COUNT"
+        message:
+          type: string
+          example: "Inventory count cannot be missing"

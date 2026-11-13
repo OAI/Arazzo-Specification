@@ -1,0 +1,132 @@
+openapi: 3.0.3
+
+info:
+  title: Order Service API
+  version: 1.0.0
+  description: A service to retrieve detailed order information.
+  contact:
+    name: Specmatic
+    url: https://specmatic.io
+    email: devs@specmatic.io
+
+servers:
+  - url: http://localhost:3002
+    description: Local development server
+  - url: http://host.docker.internal:3002
+    description: Local development server
+
+tags:
+  - name: Order
+
+paths:
+  /orders:
+    post:
+      summary: Accept a pending order
+      description: Marks a pending order as accepted after inventory reservation.
+      operationId: acceptOrder
+      tags:
+        - Order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderAcceptanceRequest"
+      responses:
+        "200":
+          description: Order accepted.
+        "400":
+          description: Order is not pending.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Order not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /orders/{orderId}:
+    get:
+      summary: Get order details
+      description: Retrieves detailed information for a specific order using its unique identifier.
+      operationId: getOrderDetails
+      tags:
+        - Order
+      parameters:
+        - name: orderId
+          in: path
+          description: The unique identifier of the order to retrieve.
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successful retrieval of order details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+        "400":
+          description: Invalid request. Usually due to a missing or malformed orderId.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Order not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    OrderAcceptanceRequest:
+      type: object
+      required:
+        - orderId
+      properties:
+        orderId:
+          type: integer
+    OrderResponse:
+      type: object
+      required:
+        - orderId
+        - userId
+        - productId
+        - status
+      properties:
+        orderId:
+          type: integer
+          description: The unique identifier of the order.
+        userId:
+          type: integer
+          description: The unique identifier of the user who placed the order.
+        productId:
+          type: integer
+          description: The unique identifier of the product.
+        inventory:
+          type: integer
+          example: 2
+        status:
+          type: string
+          enum:
+            - PENDING
+            - ACCEPTED
+            - OUT_FOR_DELIVERY
+          example: "PENDING"
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: "INVALID_ORDER_ID"
+        message:
+          type: string
+          example: "The provided orderId is not a valid UUID."

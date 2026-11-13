@@ -1,0 +1,20 @@
+arazzo: 1.2.0
+info:
+  title: Invalid streaming request for gRPC-Web
+  version: 1.0.0
+sourceDescriptions:
+  - name: rpcLibrary
+    type: protobuf
+    url: ./rpc-library.proto
+workflows:
+  - workflowId: invalidGrpcWebStream
+    steps:
+      - stepId: uploadChunks
+        type: rpc
+        method: $sourceDescriptions.rpcLibrary.org.v1.Library/UploadChunks
+        protocol: grpc-web
+        requestBody:
+          - payload:
+              data: YQ==
+          - payload:
+              data: Yg==
