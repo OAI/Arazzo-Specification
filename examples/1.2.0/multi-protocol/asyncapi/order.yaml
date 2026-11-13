@@ -1,0 +1,177 @@
+asyncapi: 3.0.0
+
+info:
+  title: Order Processing Workflow
+  version: 1.0.0
+  description: >
+    Event-driven workflow for the Order Service, modeling the interaction
+    between the Order App, Shipping App, and Order Service.
+  contact:
+    name: Specmatic
+    url: https://specmatic.io
+    email: devs@specmatic.io
+  license:
+    name: MIT
+  tags:
+    - name: Products
+
+servers:
+  localKafka:
+    host: localhost:9092
+    protocol: kafka
+    description: Development server
+
+channels:
+  newOrders:
+    address: new-orders
+    messages:
+      orderRequest:
+        $ref: "#/components/messages/OrderRequest"
+
+  wipOrders:
+    address: wip-orders
+    messages:
+      wipStatus:
+        $ref: "#/components/messages/WipStatus"
+
+  acceptedOrders:
+    address: accepted-orders
+    messages:
+      acceptedStatus:
+        $ref: "#/components/messages/AcceptedStatus"
+
+  deliveryUpdates:
+    address: out-for-delivery-orders
+    messages:
+      deliveryStatus:
+        $ref: "#/components/messages/DeliveryUpdate"
+
+operations:
+  createOrder:
+    description: Handles a new order request
+    action: receive
+    channel:
+      $ref: "#/channels/newOrders"
+    messages:
+      - $ref: "#/channels/newOrders/messages/orderRequest"
+    reply:
+      channel:
+        $ref: "#/channels/wipOrders"
+      messages:
+        - $ref: "#/channels/wipOrders/messages/wipStatus"
+
+  orderAccepted:
+    description: Notifies the Order Service that an order has been accepted
+    action: send
+    channel:
+      $ref: "#/channels/acceptedOrders"
+    messages:
+      - $ref: "#/channels/acceptedOrders/messages/acceptedStatus"
+
+  outForDelivery:
+    description: Handles a shipping status update
+    action: receive
+    channel:
+      $ref: "#/channels/deliveryUpdates"
+    messages:
+      - $ref: "#/channels/deliveryUpdates/messages/deliveryStatus"
+
+components:
+  messages:
+    OrderRequest:
+      name: OrderRequest
+      title: New Order Request
+      contentType: application/json
+      correlationId:
+        location: "$message.header#/requestId"
+      headers:
+        type: object
+        properties:
+          requestId:
+            type: string
+            format: uuid
+        required:
+          - requestId
+      payload:
+        type: object
+        required:
+          - userId
+          - productId
+          - inventory
+        properties:
+          userId:
+            type: integer
+          productId:
+            type: integer
+          inventory:
+            type: integer
+
+    WipStatus:
+      name: WipStatus
+      title: Work-In-Progress Status
+      contentType: application/json
+      correlationId:
+        location: "$message.header#/requestId"
+      headers:
+        type: object
+        properties:
+          requestId:
+            type: string
+            format: uuid
+        required:
+          - requestId
+      payload:
+        type: object
+        required:
+          - orderId
+          - status
+        properties:
+          orderId:
+            type: integer
+          status:
+            type: string
+            enum: ["PENDING"]
+
+    AcceptedStatus:
+      name: AcceptedStatus
+      title: Order Accepted Status
+      contentType: application/json
+      correlationId:
+        location: "$message.header#/requestId"
+      headers:
+        type: object
+        properties:
+          requestId:
+            type: string
+            format: uuid
+        required:
+          - requestId
+      payload:
+        type: object
+        required:
+          - status
+        properties:
+          status:
+            type: string
+            enum: ["ACCEPTED"]
+
+    DeliveryUpdate:
+      name: DeliveryUpdate
+      title: Shipping Status Update
+      correlationId:
+        location: "$message.header#/requestId"
+      headers:
+        type: object
+        properties:
+          requestId:
+            type: string
+            format: uuid
+        required:
+          - requestId
+      payload:
+        type: object
+        required:
+          - orderId
+        properties:
+          orderId:
+            type: integer

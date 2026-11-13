@@ -1,0 +1,15 @@
+# Contact:
+#   name: Specmatic
+#   url: https://specmatic.io
+#   email: devs@specmatic.io
+
+type Query {
+  products(locationCode: String!): [Product!]!
+}
+
+type Product {
+  productId: Int!
+  name: String!
+  price: Float!
+  inventory: Int!
+}

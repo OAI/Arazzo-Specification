@@ -1,0 +1,20 @@
+// Contact:
+//   name: Specmatic
+//   url: https://specmatic.io
+//   email: devs@specmatic.io
+
+syntax = "proto3";
+package location.v1;
+
+service LocationService {
+  rpc GetUserLocation(GetUserLocationRequest) returns (GetUserLocationResponse);
+}
+
+message GetUserLocationRequest {
+  string user_email = 1;
+}
+
+message GetUserLocationResponse {
+  int32 user_id = 1;
+  string location_code = 2;
+}

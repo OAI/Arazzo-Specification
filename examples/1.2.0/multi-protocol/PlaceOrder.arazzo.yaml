@@ -1,0 +1,263 @@
+# Source contracts adapted from https://github.com/specmatic/arazzo-example
+arazzo: "1.2.0"
+info:
+  title: Arazzo Multi-Protocol Workflow
+  version: "1.0.0"
+  x-contact:
+    name: Specmatic
+    url: https://specmatic.io
+    email: devs@specmatic.io
+sourceDescriptions:
+  - name: LocationProto
+    url: ./grpc/location/v1/location.proto
+    type: protobuf
+  - name: ProductGraphQL
+    url: ./graphql/product.graphqls
+    type: graphql
+  - name: AsyncOrderApi
+    url: ./asyncapi/order.yaml
+    type: asyncapi
+  - name: WarehouseApi
+    url: ./openapi/warehouse.yaml
+    type: openapi
+  - name: OrderApi
+    url: ./openapi/order.yaml
+    type: openapi
+  - name: customerService
+    url: ../customer-service.wsdl
+    type: wsdl
+
+workflows:
+  - workflowId: PlaceOrder
+    inputs:
+      type: object
+      required:
+        - GetUserLocation
+        - createOrderSend
+      properties:
+        GetUserLocation:
+          type: object
+          required:
+            - userEmail
+          properties:
+            userEmail:
+              type: string
+              format: email
+        createOrderSend:
+          type: object
+          required:
+            - requestId
+          properties:
+            requestId:
+              type: string
+              format: uuid
+
+    steps:
+      - stepId: GetUserLocation
+        type: rpc
+        method: "$sourceDescriptions.LocationProto.location.v1.LocationService/GetUserLocation"
+        protocol: grpc
+        requestBody:
+          payload:
+            userEmail: "$inputs.GetUserLocation.userEmail"
+        successCriteria:
+          - condition: "$response.status#/code == 0"
+        outputs:
+          userId: "$response.body#/userId"
+          locationCode: "$response.body#/locationCode"
+
+      - stepId: products
+        type: graphql
+        operation:
+          schema: "$sourceDescriptions.ProductGraphQL"
+          document: |
+            query ($locationCode: String!) {
+              products(locationCode: $locationCode) {
+                productId
+                inventory
+              }
+            }
+        parameters:
+          - name: locationCode
+            in: variable
+            value: "$steps.GetUserLocation.outputs.locationCode"
+        successCriteria:
+          - condition: $.data.products
+            type: jsonpath
+            context: $response.body
+        onSuccess:
+          - name: productsIsArrayEmpty
+            type: end
+            criteria:
+              - condition: '$.data[?(length(@) == 0)]'
+                type: jsonpath
+                context: $response.body
+        outputs:
+          productId: "$response.body#/data/products/0/productId"
+          inventory: "$response.body#/data/products/0/inventory"
+
+      - stepId: createOrderSend
+        type: asyncapi
+        operationId: "$sourceDescriptions.AsyncOrderApi.createOrder"
+        action: send
+        parameters:
+          - name: requestId
+            in: header
+            value: "$inputs.createOrderSend.requestId"
+        requestBody:
+          payload:
+            userId: "$steps.GetUserLocation.outputs.userId"
+            productId: "$steps.products.outputs.productId"
+            inventory: "$steps.products.outputs.inventory"
+        outputs:
+          requestId: "$inputs.createOrderSend.requestId"
+
+      - stepId: createOrderReceive
+        type: asyncapi
+        operationId: "$sourceDescriptions.AsyncOrderApi.createOrder"
+        action: receive
+        correlationId: "$steps.createOrderSend.outputs.requestId"
+        timeout: 6000
+        successCriteria:
+          - condition: $message.payload#/status == 'PENDING'
+        outputs:
+          orderId: "$message.payload#/orderId"
+
+      - stepId: reserveInventory
+        type: openapi
+        operationId: "$sourceDescriptions.WarehouseApi.reserveInventory"
+        dependsOn:
+          - createOrderReceive
+        parameters:
+          - name: orderId
+            in: query
+            value: "$steps.createOrderReceive.outputs.orderId"
+        successCriteria:
+          - condition: "$statusCode == 200"
+
+      - stepId: acceptOrder
+        type: openapi
+        operationId: $sourceDescriptions.OrderApi.acceptOrder
+        dependsOn:
+          - reserveInventory
+        requestBody:
+          contentType: application/json
+          payload:
+            orderId: $steps.createOrderReceive.outputs.orderId
+        successCriteria:
+          - condition: $statusCode == 200
+
+      - stepId: orderAccepted
+        type: asyncapi
+        operationId: "$sourceDescriptions.AsyncOrderApi.orderAccepted"
+        dependsOn:
+          - acceptOrder
+        action: receive
+        correlationId: "$steps.createOrderSend.outputs.requestId"
+        timeout: 6000
+        successCriteria:
+          - condition: $message.payload#/status == 'ACCEPTED'
+
+      - stepId: outForDelivery
+        type: asyncapi
+        operationId: "$sourceDescriptions.AsyncOrderApi.outForDelivery"
+        action: send
+        dependsOn:
+          - orderAccepted
+        parameters:
+          - name: requestId
+            in: header
+            value: "$steps.createOrderSend.outputs.requestId"
+        requestBody:
+          payload:
+            orderId: "$steps.createOrderReceive.outputs.orderId"
+
+      - stepId: getOrderDetails
+        type: openapi
+        operationId: "$sourceDescriptions.OrderApi.getOrderDetails"
+        dependsOn:
+          - outForDelivery
+        parameters:
+          - name: orderId
+            in: path
+            value: "$steps.createOrderReceive.outputs.orderId"
+        successCriteria:
+          - condition: "$statusCode == 200"
+
+      - stepId: list-customers
+        type: soap
+        dependsOn:
+          - getOrderDetails
+        operationName: $sourceDescriptions.customerService.ListCustomers
+        parameters:
+          - name: Content-Type
+            in: header
+            value: "text/xml"
+          - name: SOAPAction
+            in: header
+            value: "http://example.com/customer-service/ListCustomers"
+        requestBody:
+          contentType: text/xml
+          payload: |
+            <?xml version="1.0" encoding="UTF-8"?>
+            <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                           xmlns:tns="http://example.com/customer-service">
+              <soap:Body>
+                <tns:ListCustomers/>
+              </soap:Body>
+            </soap:Envelope>
+        successCriteria:
+          - condition: $statusCode == 200
+
+      - stepId: checkLocationProtocols
+        type: workflow
+        dependsOn:
+          - list-customers
+        workflowId: CheckLocationRpcProtocols
+        parameters:
+          - name: userEmail
+            value: $inputs.GetUserLocation.userEmail
+
+  - workflowId: CheckLocationRpcProtocols
+    description: Calls GetUserLocation through deployments configured for gRPC-Web, Connect, and Twirp.
+    inputs:
+      type: object
+      required:
+        - userEmail
+      properties:
+        userEmail:
+          type: string
+          format: email
+    steps:
+      - stepId: getLocationWithGrpcWeb
+        type: rpc
+        method: $sourceDescriptions.LocationProto.location.v1.LocationService/GetUserLocation
+        protocol: grpc-web
+        requestBody:
+          contentType: application/grpc-web+proto
+          payload:
+            userEmail: $inputs.userEmail
+        successCriteria:
+          - condition: $response.status#/code == 0
+
+      - stepId: getLocationWithConnect
+        type: rpc
+        method: $sourceDescriptions.LocationProto.location.v1.LocationService/GetUserLocation
+        protocol: connect
+        requestBody:
+          contentType: application/proto
+          payload:
+            userEmail: $inputs.userEmail
+        successCriteria:
+          - condition: $statusCode == 200
+
+      - stepId: getLocationWithTwirp
+        type: rpc
+        method: $sourceDescriptions.LocationProto.location.v1.LocationService/GetUserLocation
+        protocol: twirp
+        requestBody:
+          contentType: application/protobuf
+          payload:
+            userEmail: $inputs.userEmail
+        successCriteria:
+          - condition: $statusCode == 200
