@@ -38,11 +38,13 @@ The Arazzo ecosystem is growing with various tools to help you work with Arazzo 
 - **[Arazzo UI](https://arazzo-ui.jentic.com/)** - Visualize Arazzo workflows as interactive documentation with diagram and documentation views.
 - **[API Flows Studio](https://github.com/API-Flows/api-flows-studio)** - A web application that loads and displays an Arazzo Workflow Document.
 - **[ApiTapVia](https://github.com/lornajane/apitapviz)** - Simple visualisation of OpenAPI Arazzo files as Markdown or mermaidjs.
+- **[Bielu.AspNetCore.Arazzo.Scalar](https://apidescriptions.bielu.pl/articles/arazzo/scalar.html)** - Renders Arazzo 1.0 and 1.1 workflows in the Scalar API Reference (ASP.NET Core package or the `@bielu/scalar-arazzo` npm plugin), resolving each step against the OpenAPI and AsyncAPI documents loaded next to it.
 
 ### Generators
 
 - **[Arazzo Generator (by @jentic)](https://github.com/jentic/arazzo-engine/tree/main/generator)** - A tool for analyzing OpenAPI specifications and generating meaningful Arazzo workflows by identifying logical API sequences and patterns.
 - **[Arazzo Generator (by @JaredCE)](https://github.com/JaredCE/Arazzo-Generator)** - Generate Arazzo Workflows from your OpenAPI Documents.
+- **[Bielu.AspNetCore.Arazzo](https://apidescriptions.bielu.pl/articles/arazzo/overview.html)** - Author Arazzo workflows in C# with a fluent builder and serve them from ASP.NET Core, with source descriptions wired to the app's own OpenAPI and AsyncAPI documents and step references validated at startup and build time.
 - **[Specmatic](https://specmatic.io/)** - Simplified Authoring, Generation, Mocking, and Testing of Arazzo Workflows.
 
 ### Validation and Linting
@@ -52,6 +54,7 @@ The Arazzo ecosystem is growing with various tools to help you work with Arazzo 
 - **[Spectral](https://stoplight.io/spectral)** - Flexible OpenAPI/AsyncAPI/Arazzo linter for API governance and style guides.
 - **[Speakeasy OpenAPI](https://github.com/speakeasy-api/openapi)** - OSS Go packages and CLI for validating, linting, upgrading, and graphing Arazzo 1.0 and 1.1 documents, including checking steps against their OpenAPI and AsyncAPI sources, and bootstrapping workflows from OpenAPI.
 - **[@usearazzo/validator](https://usearazzo.com/docs/validator/)** - Validator and linter for Arazzo 1.0.0, 1.0.1, and 1.1.0 documents. Semantic validation, semantic linting, and opt-in JSON Schema validation, reported as LSP diagnostics.
+- **[dotnet-arazzo](https://apidescriptions.bielu.pl/articles/arazzo/cli.html)** - .NET CLI tool for validating, linting, and diffing Arazzo 1.0 and 1.1 documents.
 
 ### Parsers and Resolvers
 
@@ -60,6 +63,7 @@ The Arazzo ecosystem is growing with various tools to help you work with Arazzo 
 - **[Arazzo Runtime Expression](https://github.com/swaggerexpert/arazzo-runtime-expression)** - Arazzo Runtime Expressions parser, validator and extractor.
 - **[Itarazzo](https://github.com/leidenheit/itarazzo-library)** - Library to parse, validate and execute an Arazzo specification.
 - **[@usearazzo/parser](https://usearazzo.com/docs/parser/)** - TypeScript/JavaScript parser for Arazzo 1.0.0, 1.0.1, and 1.1.0 documents, runtime expressions, and criterion conditions, with source maps and a tolerant mode.
+- **[Bielu.Arazzo.NET](https://apidescriptions.bielu.pl/articles/arazzo/overview.html)** - .NET object model, JSON/YAML reader and writer, and validator for Arazzo 1.0 and 1.1 documents.
 - **[@usearazzo/resolver](https://usearazzo.com/docs/resolver/)** - TypeScript/JavaScript resolver for Arazzo and OpenAPI documents: bundle, dereference, or list every document the references reach.
 
 ### Workflow Execution and Testing
