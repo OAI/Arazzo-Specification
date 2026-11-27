@@ -467,6 +467,14 @@ Implementations SHOULD validate the following scenario:
 
 When no `dependsOn` is used in a workflow (sequential execution model), implementations SHOULD produce an error if a step references another step's outputs where the referenced step appears later in the steps array. This indicates a forward reference that cannot be satisfied in sequential execution.
 
+##### Steps Without Success Criteria
+
+When `successCriteria` is omitted, the success of a step is determined by what the step references:
+
+- For steps that reference OpenAPI operations (via `operationId` or `operationPath`), receiving any HTTP response is considered a successful step completion, regardless of its status code. Authors SHOULD define `successCriteria` (for example, `$statusCode == 200`) when the status code or the response content determines whether the step succeeded.
+- For steps that reference a workflow (via `workflowId`), the step is successful when the referenced workflow completes successfully.
+- For steps that reference AsyncAPI operations, see [Defining Success for Asynchronous Steps](#defining-success-for-asynchronous-steps).
+
 ##### Defining Success for Asynchronous Steps
 
 For steps that reference AsyncAPI operations (via `operationId` or `channelPath`), tools will send or receive messages on the specified channel as defined by the referenced AsyncAPI description. For AsyncAPI send operations, the step completes immediately after the message is sent. Arazzo does not model broker acknowledgment or delivery confirmation. For AsyncAPI receive operations, step completion depends on message receipt as described below.
